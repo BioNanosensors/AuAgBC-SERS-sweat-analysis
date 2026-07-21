@@ -1,0 +1,3 @@
+file,sample_type,concentration_molar,replicate,accumulation,instrument,acquisition,record_group,analyte,concentration_label,acquisition_setting,provenance_status
+data/quarantine/legacy_snapshot/Optimisation/500_5_5_L/4ATP_1mM_rep1_acc1.csv,4atp,0.001,1,1,portable_785nm,500 ms,example_optimisation_500_5_5_L,4-ATP,1 mM,500_5_5_L,raw_unverified
+data/quarantine/legacy_snapshot/Optimisation/500_5_5_L/blank_rep1_acc1.csv,blank,,1,1,portable_785nm,500 ms,example_optimisation_500_5_5_L,4-ATP,blank,500_5_5_L,provenance_conflict

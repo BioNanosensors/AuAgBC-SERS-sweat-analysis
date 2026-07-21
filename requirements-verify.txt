@@ -1,0 +1,9 @@
+# Audited numerical-reproduction environment (Python 3.12.10).
+numpy==2.5.0
+pandas==3.0.3
+scipy==1.18.0
+pybaselines==1.2.1
+# Configuration/test dependencies were not part of that historical numerical
+# audit; keep their supported ranges here instead of claiming unverified pins.
+PyYAML>=6.0,<7
+pytest>=8,<10

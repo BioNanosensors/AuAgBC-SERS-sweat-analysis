@@ -1,0 +1,4 @@
+reported_day,measurement_date,actual_elapsed_days,Y0,k,R2,LOD_M,LOQ_M,CV_mean_pct,CV_sd_pct,status,source
+1,2024-05-19,0,74030.0,0.3,0.757,2.37e-15,1.28e-12,15.68,11.5,publication_snapshot,manuscript
+45,2024-07-03,45,194300.0,0.58,0.95,5.95e-10,1.55e-08,30.79,20.3,publication_snapshot,manuscript
+130_reported,2024-09-24,128,87800.0,0.45,0.94,6.98e-11,4.68e-09,35.79,20.12,publication_snapshot,manuscript

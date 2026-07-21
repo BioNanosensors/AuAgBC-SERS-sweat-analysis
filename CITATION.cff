@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use these data or processing tools, please cite the associated article and this repository."
+title: "AuAgBC SERS sweat analysis: spectra and reproducible processing"
+type: dataset
+version: 0.1.0
+authors:
+  - family-names: "Patiño-Vélez"
+    given-names: "Daniela"
+  - family-names: "Morales-Narváez"
+    given-names: "Eden"
+repository-code: "https://github.com/biophotonics/AuAgBC-SERS-sweat-analysis"
+identifiers:
+  - type: other
+    value: "SD-ART-05-2026-000093"
+    description: "Associated manuscript identifier"
+preferred-citation:
+  type: article
+  title: "Miniaturised Setup for Surface-Enhanced Raman Spectroscopy in Sweat Analysis"
+  authors:
+    - family-names: "Patiño-Vélez"
+      given-names: "Daniela"
+    - family-names: "Morales-Narváez"
+      given-names: "Eden"

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "source_csv_count": 2783,
+  "legacy_snapshot_csv_count": 2783,
+  "legacy_snapshot_sanitized_files": 4,
+  "legacy_snapshot_sanitized_path_occurrences": 175140,
+  "publication_snapshot_file_count": 17,
+  "raw_processing_manifest_rows": 1449,
+  "legacy_script_inventory_rows": 69,
+  "copied_audit_report_count": 16,
+  "dataset_manifest_rows": 2818,
+  "status_counts": {
+    "audit_evidence": 16,
+    "legacy_derived": 64,
+    "provenance_conflict": 1914,
+    "publication_snapshot": 17,
+    "raw_unverified": 807
+  }
+}

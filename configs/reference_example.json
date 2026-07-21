@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "profile": "reference_2026",
+  "manifest": "example_manifest.csv",
+  "input_root": "..",
+  "output_root": "../outputs/reference_example",
+  "options": {
+    "blank": {
+      "stage": "processed",
+      "strategy": "mean",
+      "group_by": [
+        "record_group",
+        "instrument"
+      ],
+      "sample_types": [
+        "blank"
+      ]
+    },
+    "aggregation": {
+      "group_by": [
+        "record_group"
+      ]
+    }
+  }
+}

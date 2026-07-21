@@ -1,0 +1,58 @@
+curated_group,master_source,master_date,master_setting,columns
+Analytical Enhancement,master_benchtop,24-10-21,unknown,2
+Analytical Enhancement,master_benchtop,24-10-23,unknown,1
+Analytical Enhancement,master_benchtop,24-10-30,unknown,1
+Blind samples,master_portable,24-09-24,750_5_5_L,135
+Blind samples,master_portable,18-09-24,750_5_5_H,5
+Blind samples,master_portable,25-09-24,750_5_5_H,5
+Blind samples,master_portable,30-09-24,750_5_5_H,5
+Calibration curve,master_portable,03-07-24,750_5_5_L,151
+Calibration curve,master_portable,03-07-24,750_5_5_H,10
+Calibration curve,master_portable,24-09-24,750_5_5_H,10
+Calibration curve,master_portable,24-09-24,750_5_5_M,10
+Calibration curve,master_portable,03-07-24,500_5_5_L,5
+Calibration curve,master_portable,18-09-24,750_5_5_H,5
+Calibration curve,master_portable,24-09-24,750_5_5_L,5
+Calibration curve,master_portable,25-09-24,750_5_5_H,5
+Calibration curve,master_portable,30-09-24,750_5_5_H,5
+Calibration curve,master_portable,03-07-24,750_5_5_M,4
+Hand-held spectrometer calibration,master_portable,06-06-24,unknown,5
+Optimisation/500_5_5_L,master_portable,03-07-24,500_5_5_L,195
+Optimisation/500_5_5_L,master_portable,18-09-24,750_5_5_H,5
+Optimisation/500_5_5_L,master_portable,25-09-24,750_5_5_H,5
+Optimisation/500_5_5_L,master_portable,30-09-24,750_5_5_H,5
+Optimisation/750_5_5_H,master_portable,24-09-24,750_5_5_H,195
+Optimisation/750_5_5_H,master_portable,18-09-24,750_5_5_H,5
+Optimisation/750_5_5_H,master_portable,25-09-24,750_5_5_H,5
+Optimisation/750_5_5_H,master_portable,30-09-24,750_5_5_H,5
+Optimisation/750_5_5_M,master_portable,24-09-24,750_5_5_M,195
+Optimisation/750_5_5_M,master_portable,18-09-24,750_5_5_H,5
+Optimisation/750_5_5_M,master_portable,25-09-24,750_5_5_H,5
+Optimisation/750_5_5_M,master_portable,30-09-24,750_5_5_H,5
+Proof of concept/Benchtop Raman,master_benchtop,24-10-08,unknown,4
+Proof of concept/Portable Raman,master_portable,02-08-24,750_5_5_H,20
+Proof of concept/Portable Raman,master_portable,30-09-24,750_5_5_H,15
+Proof of concept/Portable Raman,master_portable,23-10-24,unknown,10
+Proof of concept/Portable Raman,master_portable,25-09-24,750_5_5_H,5
+Stability/03_07_24,master_portable,03-07-24,750_5_5_L,150
+Stability/03_07_24,master_portable,18-09-24,750_5_5_H,5
+Stability/03_07_24,master_portable,25-09-24,750_5_5_H,5
+Stability/03_07_24,master_portable,30-09-24,750_5_5_H,5
+Stability/19_05_24,master_portable,03-07-24,750_5_5_L,56
+Stability/19_05_24,master_portable,24-09-24,750_5_5_L,20
+Stability/19_05_24,master_portable,19-05-24,unknown,15
+Stability/19_05_24,master_portable,03-07-24,750_5_5_H,10
+Stability/19_05_24,master_portable,19-05-24,750_5_5_H,10
+Stability/19_05_24,master_portable,24-09-24,750_5_5_M,10
+Stability/19_05_24,master_portable,18-09-24,750_5_5_H,5
+Stability/19_05_24,master_portable,19-05-24,500_5_5_L,5
+Stability/19_05_24,master_portable,19-05-24,750_5_5_M,5
+Stability/19_05_24,master_portable,19-05-24,750_5_5_h,5
+Stability/19_05_24,master_portable,24-09-24,750_5_5_H,5
+Stability/19_05_24,master_portable,25-09-24,750_5_5_H,5
+Stability/19_05_24,master_portable,30-09-24,750_5_5_H,5
+Stability/19_05_24,master_portable,03-07-24,750_5_5_M,4
+Stability/24_09_24,master_portable,24-09-24,750_5_5_L,195
+Stability/24_09_24,master_portable,18-09-24,750_5_5_H,5
+Stability/24_09_24,master_portable,25-09-24,750_5_5_H,5
+Stability/24_09_24,master_portable,30-09-24,750_5_5_H,5

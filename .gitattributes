@@ -1,0 +1,15 @@
+# Preserve scientific CSV/JSON bytes so SHA-256 manifests remain valid on
+# Windows, macOS, and Linux regardless of each user's Git line-ending setting.
+*.csv -text
+*.json -text
+
+# Keep repository code and documentation on a stable LF convention.
+*.py text eol=lf
+*.md text eol=lf
+*.cff text eol=lf
+*.toml text eol=lf
+*.txt text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.gitignore text eol=lf
+*.gitattributes text eol=lf

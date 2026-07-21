@@ -1,0 +1,14 @@
+{
+  "roots": {
+    "curated": "<CURATED_ARCHIVE_EXTRACT>",
+    "master_benchtop": "<BENCHTOP_MASTER_COLLECTION>",
+    "master_portable": "<PORTABLE_MASTER_COLLECTION>"
+  },
+  "records": 5201,
+  "curated_files": 3046,
+  "master_benchtop_files_indexed": 532,
+  "master_portable_files_indexed": 1623,
+  "duplicate_groups": 657,
+  "curated_files_with_exact_master_match": 33,
+  "csv_parse_errors": 109
+}

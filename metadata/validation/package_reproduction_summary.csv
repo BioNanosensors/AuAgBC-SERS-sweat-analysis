@@ -1,0 +1,7 @@
+family,expected_files,generated_files,matched_files,missing_generated_files,orphan_generated_files,exact_array_equal_files,allclose_1e_12_files,allclose_1e_9_files,allclose_1e_7_files,x_exact_files,max_rmse,median_rmse,max_max_abs,min_pearson_r,missing_generated_names,orphan_generated_names
+Stability/03_07_24,165,165,165,0,0,165,165,165,165,165,0,0,0,1,,
+Stability/19_05_24,160,160,160,0,0,160,160,160,160,160,0,0,0,0.99999999999999989,,
+Stability/24_09_24,210,210,210,0,0,210,210,210,210,210,0,0,0,1,,
+Optimisation/500_5_5_L,210,210,210,0,0,210,210,210,210,210,0,0,0,1,,
+Optimisation/750_5_5_H,210,210,210,0,0,210,210,210,210,210,0,0,0,1,,
+ALL_FIVE_FAMILIES,955,955,955,0,0,955,955,955,955,955,0,0,0,0.99999999999999989,,
