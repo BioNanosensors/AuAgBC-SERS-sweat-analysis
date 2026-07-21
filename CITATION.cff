@@ -8,7 +8,7 @@ authors:
     given-names: "Daniela"
   - family-names: "Morales-Narváez"
     given-names: "Eden"
-repository-code: "https://github.com/biophotonics/AuAgBC-SERS-sweat-analysis"
+repository-code: "https://github.com/BioNanosensors/AuAgBC-SERS-sweat-analysis"
 identifiers:
   - type: other
     value: "SD-ART-05-2026-000093"

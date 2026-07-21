@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only integrity and privacy checks for the distributable repository data.
+"""Read-only integrity and limited direct-identifier checks for repository data.
 
 This module deliberately uses only the Python standard library so that a data
 release can be checked before the numerical processing dependencies are
@@ -430,7 +430,7 @@ def _human_output(report: dict[str, Any]) -> str:
             "PASS: repository data verified "
             f"({counts['manifest_files_hashed']} files, "
             f"{counts['raw_processing_manifest_rows']} processing-manifest rows, "
-            f"{counts['distributable_files_scanned']} privacy-scanned files)."
+            f"{counts['distributable_files_scanned']} direct-identifier-scanned files)."
         )
     lines = [f"FAIL: {report['error_count']} repository verification error(s):"]
     lines.extend(f"- {message}" for message in report["errors"])

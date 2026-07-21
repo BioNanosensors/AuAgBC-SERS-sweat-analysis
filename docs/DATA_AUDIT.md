@@ -56,9 +56,14 @@ replicates with five scans. The manuscript identifies the final acquisition as
 Column-level matching shows that the set is not uniformly from that acquisition.
 For example, the prepared `4ATP_1mM_rep3_acc1.csv` matches a 500 ms master
 measurement, while other 1 mM files match the 750 ms low-power collection.
-The fifteen prepared blank files are also copies of a human-sweat high-power
-blank, not a confirmed 4-ATP calibration blank. Therefore the prepared raw
-calibration set is classified as `provenance_conflict`.
+The fifteen prepared blank files form a mixed-context high-power series: ten
+channels exactly match columns stored in two Test HS master exports and five
+match columns stored in a Test 4-ATP master export. Storage context is not proof
+of sample identity, and none is a confirmed setting-matched low-power blank for
+the final calibration. Therefore the prepared raw calibration set is classified
+as `provenance_conflict`. This corrects the earlier unsupported all-human
+summary; the explicit correction is recorded in
+`metadata/provenance_corrections.csv`.
 
 The four calibration summary tables are preserved as
 `publication_snapshot`. Their values can be aggregated internally, but that
@@ -70,8 +75,8 @@ The prepared set has nine nominal concentrations, three sample files per
 concentration, and five scans per file. The master measurements retain coded
 sample labels, but the code-to-concentration key was not found. Consequently,
 the numerical spectra are recoverable but the nominal concentration assignment
-is not independently verifiable. The same inappropriate blank described above
-was copied into this experiment.
+is not independently verifiable. The same identity-unresolved,
+setting-mismatched blank series described above was copied into this experiment.
 
 ### Stability
 
@@ -109,6 +114,27 @@ instrument metadata fields (`Name` or `Tag`), shifting volunteer identifiers.
 One ten-channel artificial-sweat file repeats channels 1-5 as channels 6-10.
 The final manuscript summaries select artificial sweat and volunteers V2-V4;
 the raw collection also contains V1/P1-labelled material.
+
+### Human-data governance
+
+The manuscript and thesis report that signed informed consent was obtained from
+three volunteers and that no formal institutional ethics approval was obtained.
+The released code labels do not yet establish which three distinct participants
+are represented.
+The available consent template permits research use of donated sweat but does
+not explicitly permit public repository sharing, open reuse, or disclosure of
+exact acquisition timestamps. Signed forms and a written institutional
+determination were not located in the records reviewed.
+
+Instrument exports retain pseudonymous volunteer codes and exact dates/times,
+and several codes conflict across outer filenames, embedded metadata, master
+filenames, and publication tables. The material is therefore described as
+pseudonymised rather than proven anonymous. See
+`docs/HUMAN_DATA_GOVERNANCE.md` and
+`metadata/human_data_lineage_summary.json` for the current evidence status and
+known downstream lineage. Two processed candidate files are also byte-identical
+despite carrying different volunteer labels (dataset-manifest rows 1694 and
+1700).
 
 ### Hand-held spectrometer calibration
 

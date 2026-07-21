@@ -234,11 +234,19 @@ def quarantine_status(relative_path: str) -> tuple[str, str, str]:
             "processed_spectrum",
             "This legacy derivative set has no same-stem raw partners in the supplied archive.",
         )
-    if "blank" in name and top in {"Calibration curve", "Optimisation"}:
+    shared_blank_related = (
+        name.startswith("blank_rep")
+        or "_blank_subtracted_processed" in name
+        or name == "blank_sigma_versions.csv"
+    )
+    if shared_blank_related and top in {"Calibration curve", "Optimisation"}:
         return (
             "provenance_conflict",
             "raw_spectrum" if "processed" not in folded else "processed_spectrum",
-            "The shared blank series traces to a human-sweat high-power measurement.",
+            "Shared blank identity is unresolved; exact intensity matches link the "
+            "15-channel series to ten columns stored in Test HS master exports and "
+            "five stored in a Test 4-ATP master export. Storage context is not proof "
+            "of sample identity. See metadata/provenance_corrections.csv.",
         )
     if "processed" in folded or "/_out_raman/" in folded or top == "Analytical Enhancement" and "/processed" in folded:
         role = "processed_summary" if "summary" in folded else "processed_spectrum"
@@ -577,7 +585,7 @@ def write_reference_metadata(metadata_root: Path) -> None:
         ["conflict_id", "scope", "severity", "finding", "affected_count", "evidence", "resolution_status"],
         [
             {"conflict_id": "cross_label_duplicate_content", "scope": "curated raw spectra", "severity": "critical", "finding": "Identical spectrum bytes occur under different stated concentrations.", "affected_count": "103 groups; 277 files", "evidence": "provenance/duplicate_content_groups.csv and provenance/concentration_label_conflicts.csv", "resolution_status": "unresolved"},
-            {"conflict_id": "shared_blank_wrong_context", "scope": "blind, calibration, optimisation, stability", "severity": "critical", "finding": "The same 15 blank spectra are reused across eight sets and trace to a human-sweat high-power blank measurement.", "affected_count": "15 source spectra reused across 8 sets", "evidence": "provenance/raw_to_master_best_matches.csv", "resolution_status": "unresolved"},
+            {"conflict_id": "shared_blank_wrong_context", "scope": "blind, calibration, optimisation, stability", "severity": "critical", "finding": "The same 15 blank spectra are reused across eight sets. Ten channels exactly match columns stored in Test HS master exports and five match columns stored in a Test 4-ATP master export; storage context is not proof of sample identity, which remains unresolved.", "affected_count": "15 source spectra reused across 8 sets", "evidence": "provenance/raw_to_master_best_matches.csv", "resolution_status": "context_corrected_identity_unresolved"},
             {"conflict_id": "stability_19may_label_mismatch", "scope": "Stability/19_05_24", "severity": "critical", "finding": "Curated concentration labels disagree with the best matching master spectra.", "affected_count": "105 matched columns", "evidence": "provenance/concentration_label_conflicts.csv", "resolution_status": "unresolved"},
             {"conflict_id": "stability_content_overlap", "scope": "all stability dates", "severity": "critical", "finding": "Stability folders substantially overlap calibration or other-date content instead of forming independent dated acquisitions.", "affected_count": "unique content: 149/165, 103/159, and 20/210", "evidence": "provenance/duplicate_content_groups.csv", "resolution_status": "unresolved"},
             {"conflict_id": "optimisation_750m_orphan_derivatives", "scope": "Optimisation/750_5_5_M/Processed Spectra", "severity": "high", "finding": "Legacy processed filenames have no same-stem raw partners.", "affected_count": "43 files", "evidence": "validation/numerical_reproduction_summary.md", "resolution_status": "quarantined"},

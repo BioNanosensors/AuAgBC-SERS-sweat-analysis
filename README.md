@@ -5,13 +5,25 @@ Spectroscopy in Sweat Analysis*. It provides one manifest-driven Python workflow
 for portable and benchtop Raman CSV files, the processed tables used to assemble
 the article, and an explicit provenance audit of the supplied spectra.
 
+> [!IMPORTANT]
+> **Public work in progress.** This repository is public to support transparent
+> audit, but it is not yet an unqualified data release. Human-sweat measurements
+> were reported as collected with signed informed consent and without formal
+> institutional ethics approval. The available consent template does not
+> establish permission for open data sharing. See the
+> [human-data governance record](docs/HUMAN_DATA_GOVERNANCE.md) and
+> [release checklist](docs/RELEASE_CHECKLIST.md).
+
 ## Read this before using the data
 
 The reconstruction found genuine provenance conflicts in the prepared archive:
-some spectra are duplicated under different concentrations, the shared blank is
-traceable to a human-sweat measurement rather than a confirmed 4-ATP blank, and
-parts of the calibration and May stability sets disagree with the master
-measurement collections. Nothing was silently deleted or relabelled.
+some spectra are duplicated under different concentrations, ten shared blank
+channels exactly match columns stored in Test HS master folders while five
+match columns stored in a Test 4-ATP master folder, and parts of the calibration
+and May stability sets disagree with the master measurement collections. Folder
+context does not prove the blank's sample identity, and none of the channels is
+a confirmed setting-matched low-power blank for the final calibration. Nothing
+was silently deleted or relabelled.
 
 - `data/published_snapshot/` contains the paper-facing tables.
 - `data/raw/` and `data/processed/` contain verified or newly generated material.
@@ -63,11 +75,19 @@ Verify that an output directory still matches its recorded inputs and products:
 python process_raman.py verify outputs/reference_run/run.json
 ```
 
-Verify the release manifests, file checksums, summary counts, and privacy scan
-without installing any third-party package:
+Verify the release manifests, file checksums, summary counts, and limited
+direct-identifier scan without installing any third-party package:
 
 ```text
 python scripts/verify_repository_data.py
+```
+
+Verify the conservative inventory of direct human-sweat records, shared blank
+content with unresolved identity, and explicitly recorded downstream
+derivatives:
+
+```text
+python scripts/report_human_data_lineage.py --check
 ```
 
 The archive-wide manifest at `metadata/raw_processing_manifest.csv` includes
@@ -131,6 +151,8 @@ in the [data audit](docs/DATA_AUDIT.md).
 | `data/quarantine/legacy_snapshot/` | Submitted CSV snapshot with unresolved provenance clearly isolated |
 | `metadata/` | Checksums, origin matches, conflicts, script inventory, and validation metrics |
 | `docs/PAPER_DATA_MAP.md` | Figure/table-to-data map |
+| `docs/HUMAN_DATA_GOVERNANCE.md` | Consent, ethics, pseudonymisation, and public-sharing evidence status |
+| `docs/LICENSING.md` | Proposed path-level licensing arrangement and required decisions |
 | `docs/RELEASE_CHECKLIST.md` | Items requiring author confirmation before an unqualified public release |
 | `tests/` | Synthetic and regression tests |
 
@@ -138,4 +160,4 @@ in the [data audit](docs/DATA_AUDIT.md).
 
 Citation metadata are provided in `CITATION.cff`. The code and data licences are
 pending confirmation by the copyright holders; public access alone does not
-grant a reuse licence. See the release checklist for suggested options.
+grant a reuse licence. See the [licensing decision record](docs/LICENSING.md).
