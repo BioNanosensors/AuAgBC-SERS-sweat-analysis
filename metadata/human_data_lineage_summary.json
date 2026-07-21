@@ -45,6 +45,12 @@
       "interpretation": "The files are byte-identical but carry different volunteer labels; this does not establish participant identity."
     }
   ],
+  "author_confirmation_statuses": {
+    "no_written_ethics_determination": "confirmed_absent",
+    "pseudonymous_crosswalk_retained": "confirmed_retained_not_reviewed",
+    "signed_consent_forms_retained": "confirmed_retained_governance_scope_pending",
+    "vp_prefix_semantics": "prefix_semantics_confirmed_numeric_crosswalk_pending"
+  },
   "limitations": [
     "The CSV intentionally omits participant labels, dates, instrument Name/Tag values, master paths, and repository paths; dataset_manifest_row provides the auditable join.",
     "Participant identity is never inferred from spectral similarity.",

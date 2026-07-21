@@ -21,8 +21,12 @@ items below remain limitations; public visibility does not mark them resolved.
 - [x] Review the available blank consent template without publishing it.
 - [x] Confirm that the available template permits research use but does not
   explicitly permit public data sharing or open downstream reuse.
-- [x] Record the absence of a located formal approval, exemption, waiver,
-  signed-form set, deidentification procedure, or data-sharing determination.
+- [x] Record that signed forms were not present in the reviewed files and the
+  author's subsequent confirmation that they are retained privately.
+- [x] Record the author's confirmation that no written ethics approval,
+  exemption, waiver, or other determination was obtained.
+- [x] Record that `V` and `P` are operator/date-dependent prefixes in the same
+  pseudonymous coding system and that a private crosswalk is retained.
 - [x] Publish a conservative machine-readable inventory of known human-sweat
   records and downstream lineage.
 - [x] Correct the unsupported all-human shared-blank description: ten channels
@@ -38,10 +42,12 @@ items below remain limitations; public visibility does not mark them resolved.
 - [ ] Supply the blind-sample decoding key.
 - [ ] Identify the correct 4-ATP blank files.
 - [ ] Confirm the AEF extraction and acquisition-time scaling rule.
-- [ ] Confirm the proof-of-concept volunteer mapping.
-- [ ] Locate the signed consent forms for the manuscript-reported three
-  volunteers and confirm which version and collection session each covers;
-  never publish the signed forms.
+- [ ] Confirm whether paper Volunteer 2 equals acquisition V2/P2, Volunteer 3
+  equals V3/P3, and Volunteer 4 equals V4/P4 using the retained private key.
+- [ ] Confirm whether the normalized Figure 6 comparison should retain legacy
+  V1-V3 headers or be relabelled to the V2-V4 publication convention.
+- [ ] Privately verify which signed consent version and collection session
+  covers each manuscript-reported volunteer; never publish the signed forms.
 - [ ] Reconcile the consent-template and manuscript collection protocols.
 - [ ] Obtain a written CFATA/UNAM ethics determination for the original collection
   and present public-data release, including any approval, exemption, waiver, or
@@ -61,6 +67,7 @@ items below remain limitations; public visibility does not mark them resolved.
 
 This is not a licence grant. A common arrangement is an OSI-approved licence
 such as MIT or BSD-3-Clause for code and CC BY 4.0 for data and documentation.
-Human-sweat data and known derivatives must remain outside any open-data licence
-until their governance is resolved. The copyright holders must make and document
-the final choice; see `LICENSING.md`.
+Human-sweat candidates and identity-unresolved blank artifacts and derivatives
+must remain outside any open-data licence until their governance or identity is
+resolved. The copyright holders must make and document the final choice; see
+`LICENSING.md`.

@@ -39,10 +39,15 @@ research. It does not state that spectra or metadata may be placed in a public
 repository, licensed for unrestricted downstream reuse, retained indefinitely,
 or shared with exact acquisition timestamps. It also does not describe
 anonymisation, confidentiality, withdrawal, or destruction of the linkage key.
-No signed copies, ethics approval, exemption, waiver, or retrospective written
-determination were located in the records reviewed. These documents may exist
-elsewhere, so this is a statement about available evidence rather than proof of
-their absence.
+
+Signed copies were not included in the records reviewed. On 21 July 2026, the
+author confirmed that signed forms are retained privately for all three
+manuscript-reported volunteers. Their exact wording and session coverage were
+not reviewed, so permission for public data sharing remains unverified. The
+author also confirmed that no written ethics approval, exemption, waiver, or
+other institutional determination was obtained. These confirmations are
+recorded without participant identifiers in
+`metadata/author_confirmations.csv`.
 
 ## Protocol reconciliation required
 
@@ -69,6 +74,12 @@ different volunteer labels (dataset-manifest rows 1694 and 1700). This is a
 content/label conflict, not evidence that the labels or participant identity are
 interchangeable. The machine-readable summary records the affected checksum and
 row numbers without repeating the volunteer labels.
+
+The author confirmed that `V` and `P` are alternative prefixes in the same
+pseudonymous volunteer-coding system; a different operator and acquisition date
+led to a different prefix choice. A prefix change alone must therefore not be
+counted as a different participant. The private crosswalk is retained, but the
+numeric correspondence has not yet been recorded in this repository.
 
 The repository verifier performs a limited direct-identifier scan for email
 addresses and private computer-home paths. It does not establish anonymisation
@@ -111,8 +122,8 @@ python scripts/report_human_data_lineage.py --check
 The human-data release item remains unresolved until the authors document all
 of the following:
 
-1. Retention of a signed consent form for each volunteer and identification of
-   the exact version used.
+1. Private verification of the exact signed consent version and collection
+   session covered for each manuscript-reported volunteer.
 2. Whether the signed wording permits public sharing of pseudonymised spectra,
    exact acquisition timestamps, and downstream reuse.
 3. A written determination from the appropriate CFATA/UNAM ethics body about
@@ -123,8 +134,9 @@ of the following:
 5. A pseudonym-only mapping from each raw file and checksum to the correct
    publication trace, with no names or other re-identifying information added to
    the repository.
-6. Who controls any participant linkage key, how it is protected, and whether
-   exact dates/times can be removed from a public derivative.
+6. Who controls the confirmed existing participant linkage key, how it is
+   protected, and whether exact dates/times can be removed from a public
+   derivative.
 7. Reconciliation of the consent-template and manuscript collection protocols.
 
 If open sharing is not covered, the authors should seek participant re-consent

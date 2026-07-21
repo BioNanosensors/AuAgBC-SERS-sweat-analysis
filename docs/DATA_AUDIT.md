@@ -112,19 +112,28 @@ record. The reported AEF should not be regenerated until that rule is confirmed.
 Ten portable source files have a mismatch between the outer filename and the
 instrument metadata fields (`Name` or `Tag`), shifting volunteer identifiers.
 One ten-channel artificial-sweat file repeats channels 1-5 as channels 6-10.
-The final manuscript summaries select artificial sweat and volunteers V2-V4;
-the raw collection also contains V1/P1-labelled material.
+The separate portable and benchtop manuscript summaries use artificial sweat
+and volunteers V2-V4, while the paper-facing normalized comparison retains
+legacy V1-V3 headers. Its V1, V2, and V3 numerical traces correspond to the V2,
+V3, and V4 traces in the separate publication summaries. Whether this shift was
+deliberate and whether the normalized headers should also be V2-V4 require
+author confirmation. The raw collection also contains V1/P1-labelled material.
 
 ### Human-data governance
 
 The manuscript and thesis report that signed informed consent was obtained from
 three volunteers and that no formal institutional ethics approval was obtained.
 The released code labels do not yet establish which three distinct participants
-are represented.
+are represented. The author subsequently confirmed that signed forms are
+retained privately, that no written ethics determination was obtained, and that
+`V` and `P` are operator/date-dependent prefixes within the same pseudonymous
+coding system. The exact numeric crosswalk has not yet been privately verified
+or recorded here.
 The available consent template permits research use of donated sweat but does
 not explicitly permit public repository sharing, open reuse, or disclosure of
-exact acquisition timestamps. Signed forms and a written institutional
-determination were not located in the records reviewed.
+exact acquisition timestamps. Signed forms were not included in the records
+reviewed but are author-confirmed as retained privately; no written
+institutional determination exists.
 
 Instrument exports retain pseudonymous volunteer codes and exact dates/times,
 and several codes conflict across outer filenames, embedded metadata, master

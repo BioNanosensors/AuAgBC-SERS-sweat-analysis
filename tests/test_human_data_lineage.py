@@ -106,6 +106,12 @@ def test_committed_human_data_lineage_report_is_current_and_semantic() -> None:
     ]
     assert len(conflict_rows) == 2
     assert len({row["lineage_group_id"] for row in conflict_rows}) == 1
+    assert summary["author_confirmation_statuses"] == {
+        "no_written_ethics_determination": "confirmed_absent",
+        "pseudonymous_crosswalk_retained": "confirmed_retained_not_reviewed",
+        "signed_consent_forms_retained": "confirmed_retained_governance_scope_pending",
+        "vp_prefix_semantics": "prefix_semantics_confirmed_numeric_crosswalk_pending",
+    }
 
     csv_text = csv_path.read_text(encoding="utf-8")
     json_text = json_path.read_text(encoding="utf-8")

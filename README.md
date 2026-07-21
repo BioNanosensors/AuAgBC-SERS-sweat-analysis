@@ -9,8 +9,9 @@ the article, and an explicit provenance audit of the supplied spectra.
 > **Public work in progress.** This repository is public to support transparent
 > audit, but it is not yet an unqualified data release. Human-sweat measurements
 > were reported as collected with signed informed consent and without formal
-> institutional ethics approval. The available consent template does not
-> establish permission for open data sharing. See the
+> institutional ethics approval. The author confirms that the signed forms are
+> retained privately and that no written ethics determination was obtained, but
+> their open-data scope has not been verified. See the
 > [human-data governance record](docs/HUMAN_DATA_GOVERNANCE.md) and
 > [release checklist](docs/RELEASE_CHECKLIST.md).
 

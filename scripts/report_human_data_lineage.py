@@ -114,6 +114,24 @@ def build_inventory(repository_root: Path) -> tuple[list[dict[str, str]], dict[s
     dataset_rows = read_csv(metadata / "dataset_manifest.csv")
     processing_rows = read_csv(metadata / "raw_processing_manifest.csv")
     match_rows = read_csv(metadata / "provenance" / "raw_to_master_best_matches.csv")
+    confirmation_rows = read_csv(metadata / "author_confirmations.csv")
+    confirmation_by_id = {
+        row["confirmation_id"]: row for row in confirmation_rows
+    }
+    if len(confirmation_by_id) != len(confirmation_rows):
+        raise ValueError("author_confirmations.csv contains duplicate confirmation IDs")
+    required_confirmation_ids = {
+        "signed_consent_forms_retained",
+        "no_written_ethics_determination",
+        "vp_prefix_semantics",
+        "pseudonymous_crosswalk_retained",
+    }
+    missing_confirmation_ids = required_confirmation_ids - confirmation_by_id.keys()
+    if missing_confirmation_ids:
+        raise ValueError(
+            "author_confirmations.csv is missing required IDs: "
+            + ", ".join(sorted(missing_confirmation_ids))
+        )
 
     dataset_by_path = {
         row["repository_path"]: (row_number, row)
@@ -364,6 +382,10 @@ def build_inventory(repository_root: Path) -> tuple[list[dict[str, str]], dict[s
             {link["record_group"] for link in blank_links.values() if link["record_group"]}
         ),
         "known_label_conflicts": known_label_conflicts,
+        "author_confirmation_statuses": {
+            confirmation_id: confirmation_by_id[confirmation_id].get("status", "")
+            for confirmation_id in sorted(required_confirmation_ids)
+        },
         "limitations": [
             "The CSV intentionally omits participant labels, dates, instrument Name/Tag values, master paths, and repository paths; dataset_manifest_row provides the auditable join.",
             "Participant identity is never inferred from spectral similarity.",
