@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "scope": "identifier-minimised lower-bound human-data and unresolved shared-blank lineage inventory",
   "row_count": 789,
   "relation_counts": {
@@ -32,28 +32,44 @@
     "stability_session_2",
     "stability_session_3"
   ],
-  "known_label_conflicts": [
+  "known_label_alias_resolutions": [
     {
-      "type": "byte_identical_processed_files_with_conflicting_volunteer_labels",
+      "type": "byte_identical_processed_aliases_resolved_by_author_crosswalk",
       "artifact_sha256": "8519380fab798c509beec7806fb42e3561f99fae77fa1a7cf4279aa5075d9300",
       "dataset_manifest_rows": [
         1694,
         1700
       ],
       "artifact_count": 2,
-      "evidence_file": "metadata/provenance/duplicate_content_groups.csv",
-      "interpretation": "The files are byte-identical but carry different volunteer labels; this does not establish participant identity."
+      "evidence_file": "metadata/provenance/proof_of_concept_label_evidence.csv",
+      "interpretation": "The byte-identical files use acquisition- and publication-namespace aliases for the same confirmed deidentified acquisition record; no participant identity is disclosed."
     }
   ],
+  "known_unresolved_label_conflicts": [],
   "author_confirmation_statuses": {
-    "no_written_ethics_determination": "confirmed_absent",
-    "pseudonymous_crosswalk_retained": "confirmed_retained_not_reviewed",
+    "aa_hs_session_metadata_correction": "confirmed_metadata_typo",
+    "ethics_approval_document_provided": "document_reviewed_scope_clarification_pending",
+    "no_written_ethics_determination": "superseded_by_ethics_approval_document",
+    "pseudonymous_crosswalk_retained": "confirmed_deidentified_mapping_recorded",
+    "publication_renumbering_confirmed": "confirmed_intended_publication_mapping",
     "signed_consent_forms_retained": "confirmed_retained_governance_scope_pending",
-    "vp_prefix_semantics": "prefix_semantics_confirmed_numeric_crosswalk_pending"
+    "vp_numeric_crosswalk_confirmed": "confirmed",
+    "vp_prefix_semantics": "confirmed"
+  },
+  "ethics_approval_record": {
+    "record_id": "cfata_ceid_002_2026",
+    "document_status": "provided_by_author_not_independently_authenticated",
+    "committee_review_date": "2026-06-25",
+    "letter_date": "2026-07-01",
+    "decision": "approved",
+    "scope_status": "postdates_2024_acquisitions_retrospective_and_public_sharing_scope_unresolved",
+    "document_sha256": "fcf7267f9a72f923ccb698cc311359029364dcabe620702acdd0c0d324e5a1d3",
+    "repository_distribution": "private_source_not_distributed_contains_signatures"
   },
   "limitations": [
     "The CSV intentionally omits participant labels, dates, instrument Name/Tag values, master paths, and repository paths; dataset_manifest_row provides the auditable join.",
     "Participant identity is never inferred from spectral similarity.",
+    "The author-confirmed code crosswalk resolves acquisition and publication aliases at the deidentified record level; the private participant linkage key remains outside the repository.",
     "Master-folder context records where an exact numerical match was stored; it does not establish the shared blank's sample identity.",
     "lineage_group_id groups records by the exact-content or exact-match evidence used for that relation; it does not prove a common participant, acquisition, or sample identity.",
     "Processed blind-sample and stability outputs may also use the shared blank even when their manifest note does not expose that derivative link.",

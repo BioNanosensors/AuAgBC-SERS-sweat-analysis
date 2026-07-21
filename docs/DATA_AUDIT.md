@@ -109,41 +109,58 @@ record. The reported AEF should not be regenerated until that rule is confirmed.
 
 ### Proof of concept
 
-Ten portable source files have a mismatch between the outer filename and the
-instrument metadata fields (`Name` or `Tag`), shifting volunteer identifiers.
+Six portable human-sweat source files contain differences between their outer
+filenames and embedded instrument `Name`/`Tag` fields. The author-confirmed
+crosswalk resolves these as acquisition-code versus publication-code namespaces,
+except for one embedded session value that the author confirmed is a metadata
+mistake. Historical source bytes remain unchanged, and the resolutions are
+recorded in `metadata/provenance/proof_of_concept_label_evidence.csv`.
+
+Four volunteers were originally tested. The author reports that acquisition
+volunteer 1 produced no usable signal and was excluded; acquisition V2/P2,
+V3/P3, and V4/P4 were intentionally renumbered as publication V1, V2, and V3.
+The three Figure 6 data tables now consistently use publication V1-V3 headers.
+Only the two affected headers were changed; every numerical-body byte is
+unchanged, with before/after
+hashes recorded in
+`metadata/provenance/publication_header_corrections.csv`. The upstream inventory
+contains pseudonymous path/hash records for acquisition-1 measurement attempts,
+but no distributed spectrum is presently evidenced as acquisition V1/P1.
+
 One ten-channel artificial-sweat file repeats channels 1-5 as channels 6-10.
-The separate portable and benchtop manuscript summaries use artificial sweat
-and volunteers V2-V4, while the paper-facing normalized comparison retains
-legacy V1-V3 headers. Its V1, V2, and V3 numerical traces correspond to the V2,
-V3, and V4 traces in the separate publication summaries. Whether this shift was
-deliberate and whether the normalized headers should also be V2-V4 require
-author confirmation. The raw collection also contains V1/P1-labelled material.
 
 ### Human-data governance
 
 The manuscript and thesis report that signed informed consent was obtained from
-three volunteers and that no formal institutional ethics approval was obtained.
-The released code labels do not yet establish which three distinct participants
-are represented. The author subsequently confirmed that signed forms are
-retained privately, that no written ethics determination was obtained, and that
-`V` and `P` are operator/date-dependent prefixes within the same pseudonymous
-coding system. The exact numeric crosswalk has not yet been privately verified
-or recorded here.
+three volunteers and that no formal institutional ethics approval was obtained
+before this proof-of-concept work. A later CFATA/CEID letter states that the
+committee reviewed and approved on 25 June 2026, under registration
+`CFATA/CEID/002-2026`, a broad protocol that includes non-invasive sweat
+spectroscopy; the notification is dated 1 July 2026. It postdates the 2024
+acquisitions and does not explicitly address retrospective coverage or public
+data sharing.
+
+The author subsequently confirmed that signed forms are retained privately for
+the three manuscript-reported volunteers and that `V` and `P` are
+operator/date-dependent prefixes within the same pseudonymous acquisition-code
+system. The confirmed code-only crosswalk and publication renumbering are
+recorded without exposing the private participant linkage key.
+
 The available consent template permits research use of donated sweat but does
 not explicitly permit public repository sharing, open reuse, or disclosure of
 exact acquisition timestamps. Signed forms were not included in the records
-reviewed but are author-confirmed as retained privately; no written
-institutional determination exists.
+reviewed but are author-confirmed as retained privately. The scope limitations
+of the later approval are detailed in `docs/ETHICS_APPROVAL.md`.
 
-Instrument exports retain pseudonymous volunteer codes and exact dates/times,
-and several codes conflict across outer filenames, embedded metadata, master
-filenames, and publication tables. The material is therefore described as
-pseudonymised rather than proven anonymous. See
+Instrument exports retain pseudonymous volunteer codes and exact dates/times.
+The author-confirmed crosswalk resolves the known acquisition/publication label
+aliases, but the material is still described as pseudonymised rather than proven
+anonymous. See
 `docs/HUMAN_DATA_GOVERNANCE.md` and
 `metadata/human_data_lineage_summary.json` for the current evidence status and
-known downstream lineage. Two processed candidate files are also byte-identical
-despite carrying different volunteer labels (dataset-manifest rows 1694 and
-1700).
+known downstream lineage. Two byte-identical processed candidates at
+dataset-manifest rows 1694 and 1700 are now documented as acquisition- and
+publication-namespace aliases for the same deidentified record.
 
 ### Hand-held spectrometer calibration
 
@@ -214,7 +231,8 @@ or confirmed:
    records;
 4. the day-1 stability manifest and the intended three substrate replicates;
 5. the exact intensity extraction and time-scaling used for the reported AEF;
-6. the volunteer filename-to-instrument-metadata mapping; and
+6. complete executable raw-to-publication lineage for every proof-of-concept
+   summary trace beyond the confirmed code and label crosswalk; and
 7. the intended code and data licences.
 
 Until these are resolved, the honest scientific state is a citable publication

@@ -1,0 +1,5 @@
+acquisition_index,acquisition_v_code,acquisition_p_code,publication_index,publication_code,included_in_figure6,reason,evidence,resolution_status
+1,V1,P1,,,false,no_usable_signal,author_confirmation:publication_renumbering_confirmed,confirmed_excluded_from_publication_numbering
+2,V2,P2,1,V1,true,,author_confirmation:vp_numeric_crosswalk_confirmed+publication_renumbering_confirmed,confirmed
+3,V3,P3,2,V2,true,,author_confirmation:vp_numeric_crosswalk_confirmed+publication_renumbering_confirmed,confirmed
+4,V4,P4,3,V3,true,,author_confirmation:vp_numeric_crosswalk_confirmed+publication_renumbering_confirmed,confirmed

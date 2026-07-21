@@ -3,10 +3,14 @@
 ## Current status
 
 This public repository contains pseudonymised Raman spectra from an exploratory
-human-sweat study that the manuscript and thesis report involved three
-volunteers. The released files use more volunteer-code labels than that, and the
-mapping remains unresolved, so the number of distinct participants represented
-in the repository is not independently verified.
+human-sweat study. The manuscript and thesis report three analysed volunteers.
+The author subsequently confirmed that four volunteers were originally tested,
+but acquisition volunteer 1 produced no usable signal and was excluded; the
+three retained volunteers were intentionally renumbered for publication. The
+audit found pseudonymous path/hash records for upstream acquisition-1
+measurement attempts, but no distributed spectrum is presently evidenced as
+acquisition volunteer 1. The no-usable-signal conclusion remains an author
+confirmation rather than an inference from those metadata records.
 
 The repository also contains copies and processed derivatives of a shared-blank
 series reused historically in non-human experiments. Exact numerical matches
@@ -23,6 +27,15 @@ obtained for this proof-of-concept stage. The authors describe the measurements
 only as preliminary technical observations and do not use them for clinical,
 safety, prevalence, or diagnostic-performance claims.
 
+A later CFATA/UNAM CEID letter, registration `CFATA/CEID/002-2026`, states that
+the committee reviewed and approved on 25 June 2026 a broad human-research
+protocol that expressly includes non-invasive sweat sampling and spectroscopic
+analysis. The notification is dated 1 July 2026. Because the letter postdates
+the 2024 acquisitions and does not explicitly address retrospective coverage or
+public data sharing, the repository does not describe it as prospective
+approval for those sessions or as permission for open reuse. See
+`ETHICS_APPROVAL.md`.
+
 ## Evidence reviewed
 
 The following private project records were reviewed without copying them into
@@ -31,7 +44,8 @@ this repository:
 - the manuscript source and rendered manuscript;
 - the rendered master's thesis;
 - a blank informed-consent template dated 3 October 2024;
-- a draft CFATA ethics-protocol form; and
+- a draft CFATA ethics-protocol form;
+- the signed CFATA/CEID approval letter dated 1 July 2026; and
 - the supplied Raman archives, manifests, and instrument metadata.
 
 The consent template authorises donation of sweat and use of the sample for
@@ -44,10 +58,11 @@ Signed copies were not included in the records reviewed. On 21 July 2026, the
 author confirmed that signed forms are retained privately for all three
 manuscript-reported volunteers. Their exact wording and session coverage were
 not reviewed, so permission for public data sharing remains unverified. The
-author also confirmed that no written ethics approval, exemption, waiver, or
-other institutional determination was obtained. These confirmations are
-recorded without participant identifiers in
-`metadata/author_confirmations.csv`.
+author initially reported that no written ethics determination was available;
+later the same day, the advisor supplied the CFATA/CEID approval letter. This
+chronology and the document's identifier-minimised metadata are recorded in
+`metadata/author_confirmations.csv` and
+`metadata/ethics_approval_record.csv`.
 
 ## Protocol reconciliation required
 
@@ -70,16 +85,27 @@ portable records. These data are therefore described as pseudonymised, not
 proven anonymous.
 
 Two processed human-sweat candidate files are byte-identical while carrying
-different volunteer labels (dataset-manifest rows 1694 and 1700). This is a
-content/label conflict, not evidence that the labels or participant identity are
-interchangeable. The machine-readable summary records the affected checksum and
-row numbers without repeating the volunteer labels.
+different labels (dataset-manifest rows 1694 and 1700). The confirmed crosswalk
+resolves them as acquisition- and publication-namespace aliases for the same
+deidentified acquisition record. This record-level resolution does not disclose
+or independently establish the participant's identity. The machine-readable
+summary records the affected checksum and row numbers without repeating the
+volunteer labels.
 
 The author confirmed that `V` and `P` are alternative prefixes in the same
-pseudonymous volunteer-coding system; a different operator and acquisition date
-led to a different prefix choice. A prefix change alone must therefore not be
-counted as a different participant. The private crosswalk is retained, but the
-numeric correspondence has not yet been recorded in this repository.
+pseudonymous acquisition-code system; a different operator and acquisition date
+led to a different prefix choice. Same-numeric codes identify the same
+acquisition volunteer: V2/P2, V3/P3, and V4/P4. For publication, those retained
+volunteers were intentionally renumbered V1, V2, and V3, respectively. The
+private identity key remains unpublished; only this deidentified code crosswalk
+is recorded in `metadata/proof_of_concept_code_crosswalk.csv`.
+
+The author also confirmed that the embedded `V2S2` value associated with
+`AA_HS_V1S1_H` is a metadata mistake and that the canonical acquisition session
+is V2S1. Historical source bytes remain unchanged; the correction is recorded
+only in `metadata/provenance/proof_of_concept_label_evidence.csv`. Header-only
+publication corrections and their unchanged numerical-body hashes are recorded
+in `metadata/provenance/publication_header_corrections.csv`.
 
 The repository verifier performs a limited direct-identifier scan for email
 addresses and private computer-home paths. It does not establish anonymisation
@@ -124,20 +150,24 @@ of the following:
 
 1. Private verification of the exact signed consent version and collection
    session covered for each manuscript-reported volunteer.
-2. Whether the signed wording permits public sharing of pseudonymised spectra,
+2. Confirmation that a signed consent form is also retained for the excluded
+   acquisition volunteer 1; no signed form or participant identity should be
+   published.
+3. Whether the signed wording permits public sharing of pseudonymised spectra,
    exact acquisition timestamps, and downstream reuse.
-3. A written determination from the appropriate CFATA/UNAM ethics body about
-   the original collection and the present public-data release, including any
-   approval, exemption, waiver, or required restriction.
-4. Written disclosure to the journal editor that no formal prior institutional
-   ethics approval was obtained, together with the editor's determination.
-5. A pseudonym-only mapping from each raw file and checksum to the correct
+4. Written CFATA/CEID clarification of whether `CFATA/CEID/002-2026` applies to
+   the completed 2024 collection and present public-data release, including any
+   required restriction.
+5. Written disclosure to the journal editor of the 2024 collection chronology,
+   absence of formal prior approval, and subsequent 2026 approval, together
+   with the editor's determination.
+6. A pseudonym-only mapping from each raw file and checksum to the correct
    publication trace, with no names or other re-identifying information added to
    the repository.
-6. Who controls the confirmed existing participant linkage key, how it is
+7. Who controls the confirmed existing participant linkage key, how it is
    protected, and whether exact dates/times can be removed from a public
    derivative.
-7. Reconciliation of the consent-template and manuscript collection protocols.
+8. Reconciliation of the consent-template and manuscript collection protocols.
 
 If open sharing is not covered, the authors should seek participant re-consent
 and institutional guidance. If that is not possible, the public release should

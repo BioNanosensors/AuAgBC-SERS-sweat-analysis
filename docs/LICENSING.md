@@ -37,6 +37,11 @@ identity issue is resolved. This precedence avoids treating a non-human
 experiment derivative as confirmed non-human when its blank input is still
 unresolved.
 
+The later approval `CFATA/CEID/002-2026` does not itself grant a copyright or
+data licence and does not explicitly authorise public repository deposition or
+unrestricted downstream reuse. Its existence therefore does not change the
+current licence exclusions.
+
 ## Decisions required before adding licence files
 
 1. Daniela Patiño-Vélez and Eden Morales-Narváez confirm which materials they

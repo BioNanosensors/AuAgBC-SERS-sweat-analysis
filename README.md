@@ -9,9 +9,10 @@ the article, and an explicit provenance audit of the supplied spectra.
 > **Public work in progress.** This repository is public to support transparent
 > audit, but it is not yet an unqualified data release. Human-sweat measurements
 > were reported as collected with signed informed consent and without formal
-> institutional ethics approval. The author confirms that the signed forms are
-> retained privately and that no written ethics determination was obtained, but
-> their open-data scope has not been verified. See the
+> prior institutional ethics approval. A later CFATA/CEID approval dated 1 July
+> 2026 covers a broad human biofluid-spectroscopy protocol, but it postdates the
+> 2024 acquisitions and does not explicitly address retrospective coverage or
+> public data sharing. See the
 > [human-data governance record](docs/HUMAN_DATA_GOVERNANCE.md) and
 > [release checklist](docs/RELEASE_CHECKLIST.md).
 
@@ -24,7 +25,9 @@ match columns stored in a Test 4-ATP master folder, and parts of the calibration
 and May stability sets disagree with the master measurement collections. Folder
 context does not prove the blank's sample identity, and none of the channels is
 a confirmed setting-matched low-power blank for the final calibration. Nothing
-was silently deleted or relabelled.
+in the historical quarantine was deleted or silently relabelled. Two
+publication-summary headers were transparently corrected after author
+confirmation, with both source and corrected hashes recorded in provenance.
 
 - `data/published_snapshot/` contains the paper-facing tables.
 - `data/raw/` and `data/processed/` contain verified or newly generated material.
@@ -91,6 +94,13 @@ derivatives:
 python scripts/report_human_data_lineage.py --check
 ```
 
+Verify the author-confirmed proof-of-concept code crosswalk, publication
+headers, unchanged numerical bodies, and label-provenance sidecars:
+
+```text
+python scripts/proof_of_concept_mapping.py --check
+```
+
 The archive-wide manifest at `metadata/raw_processing_manifest.csv` includes
 quarantined records so that every submitted raw-like file is discoverable. It
 spans experiments that require different blank and normalisation rules, so
@@ -150,9 +160,10 @@ in the [data audit](docs/DATA_AUDIT.md).
 | `configs/` | Portable run examples with explicit parameters |
 | `data/published_snapshot/` | Article-facing summary data and manuscript values |
 | `data/quarantine/legacy_snapshot/` | Submitted CSV snapshot with unresolved provenance clearly isolated |
-| `metadata/` | Checksums, origin matches, conflicts, script inventory, and validation metrics |
+| `metadata/` | Checksums, origin matches, author-confirmed code crosswalks, conflicts, script inventory, and validation metrics |
 | `docs/PAPER_DATA_MAP.md` | Figure/table-to-data map |
 | `docs/HUMAN_DATA_GOVERNANCE.md` | Consent, ethics, pseudonymisation, and public-sharing evidence status |
+| `docs/ETHICS_APPROVAL.md` | Scope and limitations of the later CFATA/CEID approval letter |
 | `docs/LICENSING.md` | Proposed path-level licensing arrangement and required decisions |
 | `docs/RELEASE_CHECKLIST.md` | Items requiring author confirmation before an unqualified public release |
 | `tests/` | Synthetic and regression tests |

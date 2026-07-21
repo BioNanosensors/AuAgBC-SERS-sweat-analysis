@@ -114,7 +114,19 @@ def build_inventory(repository_root: Path) -> tuple[list[dict[str, str]], dict[s
     dataset_rows = read_csv(metadata / "dataset_manifest.csv")
     processing_rows = read_csv(metadata / "raw_processing_manifest.csv")
     match_rows = read_csv(metadata / "provenance" / "raw_to_master_best_matches.csv")
+    label_evidence_rows = read_csv(
+        metadata / "provenance" / "proof_of_concept_label_evidence.csv"
+    )
     confirmation_rows = read_csv(metadata / "author_confirmations.csv")
+    ethics_rows = read_csv(metadata / "ethics_approval_record.csv")
+    if (
+        len(ethics_rows) != 1
+        or ethics_rows[0].get("record_id") != "cfata_ceid_002_2026"
+    ):
+        raise ValueError(
+            "ethics_approval_record.csv must contain the reviewed CFATA/CEID record"
+        )
+    ethics_record = ethics_rows[0]
     confirmation_by_id = {
         row["confirmation_id"]: row for row in confirmation_rows
     }
@@ -123,8 +135,12 @@ def build_inventory(repository_root: Path) -> tuple[list[dict[str, str]], dict[s
     required_confirmation_ids = {
         "signed_consent_forms_retained",
         "no_written_ethics_determination",
+        "ethics_approval_document_provided",
         "vp_prefix_semantics",
         "pseudonymous_crosswalk_retained",
+        "vp_numeric_crosswalk_confirmed",
+        "publication_renumbering_confirmed",
+        "aa_hs_session_metadata_correction",
     }
     missing_confirmation_ids = required_confirmation_ids - confirmation_by_id.keys()
     if missing_confirmation_ids:
@@ -214,7 +230,7 @@ def build_inventory(repository_root: Path) -> tuple[list[dict[str, str]], dict[s
             "not_applicable",
             "raw_processing_manifest sample_type=human_sweat",
             "metadata/raw_processing_manifest.csv",
-            "medium_due_to_unresolved_volunteer_labels",
+            "medium_with_author_confirmed_code_mapping",
             opaque_id("direct-human", dataset_row.get("repository_sha256", "")),
             processing_row.get("record_group", ""),
         )
@@ -237,7 +253,7 @@ def build_inventory(repository_root: Path) -> tuple[list[dict[str, str]], dict[s
                 "not_applicable",
                 "proof-of-concept processed-folder scope and human-sweat filename convention",
                 "metadata/dataset_manifest.csv",
-                "medium_due_to_unresolved_processing_and_volunteer_labels",
+                "medium_due_to_unresolved_processing_provenance_with_author_confirmed_code_mapping",
                 opaque_id("processed-human", dataset_row.get("repository_sha256", "")),
                 "proof_of_concept",
             )
@@ -355,23 +371,66 @@ def build_inventory(repository_root: Path) -> tuple[list[dict[str, str]], dict[s
     relation_counts = Counter(row["relation"] for row in inventory)
     identity_counts = Counter(row["artifact_sample_identity"] for row in inventory)
     context_counts = Counter(row["master_folder_context"] for row in inventory)
-    known_label_conflicts = [
-        {
-            "type": "byte_identical_processed_files_with_conflicting_volunteer_labels",
+    resolved_alias_rows_by_sha: dict[str, set[int]] = {}
+    for evidence_row in label_evidence_rows:
+        if evidence_row.get("resolution_status") != (
+            "resolved_dual_label_namespace_duplicate"
+        ):
+            continue
+        artifact_sha256 = evidence_row.get("artifact_sha256", "")
+        try:
+            manifest_row = int(evidence_row.get("dataset_manifest_row", ""))
+        except ValueError as error:
+            raise ValueError(
+                "Invalid manifest row in proof-of-concept label evidence"
+            ) from error
+        resolved_alias_rows_by_sha.setdefault(artifact_sha256, set()).add(
+            manifest_row
+        )
+
+    known_label_alias_resolutions: list[dict[str, object]] = []
+    known_unresolved_label_conflicts: list[dict[str, object]] = []
+    for artifact_sha256, labels in sorted(processed_candidate_labels.items()):
+        if len(labels) <= 1:
+            continue
+        manifest_rows = sorted(processed_candidate_rows[artifact_sha256])
+        common = {
             "artifact_sha256": artifact_sha256,
-            "dataset_manifest_rows": sorted(processed_candidate_rows[artifact_sha256]),
-            "artifact_count": len(processed_candidate_rows[artifact_sha256]),
-            "evidence_file": "metadata/provenance/duplicate_content_groups.csv",
-            "interpretation": (
-                "The files are byte-identical but carry different volunteer labels; "
-                "this does not establish participant identity."
-            ),
+            "dataset_manifest_rows": manifest_rows,
+            "artifact_count": len(manifest_rows),
         }
-        for artifact_sha256, labels in sorted(processed_candidate_labels.items())
-        if len(labels) > 1
-    ]
+        if resolved_alias_rows_by_sha.get(artifact_sha256) == set(manifest_rows):
+            known_label_alias_resolutions.append(
+                {
+                    "type": "byte_identical_processed_aliases_resolved_by_author_crosswalk",
+                    **common,
+                    "evidence_file": (
+                        "metadata/provenance/proof_of_concept_label_evidence.csv"
+                    ),
+                    "interpretation": (
+                        "The byte-identical files use acquisition- and "
+                        "publication-namespace aliases for the same confirmed "
+                        "deidentified acquisition record; no participant identity "
+                        "is disclosed."
+                    ),
+                }
+            )
+        else:
+            known_unresolved_label_conflicts.append(
+                {
+                    "type": "byte_identical_processed_files_with_unresolved_labels",
+                    **common,
+                    "evidence_file": (
+                        "metadata/provenance/duplicate_content_groups.csv"
+                    ),
+                    "interpretation": (
+                        "The files are byte-identical but their label relationship "
+                        "has not been resolved by the author-confirmed crosswalk."
+                    ),
+                }
+            )
     summary: dict[str, object] = {
-        "schema_version": 1,
+        "schema_version": 2,
         "scope": "identifier-minimised lower-bound human-data and unresolved shared-blank lineage inventory",
         "row_count": len(inventory),
         "relation_counts": dict(sorted(relation_counts.items())),
@@ -381,14 +440,33 @@ def build_inventory(repository_root: Path) -> tuple[list[dict[str, str]], dict[s
         "shared_blank_record_groups": sorted(
             {link["record_group"] for link in blank_links.values() if link["record_group"]}
         ),
-        "known_label_conflicts": known_label_conflicts,
+        "known_label_alias_resolutions": known_label_alias_resolutions,
+        "known_unresolved_label_conflicts": known_unresolved_label_conflicts,
         "author_confirmation_statuses": {
             confirmation_id: confirmation_by_id[confirmation_id].get("status", "")
             for confirmation_id in sorted(required_confirmation_ids)
         },
+        "ethics_approval_record": {
+            "record_id": ethics_record.get("record_id", ""),
+            "document_status": ethics_record.get("document_status", ""),
+            "committee_review_date": ethics_record.get(
+                "committee_review_date", ""
+            ),
+            "letter_date": ethics_record.get("letter_date", ""),
+            "decision": ethics_record.get("decision", ""),
+            "scope_status": (
+                "postdates_2024_acquisitions_retrospective_and_public_sharing_"
+                "scope_unresolved"
+            ),
+            "document_sha256": ethics_record.get("document_sha256", ""),
+            "repository_distribution": ethics_record.get(
+                "repository_distribution", ""
+            ),
+        },
         "limitations": [
             "The CSV intentionally omits participant labels, dates, instrument Name/Tag values, master paths, and repository paths; dataset_manifest_row provides the auditable join.",
             "Participant identity is never inferred from spectral similarity.",
+            "The author-confirmed code crosswalk resolves acquisition and publication aliases at the deidentified record level; the private participant linkage key remains outside the repository.",
             "Master-folder context records where an exact numerical match was stored; it does not establish the shared blank's sample identity.",
             "lineage_group_id groups records by the exact-content or exact-match evidence used for that relation; it does not prove a common participant, acquisition, or sample identity.",
             "Processed blind-sample and stability outputs may also use the shared blank even when their manifest note does not expose that derivative link.",

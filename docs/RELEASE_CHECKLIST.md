@@ -23,17 +23,30 @@ items below remain limitations; public visibility does not mark them resolved.
   explicitly permit public data sharing or open downstream reuse.
 - [x] Record that signed forms were not present in the reviewed files and the
   author's subsequent confirmation that they are retained privately.
-- [x] Record the author's confirmation that no written ethics approval,
-  exemption, waiver, or other determination was obtained.
+- [x] Preserve the audit chronology: the author initially reported no written
+  ethics determination, then supplied a later CFATA/CEID approval letter.
+- [x] Review and hash the private signed approval letter without publishing its
+  committee-member signatures.
+- [x] Record its decision, registration number, dates, protocol scope, and
+  explicit limitations in `ETHICS_APPROVAL.md`.
 - [x] Record that `V` and `P` are operator/date-dependent prefixes in the same
   pseudonymous coding system and that a private crosswalk is retained.
+- [x] Confirm the deidentified acquisition crosswalk V2/P2, V3/P3, and V4/P4
+  and the intended publication renumbering to V1, V2, and V3.
+- [x] Confirm that embedded `V2S2` for `AA_HS_V1S1_H` is a metadata error and
+  that V2S1 is the canonical acquisition session.
+- [x] Record the deidentified crosswalk, record-level label evidence, and
+  header-only publication corrections in machine-readable metadata.
+- [x] Verify that no distributed spectrum is presently evidenced as excluded
+  acquisition volunteer 1; upstream path/hash metadata for measurement attempts
+  remains visible for audit.
 - [x] Publish a conservative machine-readable inventory of known human-sweat
   records and downstream lineage.
 - [x] Correct the unsupported all-human shared-blank description: ten channels
   match columns in Test HS master folders and five match columns in a Test
   4-ATP master folder; sample identity remains unresolved.
-- [x] Record the byte-identical processed candidates carrying conflicting
-  volunteer labels (dataset-manifest rows 1694 and 1700).
+- [x] Record and resolve the byte-identical processed candidates at
+  dataset-manifest rows 1694 and 1700 as acquisition/publication aliases.
 - [x] Document the repository's current no-licence status and proposed scope.
 
 ## Required before an unqualified public data release
@@ -42,21 +55,20 @@ items below remain limitations; public visibility does not mark them resolved.
 - [ ] Supply the blind-sample decoding key.
 - [ ] Identify the correct 4-ATP blank files.
 - [ ] Confirm the AEF extraction and acquisition-time scaling rule.
-- [ ] Confirm whether paper Volunteer 2 equals acquisition V2/P2, Volunteer 3
-  equals V3/P3, and Volunteer 4 equals V4/P4 using the retained private key.
-- [ ] Confirm whether the normalized Figure 6 comparison should retain legacy
-  V1-V3 headers or be relabelled to the V2-V4 publication convention.
+- [ ] Confirm that a signed consent form is retained for excluded acquisition
+  volunteer 1; never publish the signed form.
 - [ ] Privately verify which signed consent version and collection session
   covers each manuscript-reported volunteer; never publish the signed forms.
 - [ ] Reconcile the consent-template and manuscript collection protocols.
-- [ ] Obtain a written CFATA/UNAM ethics determination for the original collection
-  and present public-data release, including any approval, exemption, waiver, or
-  required restriction.
+- [ ] Obtain written CFATA/CEID clarification of whether
+  `CFATA/CEID/002-2026` applies retrospectively to the 2024 collection and to the
+  present public-data release, including any required restriction.
 - [ ] Confirm whether consent covers public sharing of pseudonymised spectra,
   exact timestamps, and downstream reuse; otherwise re-consent or restrict the
   affected material.
-- [ ] Inform the journal editor that no formal prior institutional approval was
-  obtained and retain the editor's written determination.
+- [ ] Inform the journal editor of the 2024 collection, absence of formal prior
+  approval, and subsequent 2026 approval; retain the editor's written
+  determination.
 - [ ] Choose a code licence and a data licence; no licence is granted merely by making a repository public.
 - [ ] Correct the manuscript's repository URL and future-tense Data Availability
   wording to `https://github.com/BioNanosensors/AuAgBC-SERS-sweat-analysis`.

@@ -97,29 +97,56 @@ def test_committed_human_data_lineage_report_is_current_and_semantic() -> None:
         manifest_row = manifest_rows[int(row["dataset_manifest_row"])]
         assert row["artifact_sha256"] == manifest_row["repository_sha256"]
 
-    conflict = summary["known_label_conflicts"]
-    assert len(conflict) == 1
-    assert conflict[0]["dataset_manifest_rows"] == [1694, 1700]
-    assert conflict[0]["artifact_count"] == 2
-    conflict_rows = [
+    assert summary["schema_version"] == 2
+    aliases = summary["known_label_alias_resolutions"]
+    assert len(aliases) == 1
+    assert aliases[0]["dataset_manifest_rows"] == [1694, 1700]
+    assert aliases[0]["artifact_count"] == 2
+    assert aliases[0]["type"] == (
+        "byte_identical_processed_aliases_resolved_by_author_crosswalk"
+    )
+    assert summary["known_unresolved_label_conflicts"] == []
+    alias_rows = [
         row for row in rows if int(row["dataset_manifest_row"]) in {1694, 1700}
     ]
-    assert len(conflict_rows) == 2
-    assert len({row["lineage_group_id"] for row in conflict_rows}) == 1
+    assert len(alias_rows) == 2
+    assert len({row["lineage_group_id"] for row in alias_rows}) == 1
     assert summary["author_confirmation_statuses"] == {
-        "no_written_ethics_determination": "confirmed_absent",
-        "pseudonymous_crosswalk_retained": "confirmed_retained_not_reviewed",
+        "aa_hs_session_metadata_correction": "confirmed_metadata_typo",
+        "ethics_approval_document_provided": "document_reviewed_scope_clarification_pending",
+        "no_written_ethics_determination": "superseded_by_ethics_approval_document",
+        "publication_renumbering_confirmed": "confirmed_intended_publication_mapping",
+        "pseudonymous_crosswalk_retained": "confirmed_deidentified_mapping_recorded",
         "signed_consent_forms_retained": "confirmed_retained_governance_scope_pending",
-        "vp_prefix_semantics": "prefix_semantics_confirmed_numeric_crosswalk_pending",
+        "vp_numeric_crosswalk_confirmed": "confirmed",
+        "vp_prefix_semantics": "confirmed",
+    }
+    assert summary["ethics_approval_record"] == {
+        "record_id": "cfata_ceid_002_2026",
+        "document_status": "provided_by_author_not_independently_authenticated",
+        "committee_review_date": "2026-06-25",
+        "letter_date": "2026-07-01",
+        "decision": "approved",
+        "scope_status": (
+            "postdates_2024_acquisitions_retrospective_and_public_sharing_"
+            "scope_unresolved"
+        ),
+        "document_sha256": (
+            "fcf7267f9a72f923ccb698cc311359029364dcabe620702acdd0c0d324e5a1d3"
+        ),
+        "repository_distribution": "private_source_not_distributed_contains_signatures",
     }
 
     csv_text = csv_path.read_text(encoding="utf-8")
-    json_text = json_path.read_text(encoding="utf-8")
+    privacy_summary = dict(summary)
+    privacy_summary.pop("ethics_approval_record")
+    privacy_json_text = json.dumps(privacy_summary)
     date_pattern = r"(?<!\d)20\d{2}-\d{2}-\d{2}(?!\d)"
     participant_pattern = r"(?<![A-Za-z0-9])(?:V|P)\d+(?:S\d+)?(?![A-Za-z0-9])"
     assert re.search(date_pattern, csv_text) is None
-    assert re.search(date_pattern, json_text) is None
+    assert re.search(date_pattern, privacy_json_text) is None
     assert re.search(participant_pattern, csv_text) is None
+    assert re.search(participant_pattern, privacy_json_text) is None
     assert {
         "repository_path",
         "participant_label",

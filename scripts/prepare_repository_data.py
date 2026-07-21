@@ -29,6 +29,21 @@ from itertools import zip_longest
 from pathlib import Path
 from typing import Iterable
 
+try:
+    from proof_of_concept_mapping import (
+        PUBLICATION_FILES as PROOF_OF_CONCEPT_PUBLICATION_FILES,
+        PUBLICATION_MANIFEST_NOTE as PROOF_OF_CONCEPT_MANIFEST_NOTE,
+        correct_publication_header,
+        write_mapping_sidecars,
+    )
+except ModuleNotFoundError:  # Supports importing this script from the repo root.
+    from scripts.proof_of_concept_mapping import (
+        PUBLICATION_FILES as PROOF_OF_CONCEPT_PUBLICATION_FILES,
+        PUBLICATION_MANIFEST_NOTE as PROOF_OF_CONCEPT_MANIFEST_NOTE,
+        correct_publication_header,
+        write_mapping_sidecars,
+    )
+
 
 RAMAN_ARCHIVE_SHA256 = "1b8460a5230bc74e5fe72d47d05d9172ebc9fe48b3024c2ee9e9b44d5fb4680a"
 RAMAN_ARCHIVE_BYTES = 132_298_137
@@ -589,7 +604,7 @@ def write_reference_metadata(metadata_root: Path) -> None:
             {"conflict_id": "stability_19may_label_mismatch", "scope": "Stability/19_05_24", "severity": "critical", "finding": "Curated concentration labels disagree with the best matching master spectra.", "affected_count": "105 matched columns", "evidence": "provenance/concentration_label_conflicts.csv", "resolution_status": "unresolved"},
             {"conflict_id": "stability_content_overlap", "scope": "all stability dates", "severity": "critical", "finding": "Stability folders substantially overlap calibration or other-date content instead of forming independent dated acquisitions.", "affected_count": "unique content: 149/165, 103/159, and 20/210", "evidence": "provenance/duplicate_content_groups.csv", "resolution_status": "unresolved"},
             {"conflict_id": "optimisation_750m_orphan_derivatives", "scope": "Optimisation/750_5_5_M/Processed Spectra", "severity": "high", "finding": "Legacy processed filenames have no same-stem raw partners.", "affected_count": "43 files", "evidence": "validation/numerical_reproduction_summary.md", "resolution_status": "quarantined"},
-            {"conflict_id": "portable_poc_embedded_metadata", "scope": "Proof of concept/Portable Raman", "severity": "high", "finding": "Outer filenames disagree with embedded Name or Tag volunteer identifiers.", "affected_count": "10 metadata mismatches", "evidence": "provenance/raw_to_master_best_matches.csv", "resolution_status": "unresolved"},
+            {"conflict_id": "portable_poc_embedded_metadata", "scope": "Proof of concept/Portable Raman", "severity": "high", "finding": "Six human-sweat raw files use outer publication aliases that differ from embedded acquisition aliases. The author-confirmed crosswalk resolves the numbering; the embedded V2S2 session in the two AA_HS copies is a confirmed metadata typo whose canonical session is V2S1. Historical bytes are preserved.", "affected_count": "6 human-sweat raw files", "evidence": "provenance/proof_of_concept_label_evidence.csv", "resolution_status": "resolved_by_author_confirmed_crosswalk_and_session_correction"},
             {"conflict_id": "families_not_exactly_regenerated", "scope": "calibration, analytical enhancement, proof of concept", "severity": "high", "finding": "Candidate recipes do not exactly regenerate supplied processed outputs from the paired curated raw files; missing or different blanks/source columns are implicated.", "affected_count": "3 analysis families", "evidence": "validation/numerical_reproduction_summary.md", "resolution_status": "unresolved"},
         ],
     )
@@ -761,6 +776,7 @@ def main() -> int:
             raise FileNotFoundError(f"Paper-context publication source is missing: {source}")
         destination = publication_root / Path(normalized)
         source_hash, _, source_size, _, substitutions = copy_sanitized(source, destination)
+        correct_publication_header(destination, source_name)
         add_manifest_row(
             manifest,
             repository_root,
@@ -772,7 +788,11 @@ def main() -> int:
             status="publication_snapshot",
             role="manuscript_supporting_table",
             substitutions=substitutions,
-            note="Selected from the paper project; the differing archive export remains only in quarantine.",
+            note=(
+                PROOF_OF_CONCEPT_MANIFEST_NOTE
+                if source_name in PROOF_OF_CONCEPT_PUBLICATION_FILES
+                else "Selected from the paper project; the differing archive export remains only in quarantine."
+            ),
         )
         status_counts["publication_snapshot"] += 1
 
@@ -932,6 +952,7 @@ def main() -> int:
     )
 
     manifest.sort(key=lambda row: str(row["repository_path"]).casefold())
+    write_mapping_sidecars(repository_root, manifest)
     write_csv(
         metadata_root / "dataset_manifest.csv",
         [
