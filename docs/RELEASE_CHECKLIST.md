@@ -23,6 +23,9 @@ items below remain limitations; public visibility does not mark them resolved.
   explicitly permit public data sharing or open downstream reuse.
 - [x] Record that signed forms were not present in the reviewed files and the
   author's subsequent confirmation that they are retained privately.
+- [x] Confirm that a signed consent form is also retained privately for excluded
+  acquisition volunteer 1; do not publish any signed form or participant
+  identity.
 - [x] Preserve the audit chronology: the author initially reported no written
   ethics determination, then supplied a later CFATA/CEID approval letter.
 - [x] Review and hash the private signed approval letter without publishing its
@@ -55,10 +58,9 @@ items below remain limitations; public visibility does not mark them resolved.
 - [ ] Supply the blind-sample decoding key.
 - [ ] Identify the correct 4-ATP blank files.
 - [ ] Confirm the AEF extraction and acquisition-time scaling rule.
-- [ ] Confirm that a signed consent form is retained for excluded acquisition
-  volunteer 1; never publish the signed form.
 - [ ] Privately verify which signed consent version and collection session
-  covers each manuscript-reported volunteer; never publish the signed forms.
+  covers each of the four originally tested volunteers; never publish the
+  signed forms.
 - [ ] Reconcile the consent-template and manuscript collection protocols.
 - [ ] Obtain written CFATA/CEID clarification of whether
   `CFATA/CEID/002-2026` applies retrospectively to the 2024 collection and to the

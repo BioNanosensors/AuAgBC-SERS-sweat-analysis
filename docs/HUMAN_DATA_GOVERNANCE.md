@@ -55,9 +55,10 @@ or shared with exact acquisition timestamps. It also does not describe
 anonymisation, confidentiality, withdrawal, or destruction of the linkage key.
 
 Signed copies were not included in the records reviewed. On 21 July 2026, the
-author confirmed that signed forms are retained privately for all three
-manuscript-reported volunteers. Their exact wording and session coverage were
-not reviewed, so permission for public data sharing remains unverified. The
+author confirmed that signed forms are retained privately for all four
+originally tested volunteers: the three reported in the manuscript and excluded
+acquisition volunteer 1. Their exact wording and session coverage were not
+reviewed, so permission for public data sharing remains unverified. The
 author initially reported that no written ethics determination was available;
 later the same day, the advisor supplied the CFATA/CEID approval letter. This
 chronology and the document's identifier-minimised metadata are recorded in
@@ -149,25 +150,22 @@ The human-data release item remains unresolved until the authors document all
 of the following:
 
 1. Private verification of the exact signed consent version and collection
-   session covered for each manuscript-reported volunteer.
-2. Confirmation that a signed consent form is also retained for the excluded
-   acquisition volunteer 1; no signed form or participant identity should be
-   published.
-3. Whether the signed wording permits public sharing of pseudonymised spectra,
+   session covered for each of the four originally tested volunteers.
+2. Whether the signed wording permits public sharing of pseudonymised spectra,
    exact acquisition timestamps, and downstream reuse.
-4. Written CFATA/CEID clarification of whether `CFATA/CEID/002-2026` applies to
+3. Written CFATA/CEID clarification of whether `CFATA/CEID/002-2026` applies to
    the completed 2024 collection and present public-data release, including any
    required restriction.
-5. Written disclosure to the journal editor of the 2024 collection chronology,
+4. Written disclosure to the journal editor of the 2024 collection chronology,
    absence of formal prior approval, and subsequent 2026 approval, together
    with the editor's determination.
-6. A pseudonym-only mapping from each raw file and checksum to the correct
+5. A pseudonym-only mapping from each raw file and checksum to the correct
    publication trace, with no names or other re-identifying information added to
    the repository.
-7. Who controls the confirmed existing participant linkage key, how it is
+6. Who controls the confirmed existing participant linkage key, how it is
    protected, and whether exact dates/times can be removed from a public
    derivative.
-8. Reconciliation of the consent-template and manuscript collection protocols.
+7. Reconciliation of the consent-template and manuscript collection protocols.
 
 If open sharing is not covered, the authors should seek participant re-consent
 and institutional guidance. If that is not possible, the public release should

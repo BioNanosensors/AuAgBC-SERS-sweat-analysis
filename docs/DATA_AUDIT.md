@@ -141,9 +141,10 @@ acquisitions and does not explicitly address retrospective coverage or public
 data sharing.
 
 The author subsequently confirmed that signed forms are retained privately for
-the three manuscript-reported volunteers and that `V` and `P` are
-operator/date-dependent prefixes within the same pseudonymous acquisition-code
-system. The confirmed code-only crosswalk and publication renumbering are
+all four originally tested volunteers, including excluded acquisition volunteer
+1. The author also confirmed that `V` and `P` are operator/date-dependent
+prefixes within the same pseudonymous acquisition-code system. The confirmed
+code-only crosswalk and publication renumbering are
 recorded without exposing the private participant linkage key.
 
 The available consent template permits research use of donated sweat but does

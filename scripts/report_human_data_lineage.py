@@ -134,6 +134,7 @@ def build_inventory(repository_root: Path) -> tuple[list[dict[str, str]], dict[s
         raise ValueError("author_confirmations.csv contains duplicate confirmation IDs")
     required_confirmation_ids = {
         "signed_consent_forms_retained",
+        "excluded_volunteer_consent_form_retained",
         "no_written_ethics_determination",
         "ethics_approval_document_provided",
         "vp_prefix_semantics",

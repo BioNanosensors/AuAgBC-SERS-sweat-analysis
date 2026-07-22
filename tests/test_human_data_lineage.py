@@ -114,6 +114,9 @@ def test_committed_human_data_lineage_report_is_current_and_semantic() -> None:
     assert summary["author_confirmation_statuses"] == {
         "aa_hs_session_metadata_correction": "confirmed_metadata_typo",
         "ethics_approval_document_provided": "document_reviewed_scope_clarification_pending",
+        "excluded_volunteer_consent_form_retained": (
+            "confirmed_retained_governance_scope_pending"
+        ),
         "no_written_ethics_determination": "superseded_by_ethics_approval_document",
         "publication_renumbering_confirmed": "confirmed_intended_publication_mapping",
         "pseudonymous_crosswalk_retained": "confirmed_deidentified_mapping_recorded",
