@@ -18,20 +18,41 @@ laser power, and experimental matrix are supported by the record.
 
 No supplied file yet satisfies those criteria for the low-power calibration,
 blind, or stability experiments, or for the 500 ms low-power and 750 ms
-medium-power optimisation experiments. One file is a strong provisional match
-for the 750 ms high-power optimisation experiment, pending author confirmation:
+medium-power optimisation experiments. One separate file is now confirmed for
+the 750 ms high-power optimisation experiment:
 
 `Test 4-ATP/24-09-24/Blank/Blanck_AABC_750_5_5_H.csv`
 
 Its SHA-256 is
 `e36f0ad7a57ebab8cba038309284305cfecc98d1586499fe73e266e301257dd9`.
-It was acquired on the same date with the same nominal setting, but the record
-must still confirm that `AABC` means the same AuAgBC/AAB material and that the
-substrate contained no 4-ATP. It contains five scans from one export; it is not
-evidence for three independently prepared blank substrates.
+On 22 July 2026, the author confirmed that `AABC` means the same AuAgBC/AAB
+material and that this file is an AuAgBC substrate without 4-ATP. Its date and
+all nominal acquisition settings match the high-power optimisation. An exact,
+unchanged copy is distributed at
+`data/raw/4atp/optimisation/750_5_5_H/Blanck_AABC_750_5_5_H.csv`.
+It contains five scans from one export; it is not evidence for three
+independently prepared blank substrates.
+
+This confirmation does not retroactively validate the historical processed
+optimisation files. Those files are exactly reproducible with the mixed
+15-spectrum composite documented below, which shows what the historical script
+used. Reprocessing the high-power experiment with the confirmed blank is a
+scientifically corrected run and is expected to differ from that preserved
+publication history; the two lineages must remain separately labelled.
 
 No historical file has been deleted, renamed, relabelled, or replaced as a
 result of this audit.
+
+## Author resolutions on 22 July 2026
+
+- `AABC` is confirmed as the same material code as AAB/AuAgBC.
+- `Blanck_AABC_750_5_5_H.csv` is confirmed as an analyte-free AuAgBC blank and
+  is accepted only for the matching 24 September high-power optimisation.
+- The author selected the currently prepared 24 September concentration-labelled
+  Blind snapshot for release, not the historical coded 10 September experiment.
+- The author recalls that additional setting-matched blanks probably existed
+  but cannot identify them. That recollection is not treated as file-level
+  evidence, so no low- or medium-power blank is inferred or relabelled.
 
 ## Method-definition evidence
 
@@ -77,10 +98,10 @@ historical input, not an independent blank acquisition.
 | Experiment or release scope | Required context | Best evidence found | Current decision |
 | --- | --- | --- | --- |
 | Calibration curve | 3 July 2024, `750_5_5_L`, AuAgBC without 4-ATP | Same-date `BC Blank 750_5_5_L.csv` matches the setting but is labelled bare BC | No confirmed blank |
-| Prepared blind snapshot | 24 September 2024, `750_5_5_L`, AuAgBC without 4-ATP | Same-date AuAgBC-like candidate is `750_5_5_H` | No confirmed blank |
-| Original coded blind experiment | 10 September 2024, low-power samples | Same-date file is `AABC Blank_750_5_5_H.csv`; its embedded tag says `AAG` | No confirmed blank; dataset choice and metadata conflict remain |
+| Author-selected prepared blind snapshot | 24 September 2024, `750_5_5_L`, AuAgBC without 4-ATP | Same-date analyte-free AuAgBC candidate is `750_5_5_H` | Release scope confirmed; no setting-matched blank |
+| Historical coded blind experiment, not selected | 10 September 2024, low-power samples | Same-date file is `AABC Blank_750_5_5_H.csv`; its embedded tag says `AAG` | Not selected for release; blank remains unresolved |
 | Optimisation, 500 ms low power | 3 July 2024, `500_5_5_L` | No setting-matched AuAgBC blank found | No confirmed blank |
-| Optimisation, 750 ms high power | 24 September 2024, `750_5_5_H` | `Blanck_AABC_750_5_5_H.csv` matches date and setting | Provisional; material and absence of 4-ATP need confirmation |
+| Optimisation, 750 ms high power | 24 September 2024, `750_5_5_H` | `Blanck_AABC_750_5_5_H.csv` matches date, material, analyte-free identity, and settings | Confirmed context match |
 | Optimisation, 750 ms medium power | 24 September 2024, `750_5_5_M` | No medium-power AuAgBC blank found | No confirmed blank |
 | Stability, day 1 | 19 May 2024; intended `750_5_5_L` | A folder-local AuAgBC blank exists only at high power and has a 20 May timestamp; the prepared family also mixes dates/settings | No blank valid for the complete family |
 | Stability, day 45 | 3 July 2024, `750_5_5_L` | Same-date low-power file is labelled bare BC | No confirmed blank |
@@ -101,28 +122,29 @@ Its power cannot be inferred from date or folder context. It is also from a
 different date than the final experiments, so it remains an unresolved
 candidate rather than a replacement.
 
-## Blind-sample fork that must be resolved first
+## Blind release selection
 
 The prepared Blind folder does not contain the original coded 10 September
 blind experiment. All 135 prepared nonblank channels match concentration-labelled
-low-power spectra from 24 September; none is an exact match to the coded
-10 September measurements. Blank selection depends on which of those two
-datasets is intended for release. The current prepared snapshot must not be
-described as the decoded coded experiment without the missing decoding record.
+low-power spectra from 24 September; every prepared concentration agrees with
+its matching master spectrum, and none is an exact match to the coded
+10 September measurements. The author selected this current 24 September
+snapshot for release. The 10 September decoding key is therefore not required
+for the selected release scope, but it would still be required before the
+historical coded experiment could be released or used to substantiate the
+original blinded-validation lineage.
 
-## Confirmations still needed
+## Blank files still needed
 
-1. Confirm whether `AABC` is an alias or typographical variant of AAB/AuAgBC.
-2. Confirm whether `Blanck_AABC_750_5_5_H.csv` is an AuAgBC substrate with no
-   4-ATP, acquired as the blank for the 24 September high-power optimisation.
-3. Choose whether the Blind release should represent the original 10 September
-   coded experiment or the current 24 September concentration-labelled snapshot.
-4. Locate or identify any AuAgBC-without-4-ATP measurements acquired at
-   `500_5_5_L`, `750_5_5_L`, or `750_5_5_M`, including files stored under an
-   unexpected name.
+The remaining task is to locate or identify any AuAgBC-without-4-ATP
+measurements acquired at `500_5_5_L`, `750_5_5_L`, or `750_5_5_M`, including
+files stored under an unexpected name. The author's uncertain recollection that
+such files probably existed is recorded, but it is not sufficient to select a
+file.
 
-Until those points are resolved, the historical composite remains quarantined
-and no candidate is promoted into `data/raw/` as a verified 4-ATP blank.
+The historical composite remains quarantined. Only the separately confirmed
+`750_5_5_H` source is promoted into `data/raw/`, and it must not be substituted
+for the still-missing low- or medium-power blanks.
 
 ## Reproducing this audit check
 

@@ -24,8 +24,11 @@ channels exactly match columns stored in Test HS master folders while five
 match columns stored in a Test 4-ATP master folder, and parts of the calibration
 and May stability sets disagree with the master measurement collections. Folder
 context does not prove the blank's sample identity, and none of the channels is
-a confirmed setting-matched low-power blank for the final calibration. Nothing
-in the historical quarantine was deleted or silently relabelled. Two
+a confirmed setting-matched low-power blank for the final calibration. A
+separate 24 September `750_5_5_H` analyte-free AuAgBC blank is now
+author-confirmed and distributed only for the matching high-power optimisation;
+it is not substituted for low- or medium-power experiments. Nothing in the
+historical quarantine was deleted or silently relabelled. Two
 publication-summary headers were transparently corrected after author
 confirmation, with both source and corrected hashes recorded in provenance.
 

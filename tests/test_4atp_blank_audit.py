@@ -26,6 +26,13 @@ def _copy_audit_fixture(tmp_path: Path) -> Path:
         "4atp_blank_family_assessment.csv",
     ):
         shutil.copy2(PROJECT_ROOT / "metadata" / "provenance" / filename, provenance)
+    shutil.copy2(
+        PROJECT_ROOT / "metadata" / "author_confirmations.csv",
+        root / "metadata" / "author_confirmations.csv",
+    )
+    confirmed_raw = root / VERIFY.CONFIRMED_RAW_PATH
+    confirmed_raw.parent.mkdir(parents=True)
+    shutil.copy2(PROJECT_ROOT / VERIFY.CONFIRMED_RAW_PATH, confirmed_raw)
     return root
 
 
@@ -58,22 +65,49 @@ def test_committed_4atp_blank_audit_is_internally_consistent() -> None:
         "prepared_record_groups": 8,
         "shared_source_files": 3,
         "family_assessments": 9,
-        "provisional_candidates": 1,
-        "confirmed_candidates": 0,
+        "provisional_candidates": 0,
+        "confirmed_candidates": 1,
+        "required_author_confirmations": 3,
+        "confirmed_raw_files_verified": 1,
     }
 
 
-def test_false_confirmation_is_rejected(tmp_path: Path) -> None:
+def test_second_confirmation_is_rejected(tmp_path: Path) -> None:
     root = _copy_audit_fixture(tmp_path)
     assessment = (
         root / "metadata" / "provenance" / "4atp_blank_family_assessment.csv"
     )
-    _mutate_first_row(assessment, {"resolution_status": "confirmed_context_match"})
+    _mutate_first_row(
+        assessment,
+        {"resolution_status": "confirmed_context_match"},
+        required_text=("family_id", "calibration_curve"),
+    )
 
     report = VERIFY.verify_audit(root)
 
     assert report["ok"] is False
-    assert "resolution_status must be one of" in "\n".join(report["errors"])
+    assert "Exactly one family may have a confirmed context-matched blank" in "\n".join(
+        report["errors"]
+    )
+
+
+def test_confirmation_requires_all_six_match_flags(tmp_path: Path) -> None:
+    root = _copy_audit_fixture(tmp_path)
+    assessment = (
+        root / "metadata" / "provenance" / "4atp_blank_family_assessment.csv"
+    )
+    _mutate_first_row(
+        assessment,
+        {"material_match": "unresolved"},
+        required_text=("family_id", "optimisation_750_5_5_H"),
+    )
+
+    report = VERIFY.verify_audit(root)
+
+    assert report["ok"] is False
+    assert "cannot be confirmed while material_match is 'unresolved'" in "\n".join(
+        report["errors"]
+    )
 
 
 def test_nonzero_shared_blank_difference_is_rejected(tmp_path: Path) -> None:
@@ -127,3 +161,34 @@ def test_family_scientific_condition_substitution_is_rejected(
     assert "required_setting differs from reviewed audit value" in "\n".join(
         report["errors"]
     )
+
+
+def test_required_author_confirmation_status_is_enforced(tmp_path: Path) -> None:
+    root = _copy_audit_fixture(tmp_path)
+    confirmations = root / "metadata" / "author_confirmations.csv"
+    _mutate_first_row(
+        confirmations,
+        {"status": "unresolved"},
+        required_text=("confirmation_id", "aabc_blank_identity_confirmed"),
+    )
+
+    report = VERIFY.verify_audit(root)
+
+    assert report["ok"] is False
+    assert "aabc_blank_identity_confirmed" in "\n".join(report["errors"])
+    assert "confirmed_material_alias_and_analyte_free_blank" in "\n".join(
+        report["errors"]
+    )
+
+
+def test_confirmed_raw_file_tampering_is_rejected(tmp_path: Path) -> None:
+    root = _copy_audit_fixture(tmp_path)
+    confirmed_raw = root / VERIFY.CONFIRMED_RAW_PATH
+    confirmed_raw.write_bytes(confirmed_raw.read_bytes() + b"tampered\n")
+
+    report = VERIFY.verify_audit(root)
+
+    assert report["ok"] is False
+    joined = "\n".join(report["errors"])
+    assert "byte-size mismatch" in joined
+    assert "SHA-256 mismatch" in joined

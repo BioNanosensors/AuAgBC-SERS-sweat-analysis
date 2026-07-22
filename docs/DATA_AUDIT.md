@@ -36,6 +36,7 @@ same bytes occur under filenames that claim different concentrations.
 | Status | Meaning |
 | --- | --- |
 | `verified` | Identity, acquisition context, and processing lineage agree with an independent source. |
+| `raw_author_confirmed` | Unchanged raw source whose material/sample identity is author-confirmed and whose acquisition metadata matches one explicitly named condition; it must not be generalized to other conditions. |
 | `publication_snapshot` | A table or spectrum preserved because it was used to assemble the manuscript; this does not imply that its complete raw lineage is verified. |
 | `regenerated` | Produced by the current pipeline from inputs named in a portable manifest. |
 | `legacy_derived` | Produced by an historical script or workflow; retained as evidence. |
@@ -78,16 +79,19 @@ does not resolve the identity of the underlying prepared raw files.
 ### Blind samples
 
 The prepared set has nine nominal concentrations, three sample files per
-concentration, and five scans per file. The master measurements retain coded
-sample labels, but the code-to-concentration key was not found. Consequently,
-the numerical spectra are recoverable but the nominal concentration assignment
-is not independently verifiable. The same identity-unresolved,
-setting-mismatched blank series described above was copied into this experiment.
+concentration, and five scans per file. All 135 nonblank channels match
+concentration-labelled 24 September `750_5_5_L` master measurements, with every
+prepared concentration agreeing with its match. None matches the original coded
+10 September blind experiment. On 22 July 2026, the author selected the current
+24 September concentration-labelled snapshot for release rather than the coded
+10 September collection. The unavailable decoding key is therefore not needed
+for this selected release scope, although it would still be required to release
+or substantiate the historical coded experiment.
 
-In addition, all 135 prepared nonblank channels match concentration-labelled
-24 September low-power measurements, while none matches the original coded
-10 September blind experiment. The intended release dataset must be selected
-before its correct blank can be established.
+The same setting-mismatched historical blank composite described above was
+copied into the prepared Blind folder. The author-confirmed 24 September AuAgBC
+blank is high power and therefore is not a valid blank for the selected
+low-power Blind snapshot.
 
 ### Stability
 
@@ -115,12 +119,20 @@ that folder; these are classified as `orphan_derived`. Modern summary outputs
 for the 500 ms low-power and 750 ms medium-power sets are internally
 reproducible to CSV rounding.
 
-The only date- and setting-compatible blank candidate with an AuAgBC-like label
-found for these three optimisation sets is
+The date- and setting-compatible high-power blank found for these optimisation
+sets is
 `Test 4-ATP/24-09-24/Blank/Blanck_AABC_750_5_5_H.csv` for the high-power set.
-It remains provisional until the author confirms that `AABC` means AuAgBC/AAB
-and that the substrate contained no 4-ATP. No matched AuAgBC blank was found for
-the 500 ms low-power or 750 ms medium-power set.
+The author confirmed on 22 July 2026 that `AABC` means AuAgBC/AAB and that this
+file is an AuAgBC substrate without 4-ATP. It is now the confirmed blank for the
+matching 24 September `750_5_5_H` optimisation condition and is distributed
+unchanged under `data/raw/`. No matched AuAgBC blank was found for the 500 ms
+low-power or 750 ms medium-power set.
+
+The preserved high-power processed snapshot was historically generated with
+the mixed 15-spectrum composite, not this newly confirmed blank. Exact replay of
+that snapshot remains historical-lineage evidence. A corrected run using the
+confirmed blank must be labelled as regenerated rather than presented as an
+exact reproduction of the supplied processed files.
 
 ### Analytical enhancement factor
 
@@ -247,10 +259,11 @@ calculated; it does not prove that the raw file was labelled correctly.
 Before describing every raw file as verified, the following should be supplied
 or confirmed:
 
-1. the blind-sample code-to-concentration key;
-2. confirmation of the provisional 24 September high-power blank and the still
-   missing or unidentified AuAgBC blanks at `500_5_5_L`, `750_5_5_L`, and
-   `750_5_5_M`, as detailed in `4ATP_BLANK_AUDIT.md`;
+1. the blind-sample code-to-concentration key only if the historical 10 September
+   coded experiment is to be released or used to substantiate the original
+   blinded-validation lineage;
+2. the still missing or unidentified AuAgBC blanks at `500_5_5_L`,
+   `750_5_5_L`, and `750_5_5_M`, as detailed in `4ATP_BLANK_AUDIT.md`;
 3. the intended 750 ms low-power calibration file list, especially mixed 500 ms
    records;
 4. the day-1 stability manifest and the intended three substrate replicates;

@@ -53,15 +53,24 @@ items below remain limitations; public visibility does not mark them resolved.
 - [x] Document the repository's current no-licence status and proposed scope.
 - [x] Trace all 120 prepared 4-ATP blank copies to three five-channel master
   exports and publish an experiment-by-experiment candidate assessment.
+- [x] Confirm that `AABC` means AAB/AuAgBC and that the separate 24 September
+  `750_5_5_H` file is an analyte-free AuAgBC blank; distribute its unchanged
+  source bytes for the matching high-power optimisation only.
+- [x] Select the current 24 September concentration-labelled Blind snapshot for
+  release and verify that all 135 nonblank columns have agreeing same-date,
+  same-setting concentration-labelled master matches.
 
 ## Required before an unqualified public data release
 
 - [ ] Resolve or explicitly withdraw the conflicting calibration and stability labels documented in `DATA_AUDIT.md`.
-- [ ] Supply the blind-sample decoding key.
-- [ ] Confirm the provisional 24 September high-power AuAgBC blank and locate or
-  identify the missing setting-matched AuAgBC blanks listed in
-  `4ATP_BLANK_AUDIT.md`; do not reuse the historical composite as if it were
-  independently acquired for every experiment.
+- [ ] Supply the 10 September decoding key before releasing that historical
+  coded experiment or presenting the selected 24 September snapshot as its
+  decoded blinded-validation result.
+- [ ] Locate or identify the missing `500_5_5_L`, `750_5_5_L`, and
+  `750_5_5_M` AuAgBC blanks listed in `4ATP_BLANK_AUDIT.md`; the author's
+  uncertain recollection is not file-level evidence, and the historical
+  composite must not be reused as if independently acquired for every
+  experiment.
 - [ ] Confirm the AEF extraction and acquisition-time scaling rule.
 - [ ] Privately verify which signed consent version and collection session
   covers each of the four originally tested volunteers; never publish the

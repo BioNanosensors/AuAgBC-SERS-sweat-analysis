@@ -1,5 +1,6 @@
 status,meaning,may_be_aggregated_without_review
 publication_snapshot,Selected manuscript-facing table or spectrum export; selection does not by itself verify raw provenance.,no
+raw_author_confirmed,Raw source whose sample identity and experimental context were confirmed by the author and whose distributed bytes match the audited source hash.,no
 raw_unverified,"Raw-like spectrum preserved with no detected decisive conflict, but identity and labels remain unverified.",no
 legacy_derived,"Historical processed output retained without a complete, verified source-to-output lineage.",no
 provenance_conflict,"At least one filename, embedded label, source match, blank identity, or raw/processed relationship conflicts.",no

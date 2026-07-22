@@ -2,16 +2,17 @@
 """Verify the committed 4-ATP blank audit without modifying repository data.
 
 The check deliberately uses only the Python standard library.  It verifies the
-two audit tables, then independently rebuilds the historical shared-blank
-mapping from ``raw_to_master_best_matches.csv``.  The scientific suitability
-table is conservative by design: no row may claim a confirmed blank while the
-material or acquisition context remains unresolved.
+two audit tables, the relevant author confirmations, and the one confirmed raw
+blank, then independently rebuilds the historical shared-blank mapping from
+``raw_to_master_best_matches.csv``.  A blank may be marked confirmed only when
+all material and acquisition-context checks are true.
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import math
 import re
@@ -56,6 +57,15 @@ FAMILY_TABLE_FIELDS = (
     "resolution_status",
     "reason",
 )
+AUTHOR_CONFIRMATION_FIELDS = (
+    "confirmation_id",
+    "confirmed_on",
+    "topic",
+    "author_confirmation",
+    "repository_interpretation",
+    "status",
+    "privacy_handling",
+)
 MATCH_FIELDS = (
     "material_match",
     "session_match",
@@ -67,9 +77,25 @@ MATCH_FIELDS = (
 MATCH_VALUES = {"true", "false", "unresolved"}
 RESOLUTION_STATUSES = {
     "no_confirmed_context_match",
-    "provisional_context_match_pending_author_confirmation",
+    "confirmed_context_match",
 }
 SHARED_ASSESSMENTS = {"historical_input_wrong_context"}
+REQUIRED_AUTHOR_CONFIRMATIONS = {
+    "aabc_blank_identity_confirmed": (
+        "confirmed_material_alias_and_analyte_free_blank"
+    ),
+    "blind_release_snapshot_selected": "confirmed_selected_release_scope",
+    "additional_4atp_blank_recollection": (
+        "unresolved_author_recollection_no_file_identified"
+    ),
+}
+CONFIRMED_RAW_PATH = Path(
+    "data/raw/4atp/optimisation/750_5_5_H/Blanck_AABC_750_5_5_H.csv"
+)
+CONFIRMED_RAW_SHA256 = (
+    "e36f0ad7a57ebab8cba038309284305cfecc98d1586499fe73e266e301257dd9"
+)
+CONFIRMED_RAW_BYTES = 27_476
 
 EXPECTED_GROUPS = (
     "Blind samples",
@@ -100,14 +126,14 @@ EXPECTED_FAMILY_ROWS = {
         "resolution_status": "no_confirmed_context_match",
     },
     "blind_samples_prepared_2024_09_24": {
-        "scope": "prepared_concentration_labelled_snapshot",
+        "scope": "author_selected_prepared_concentration_labelled_snapshot",
         "required_session": "2024-09-24",
         "required_setting": "750_5_5_L",
         "required_material": REQUIRED_BLANK_MATERIAL,
         "nearest_candidate_path": "Test 4-ATP/24-09-24/Blank/Blanck_AABC_750_5_5_H.csv",
         "candidate_embedded_datetime": "2024-09-24T09:33:50",
         "candidate_tag": "Blanck_AABC_750_5_5_H",
-        "material_match": "unresolved",
+        "material_match": "true",
         "session_match": "true",
         "integration_match": "true",
         "power_match": "false",
@@ -116,7 +142,7 @@ EXPECTED_FAMILY_ROWS = {
         "resolution_status": "no_confirmed_context_match",
     },
     "blind_samples_intended_2024_09_10": {
-        "scope": "intended_coded_blind_experiment",
+        "scope": "historical_coded_blind_experiment_not_selected_for_release",
         "required_session": "2024-09-10",
         "required_setting": "750_5_5_L",
         "required_material": REQUIRED_BLANK_MATERIAL,
@@ -155,13 +181,13 @@ EXPECTED_FAMILY_ROWS = {
         "nearest_candidate_path": "Test 4-ATP/24-09-24/Blank/Blanck_AABC_750_5_5_H.csv",
         "candidate_embedded_datetime": "2024-09-24T09:33:50",
         "candidate_tag": "Blanck_AABC_750_5_5_H",
-        "material_match": "unresolved",
+        "material_match": "true",
         "session_match": "true",
         "integration_match": "true",
         "power_match": "true",
         "averaging_match": "true",
         "data_count_match": "true",
-        "resolution_status": "provisional_context_match_pending_author_confirmation",
+        "resolution_status": "confirmed_context_match",
     },
     "optimisation_750_5_5_M": {
         "scope": "optimisation_condition",
@@ -171,7 +197,7 @@ EXPECTED_FAMILY_ROWS = {
         "nearest_candidate_path": "Test 4-ATP/24-09-24/Blank/Blanck_AABC_750_5_5_H.csv",
         "candidate_embedded_datetime": "2024-09-24T09:33:50",
         "candidate_tag": "Blanck_AABC_750_5_5_H",
-        "material_match": "unresolved",
+        "material_match": "true",
         "session_match": "true",
         "integration_match": "true",
         "power_match": "false",
@@ -222,7 +248,7 @@ EXPECTED_FAMILY_ROWS = {
         "nearest_candidate_path": "Test 4-ATP/24-09-24/Blank/Blanck_AABC_750_5_5_H.csv",
         "candidate_embedded_datetime": "2024-09-24T09:33:50",
         "candidate_tag": "Blanck_AABC_750_5_5_H",
-        "material_match": "unresolved",
+        "material_match": "true",
         "session_match": "true",
         "integration_match": "true",
         "power_match": "false",
@@ -266,7 +292,7 @@ KNOWN_CANDIDATE_HASHES = {
         "d0b175f45c6fdd717bdf5d3aed02ae116fb8635901ac35c4772ed3ce906de09c"
     ),
     "Test 4-ATP/24-09-24/Blank/Blanck_AABC_750_5_5_H.csv": (
-        "e36f0ad7a57ebab8cba038309284305cfecc98d1586499fe73e266e301257dd9"
+        CONFIRMED_RAW_SHA256
     ),
     (
         "Parámetros heterogéneos de medición/Primeras mediciones/19-05-24/"
@@ -299,7 +325,15 @@ def _read_csv(
                     f"{path.name} schema mismatch: expected {list(expected_fields)!r}, "
                     f"found {list(actual_fields)!r}"
                 )
-            return [dict(row) for row in reader]
+            rows: list[dict[str, str]] = []
+            for row_number, row in enumerate(reader, start=2):
+                if None in row:
+                    errors.append(
+                        f"{path.name} row {row_number} has extra CSV field(s); "
+                        "values containing commas must be quoted"
+                    )
+                rows.append(dict(row))
+            return rows
     except (OSError, UnicodeError, csv.Error) as exc:
         errors.append(f"Could not read {path.as_posix()}: {exc}")
         return []
@@ -354,6 +388,75 @@ def _portable_relative_path(value: str, context: str, errors: list[str]) -> None
         errors.append(
             f"{context} must be a safe forward-slash relative path, found {value!r}"
         )
+
+
+def _verify_author_confirmations(
+    rows: list[dict[str, str]], errors: list[str]
+) -> int:
+    """Require the three author decisions that resolve this audit revision."""
+
+    counts = Counter(row.get("confirmation_id", "") for row in rows)
+    verified = 0
+    for confirmation_id, expected_status in REQUIRED_AUTHOR_CONFIRMATIONS.items():
+        count = counts[confirmation_id]
+        if count != 1:
+            errors.append(
+                "author_confirmations.csv must contain exactly one "
+                f"{confirmation_id!r} row, found {count}"
+            )
+            continue
+        row = next(
+            row for row in rows if row.get("confirmation_id") == confirmation_id
+        )
+        actual_status = row.get("status", "")
+        if actual_status != expected_status:
+            errors.append(
+                f"Author confirmation {confirmation_id!r} must have status "
+                f"{expected_status!r}, found {actual_status!r}"
+            )
+            continue
+        verified += 1
+    return verified
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _verify_confirmed_raw_file(repository_root: Path, errors: list[str]) -> int:
+    """Verify the distributed copy of the one confirmed, context-matched blank."""
+
+    path = repository_root / CONFIRMED_RAW_PATH
+    if not path.is_file():
+        errors.append(
+            "Missing confirmed 4-ATP blank raw file: "
+            f"{CONFIRMED_RAW_PATH.as_posix()}"
+        )
+        return 0
+    try:
+        actual_bytes = path.stat().st_size
+        actual_hash = _sha256(path)
+    except OSError as exc:
+        errors.append(f"Could not verify confirmed 4-ATP blank raw file: {exc}")
+        return 0
+    valid = True
+    if actual_bytes != CONFIRMED_RAW_BYTES:
+        errors.append(
+            "Confirmed 4-ATP blank raw file byte-size mismatch: expected "
+            f"{CONFIRMED_RAW_BYTES}, found {actual_bytes}"
+        )
+        valid = False
+    if actual_hash != CONFIRMED_RAW_SHA256:
+        errors.append(
+            "Confirmed 4-ATP blank raw file SHA-256 mismatch: expected "
+            f"{CONFIRMED_RAW_SHA256}, found {actual_hash}"
+        )
+        valid = False
+    return int(valid)
 
 
 def _verify_shared_mapping(
@@ -605,7 +708,7 @@ def _verify_family_table(rows: list[dict[str, str]], errors: list[str]) -> None:
     if len(set(family_ids)) != len(family_ids):
         errors.append("4atp_blank_family_assessment.csv contains duplicate family_id values")
 
-    provisional_rows: list[dict[str, str]] = []
+    confirmed_rows: list[dict[str, str]] = []
     for row_number, row in enumerate(rows, start=2):
         context = f"4atp_blank_family_assessment.csv row {row_number}"
         family_id = row.get("family_id", "")
@@ -651,38 +754,29 @@ def _verify_family_table(rows: list[dict[str, str]], errors: list[str]) -> None:
                 f"{sorted(RESOLUTION_STATUSES)!r}, found {status!r}"
             )
             continue
-        if status == "provisional_context_match_pending_author_confirmation":
-            provisional_rows.append(row)
+        if status == "confirmed_context_match":
+            confirmed_rows.append(row)
+            for field in MATCH_FIELDS:
+                if row.get(field) != "true":
+                    errors.append(
+                        f"{context} cannot be confirmed while {field} is "
+                        f"{row.get(field)!r}; every match flag must be true"
+                    )
         elif all(row.get(field) == "true" for field in MATCH_FIELDS):
             errors.append(
                 f"{context} marks every context criterion true but reports no confirmed match"
             )
 
-    if len(provisional_rows) != 1:
+    if len(confirmed_rows) != 1:
         errors.append(
-            "Exactly one candidate must remain provisional pending author confirmation, "
-            f"found {len(provisional_rows)}"
+            "Exactly one family may have a confirmed context-matched blank, "
+            f"found {len(confirmed_rows)}"
         )
     else:
-        row = provisional_rows[0]
+        row = confirmed_rows[0]
         if row.get("family_id") != "optimisation_750_5_5_H":
             errors.append(
-                "Only optimisation_750_5_5_H may be the provisional context match"
-            )
-        for field in (
-            "session_match",
-            "integration_match",
-            "power_match",
-            "averaging_match",
-            "data_count_match",
-        ):
-            if row.get(field) != "true":
-                errors.append(
-                    f"The provisional optimisation_750_5_5_H candidate must have {field}=true"
-                )
-        if row.get("material_match") != "unresolved":
-            errors.append(
-                "The provisional optimisation_750_5_5_H material match must remain unresolved"
+                "Only optimisation_750_5_5_H may have a confirmed context match"
             )
 
 
@@ -701,10 +795,17 @@ def verify_audit(repository_root: Path) -> dict[str, object]:
     family_rows = _read_csv(
         provenance / "4atp_blank_family_assessment.csv", FAMILY_TABLE_FIELDS, errors
     )
+    confirmation_rows = _read_csv(
+        root / "metadata" / "author_confirmations.csv",
+        AUTHOR_CONFIRMATION_FIELDS,
+        errors,
+    )
 
     mapping_aggregate = _verify_shared_mapping(mapping_rows, errors)
     _verify_shared_table(shared_rows, mapping_aggregate, errors)
     _verify_family_table(family_rows, errors)
+    verified_confirmations = _verify_author_confirmations(confirmation_rows, errors)
+    verified_confirmed_raw_files = _verify_confirmed_raw_file(root, errors)
     return {
         "ok": not errors,
         "counts": {
@@ -731,6 +832,8 @@ def verify_audit(repository_root: Path) -> dict[str, object]:
                 row.get("resolution_status") == "confirmed_context_match"
                 for row in family_rows
             ),
+            "required_author_confirmations": verified_confirmations,
+            "confirmed_raw_files_verified": verified_confirmed_raw_files,
         },
         "errors": errors,
         "error_count": len(errors),
@@ -761,7 +864,8 @@ def main(argv: Iterable[str] | None = None) -> int:
             f"({counts['prepared_blank_records']} prepared records, "
             f"{counts['shared_source_files']} historical source files, "
             f"{counts['family_assessments']} family assessments, "
-            "0 confirmed candidates)."
+            f"{counts['confirmed_candidates']} confirmed candidate, "
+            f"{counts['confirmed_raw_files_verified']} confirmed raw file)."
         )
     else:
         print(f"FAIL: {report['error_count']} 4-ATP blank audit error(s):")

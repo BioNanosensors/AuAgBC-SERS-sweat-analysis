@@ -55,6 +55,14 @@ RENDERED_MANUSCRIPT_ARCHIVE_SHA256 = "0dd193d01bd36f0dace705a5003d85eacd686f8bca
 RENDERED_MANUSCRIPT_ARCHIVE_BYTES = 61_601_494
 THESIS_PDF_SHA256 = "fcbd81d10f444262b4f75007927d604f478dd4ff3c7c9326c897bd7fdfe3e359"
 THESIS_PDF_BYTES = 16_886_679
+CONFIRMED_4ATP_BLANK_REPOSITORY_PATH = Path(
+    "data/raw/4atp/optimisation/750_5_5_H/Blanck_AABC_750_5_5_H.csv"
+)
+CONFIRMED_4ATP_BLANK_SOURCE_PATH = (
+    "Test 4-ATP/24-09-24/Blank/Blanck_AABC_750_5_5_H.csv"
+)
+CONFIRMED_4ATP_BLANK_SHA256 = "e36f0ad7a57ebab8cba038309284305cfecc98d1586499fe73e266e301257dd9"
+CONFIRMED_4ATP_BLANK_BYTES = 27_476
 
 
 # Archive paths use their original names; destinations are stable, lowercase,
@@ -124,6 +132,26 @@ def sha256_file(path: Path) -> str:
         while block := handle.read(1024 * 1024):
             digest.update(block)
     return digest.hexdigest()
+
+
+def validate_confirmed_4atp_blank(repository_root: Path) -> Path:
+    """Return the committed blank after verifying its immutable source identity."""
+    path = repository_root / CONFIRMED_4ATP_BLANK_REPOSITORY_PATH
+    if not path.is_file():
+        raise FileNotFoundError(f"Author-confirmed 4-ATP blank is missing: {path}")
+    size = path.stat().st_size
+    if size != CONFIRMED_4ATP_BLANK_BYTES:
+        raise RuntimeError(
+            f"Author-confirmed 4-ATP blank has {size} bytes; "
+            f"expected {CONFIRMED_4ATP_BLANK_BYTES}: {path}"
+        )
+    digest = sha256_file(path)
+    if digest != CONFIRMED_4ATP_BLANK_SHA256:
+        raise RuntimeError(
+            f"Author-confirmed 4-ATP blank has SHA256 {digest}; "
+            f"expected {CONFIRMED_4ATP_BLANK_SHA256}: {path}"
+        )
+    return path
 
 
 def sanitize_bytes(data: bytes) -> tuple[bytes, int]:
@@ -422,6 +450,7 @@ def build_raw_processing_manifest(
     metadata_root: Path,
     best_match_report: Path,
     file_inventory_report: Path,
+    repository_root: Path,
 ) -> int:
     matched_instruments = load_master_instruments(best_match_report)
     numeric_columns = load_numeric_column_counts(file_inventory_report)
@@ -449,6 +478,19 @@ def build_raw_processing_manifest(
             "acquisition": explicit_acquisition(relative),
             "provenance_status": status,
         })
+    validate_confirmed_4atp_blank(repository_root)
+    rows.append({
+        "file": CONFIRMED_4ATP_BLANK_REPOSITORY_PATH.as_posix(),
+        "record_group": "optimisation_750_5_5_h_confirmed_blank",
+        "sample_type": "blank",
+        "concentration_molar": "",
+        "replicate": "unresolved",
+        "accumulation": "expanded_column",
+        "instrument": "portable_raman",
+        "acquisition": "750_5_5_H",
+        "provenance_status": "raw_author_confirmed",
+    })
+    rows.sort(key=lambda row: str(row["file"]).casefold())
     write_csv(
         metadata_root / "raw_processing_manifest.csv",
         [
@@ -603,6 +645,17 @@ def write_reference_metadata(metadata_root: Path) -> None:
                 ),
             },
             {
+                "source_name": "Blanck_AABC_750_5_5_H.csv",
+                "sha256": CONFIRMED_4ATP_BLANK_SHA256,
+                "bytes": CONFIRMED_4ATP_BLANK_BYTES,
+                "hash_status": "verified_source_file",
+                "role": "author_confirmed_4atp_blank_source",
+                "note": (
+                    "Exact unchanged copy from Test 4-ATP/24-09-24/Blank in the expanded portable "
+                    "master collection; distributed under data/raw for high-power optimisation only."
+                ),
+            },
+            {
                 "source_name": "Mediciones Raman.zip",
                 "sha256": "",
                 "bytes": "",
@@ -616,7 +669,10 @@ def write_reference_metadata(metadata_root: Path) -> None:
                 "bytes": "",
                 "hash_status": "not_computed_expanded_directory",
                 "role": "portable_master_search_collection",
-                "note": "Used as read-only provenance evidence; the ZIP itself was not available to hash.",
+                "note": (
+                    "Used as read-only provenance evidence except for the separately hashed and "
+                    "distributed author-confirmed 24 September high-power blank."
+                ),
             },
         ],
     )
@@ -626,6 +682,7 @@ def write_reference_metadata(metadata_root: Path) -> None:
         ["status", "meaning", "may_be_aggregated_without_review"],
         [
             {"status": "publication_snapshot", "meaning": "Selected manuscript-facing table or spectrum export; selection does not by itself verify raw provenance.", "may_be_aggregated_without_review": "no"},
+            {"status": "raw_author_confirmed", "meaning": "Raw source whose sample identity and experimental context were confirmed by the author and whose distributed bytes match the audited source hash.", "may_be_aggregated_without_review": "no"},
             {"status": "raw_unverified", "meaning": "Raw-like spectrum preserved with no detected decisive conflict, but identity and labels remain unverified.", "may_be_aggregated_without_review": "no"},
             {"status": "legacy_derived", "meaning": "Historical processed output retained without a complete, verified source-to-output lineage.", "may_be_aggregated_without_review": "no"},
             {"status": "provenance_conflict", "meaning": "At least one filename, embedded label, source match, blank identity, or raw/processed relationship conflicts.", "may_be_aggregated_without_review": "no"},
@@ -639,7 +696,7 @@ def write_reference_metadata(metadata_root: Path) -> None:
         ["conflict_id", "scope", "severity", "finding", "affected_count", "evidence", "resolution_status"],
         [
             {"conflict_id": "cross_label_duplicate_content", "scope": "curated raw spectra", "severity": "critical", "finding": "Identical spectrum bytes occur under different stated concentrations.", "affected_count": "103 groups; 277 files", "evidence": "provenance/duplicate_content_groups.csv and provenance/concentration_label_conflicts.csv", "resolution_status": "unresolved"},
-            {"conflict_id": "shared_blank_wrong_context", "scope": "blind, calibration, optimisation, stability", "severity": "critical", "finding": "The same 15 high-power blank spectra are reused across eight sets that require different sessions and settings. Their exact historical origins are identified, but no shared source is a confirmed context-matched analytical blank. One independent high-power candidate is provisional; required low- and medium-power AuAgBC blanks remain unresolved.", "affected_count": "120 exact copies across 8 sets; 3 master exports; 1 provisional context match", "evidence": "provenance/shared_blank_origin_summary.csv and provenance/4atp_blank_family_assessment.csv", "resolution_status": "historical_sources_identified_scientific_matches_unresolved"},
+            {"conflict_id": "shared_blank_wrong_context", "scope": "blind, calibration, optimisation, stability", "severity": "critical", "finding": "The same 15 high-power blank spectra are reused across eight sets that require different sessions and settings. Their exact historical origins are identified, but the shared composite is not a confirmed context-matched analytical blank. A separate 24 September high-power blank is author-confirmed for the matching optimisation condition; required low- and medium-power AuAgBC blanks remain unresolved.", "affected_count": "120 exact copies across 8 sets; 3 historical source exports; 1 separate confirmed high-power match", "evidence": "provenance/shared_blank_origin_summary.csv and provenance/4atp_blank_family_assessment.csv", "resolution_status": "historical_sources_identified_one_context_match_confirmed_others_unresolved"},
             {"conflict_id": "stability_19may_label_mismatch", "scope": "Stability/19_05_24", "severity": "critical", "finding": "Curated concentration labels disagree with the best matching master spectra.", "affected_count": "105 matched columns", "evidence": "provenance/concentration_label_conflicts.csv", "resolution_status": "unresolved"},
             {"conflict_id": "stability_content_overlap", "scope": "all stability dates", "severity": "critical", "finding": "Stability folders substantially overlap calibration or other-date content instead of forming independent dated acquisitions.", "affected_count": "unique content: 149/165, 103/159, and 20/210", "evidence": "provenance/duplicate_content_groups.csv", "resolution_status": "unresolved"},
             {"conflict_id": "optimisation_750m_orphan_derivatives", "scope": "Optimisation/750_5_5_M/Processed Spectra", "severity": "high", "finding": "Legacy processed filenames have no same-stem raw partners.", "affected_count": "43 files", "evidence": "validation/numerical_reproduction_summary.md", "resolution_status": "quarantined"},
@@ -743,7 +800,7 @@ def write_reference_metadata(metadata_root: Path) -> None:
             },
             {
                 "family_id": "blind_samples_prepared_2024_09_24",
-                "scope": "prepared_concentration_labelled_snapshot",
+                "scope": "author_selected_prepared_concentration_labelled_snapshot",
                 "required_session": "2024-09-24",
                 "required_setting": "750_5_5_L",
                 "required_material": "AuAgBC substrate without 4-ATP",
@@ -751,18 +808,18 @@ def write_reference_metadata(metadata_root: Path) -> None:
                 "candidate_sha256": "e36f0ad7a57ebab8cba038309284305cfecc98d1586499fe73e266e301257dd9",
                 "candidate_embedded_datetime": "2024-09-24T09:33:50",
                 "candidate_tag": "Blanck_AABC_750_5_5_H",
-                "material_match": "unresolved",
+                "material_match": "true",
                 "session_match": "true",
                 "integration_match": "true",
                 "power_match": "false",
                 "averaging_match": "true",
                 "data_count_match": "true",
                 "resolution_status": "no_confirmed_context_match",
-                "reason": "The prepared nonblank spectra match the 24-Sep low-power concentration-labelled set but the same-day AABC candidate is high power and its material identity remains unconfirmed",
+                "reason": "The author selected the prepared 24-Sep low-power concentration-labelled set for release and confirmed AABC as analyte-free AuAgBC; the same-day candidate remains unsuitable because it was acquired at high power",
             },
             {
                 "family_id": "blind_samples_intended_2024_09_10",
-                "scope": "intended_coded_blind_experiment",
+                "scope": "historical_coded_blind_experiment_not_selected_for_release",
                 "required_session": "2024-09-10",
                 "required_setting": "750_5_5_L",
                 "required_material": "AuAgBC substrate without 4-ATP",
@@ -777,7 +834,7 @@ def write_reference_metadata(metadata_root: Path) -> None:
                 "averaging_match": "true",
                 "data_count_match": "true",
                 "resolution_status": "no_confirmed_context_match",
-                "reason": "The same-session candidate is high power and its AABC filename conflicts with the embedded AAG identity",
+                "reason": "The author did not select this historical coded experiment for release; its same-session candidate is high power and the AABC filename still conflicts with the embedded AAG identity",
             },
             {
                 "family_id": "optimisation_500_5_5_L",
@@ -808,14 +865,14 @@ def write_reference_metadata(metadata_root: Path) -> None:
                 "candidate_sha256": "e36f0ad7a57ebab8cba038309284305cfecc98d1586499fe73e266e301257dd9",
                 "candidate_embedded_datetime": "2024-09-24T09:33:50",
                 "candidate_tag": "Blanck_AABC_750_5_5_H",
-                "material_match": "unresolved",
+                "material_match": "true",
                 "session_match": "true",
                 "integration_match": "true",
                 "power_match": "true",
                 "averaging_match": "true",
                 "data_count_match": "true",
-                "resolution_status": "provisional_context_match_pending_author_confirmation",
-                "reason": "Date and acquisition settings match but AABC must be confirmed as AuAgBC and the file must be confirmed as an analyte-free substrate blank",
+                "resolution_status": "confirmed_context_match",
+                "reason": "The author confirmed AABC is AuAgBC/AAB and this file is an analyte-free AuAgBC blank; date and all acquisition settings match the 24-Sep high-power optimisation",
             },
             {
                 "family_id": "optimisation_750_5_5_M",
@@ -827,14 +884,14 @@ def write_reference_metadata(metadata_root: Path) -> None:
                 "candidate_sha256": "e36f0ad7a57ebab8cba038309284305cfecc98d1586499fe73e266e301257dd9",
                 "candidate_embedded_datetime": "2024-09-24T09:33:50",
                 "candidate_tag": "Blanck_AABC_750_5_5_H",
-                "material_match": "unresolved",
+                "material_match": "true",
                 "session_match": "true",
                 "integration_match": "true",
                 "power_match": "false",
                 "averaging_match": "true",
                 "data_count_match": "true",
                 "resolution_status": "no_confirmed_context_match",
-                "reason": "The same-day AABC candidate was acquired at high power rather than the required medium power and its material identity remains unconfirmed",
+                "reason": "The author confirmed the AABC file is an analyte-free AuAgBC blank, but it was acquired at high rather than required medium power",
             },
             {
                 "family_id": "stability_day_1_2024_05_19",
@@ -884,14 +941,14 @@ def write_reference_metadata(metadata_root: Path) -> None:
                 "candidate_sha256": "e36f0ad7a57ebab8cba038309284305cfecc98d1586499fe73e266e301257dd9",
                 "candidate_embedded_datetime": "2024-09-24T09:33:50",
                 "candidate_tag": "Blanck_AABC_750_5_5_H",
-                "material_match": "unresolved",
+                "material_match": "true",
                 "session_match": "true",
                 "integration_match": "true",
                 "power_match": "false",
                 "averaging_match": "true",
                 "data_count_match": "true",
                 "resolution_status": "no_confirmed_context_match",
-                "reason": "The same-day AABC candidate was acquired at high power rather than the required low power and its material identity remains unconfirmed",
+                "reason": "The author confirmed the same-day AABC file is an analyte-free AuAgBC blank, but it was acquired at high rather than required low power",
             },
         ],
     )
@@ -924,6 +981,32 @@ def add_manifest_row(
         "sanitized_user_path_occurrences": substitutions,
         "note": note,
     })
+
+
+def add_confirmed_4atp_blank_manifest_entry(
+    repository_root: Path,
+    manifest: list[dict[str, object]],
+    status_counts: Counter[str],
+) -> None:
+    """Validate and manifest the committed author-confirmed raw blank."""
+    confirmed_blank = validate_confirmed_4atp_blank(repository_root)
+    add_manifest_row(
+        manifest,
+        repository_root,
+        confirmed_blank,
+        source_name="Blanck_AABC_750_5_5_H.csv",
+        source_relative_path=CONFIRMED_4ATP_BLANK_SOURCE_PATH,
+        source_sha256=CONFIRMED_4ATP_BLANK_SHA256,
+        source_bytes=CONFIRMED_4ATP_BLANK_BYTES,
+        status="raw_author_confirmed",
+        role="4atp_analytical_blank_raw",
+        substitutions=0,
+        note=(
+            "Exact unchanged source file; the author confirmed AABC is AuAgBC/AAB and "
+            "this is an analyte-free blank for the 24 September high-power optimisation."
+        ),
+    )
+    status_counts["raw_author_confirmed"] += 1
 
 
 def parse_args() -> argparse.Namespace:
@@ -976,6 +1059,11 @@ def main() -> int:
     sanitized_legacy_files = 0
     sanitized_occurrences = 0
     sanitization_rows: list[dict[str, object]] = []
+
+    # This raw file is intentionally committed and is not regenerated from a
+    # machine-local master directory. Validate its exact source identity on
+    # every rebuild, then manifest the repository copy directly.
+    add_confirmed_4atp_blank_manifest_entry(repository_root, manifest, status_counts)
 
     # Complete archive CSV snapshot.
     for source in sorted(source_root.rglob("*.csv"), key=lambda item: item.as_posix().casefold()):
@@ -1232,6 +1320,7 @@ def main() -> int:
         metadata_root,
         reports_root / "best_curated_raw_column_matches.csv",
         reports_root / "file_inventory.csv",
+        repository_root,
     )
     legacy_script_count = build_legacy_script_inventory(
         legacy_scripts_root,
