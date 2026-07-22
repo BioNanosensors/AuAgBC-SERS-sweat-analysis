@@ -25,3 +25,5 @@ jobs:
         run: python -m pytest
       - name: Verify repository data release
         run: python scripts/verify_repository_data.py
+      - name: Verify 4-ATP blank audit
+        run: python scripts/verify_4atp_blank_audit.py

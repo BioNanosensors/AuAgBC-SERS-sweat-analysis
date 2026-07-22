@@ -36,7 +36,8 @@ confirmation, with both source and corrected hashes recorded in provenance.
 - `metadata/dataset_manifest.csv` records checksums and status for every
   source-derived dataset file and copied audit report.
 
-See [the data audit](docs/DATA_AUDIT.md) before quantitative reuse. A
+See [the data audit](docs/DATA_AUDIT.md) and the focused
+[4-ATP blank-file audit](docs/4ATP_BLANK_AUDIT.md) before quantitative reuse. A
 `publication_snapshot` label means “used in preparation of the manuscript,” not
 “complete raw lineage independently verified.”
 
@@ -99,6 +100,12 @@ headers, unchanged numerical bodies, and label-provenance sidecars:
 
 ```text
 python scripts/proof_of_concept_mapping.py --check
+```
+
+Verify the machine-readable 4-ATP blank provenance and candidate decisions:
+
+```text
+python scripts/verify_4atp_blank_audit.py
 ```
 
 The archive-wide manifest at `metadata/raw_processing_manifest.csv` includes
@@ -164,6 +171,7 @@ in the [data audit](docs/DATA_AUDIT.md).
 | `docs/PAPER_DATA_MAP.md` | Figure/table-to-data map |
 | `docs/HUMAN_DATA_GOVERNANCE.md` | Consent, ethics, pseudonymisation, and public-sharing evidence status |
 | `docs/ETHICS_APPROVAL.md` | Scope and limitations of the later CFATA/CEID approval letter |
+| `docs/4ATP_BLANK_AUDIT.md` | Historical blank origins, experiment-specific candidates, and unresolved decisions |
 | `docs/LICENSING.md` | Proposed path-level licensing arrangement and required decisions |
 | `docs/RELEASE_CHECKLIST.md` | Items requiring author confirmation before an unqualified public release |
 | `tests/` | Synthetic and regression tests |

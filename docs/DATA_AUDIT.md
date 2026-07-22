@@ -65,6 +65,12 @@ as `provenance_conflict`. This corrects the earlier unsupported all-human
 summary; the explicit correction is recorded in
 `metadata/provenance_corrections.csv`.
 
+A focused blank audit found a same-date, low-power `BC Blank` file, but the
+manuscript and thesis define the analytical blank as AuAgBC without 4-ATP, not
+bare bacterial cellulose. It therefore cannot be substituted without evidence
+that the material label is wrong. See `docs/4ATP_BLANK_AUDIT.md` and the two
+machine-readable tables under `metadata/provenance/`.
+
 The four calibration summary tables are preserved as
 `publication_snapshot`. Their values can be aggregated internally, but that
 does not resolve the identity of the underlying prepared raw files.
@@ -78,6 +84,11 @@ the numerical spectra are recoverable but the nominal concentration assignment
 is not independently verifiable. The same identity-unresolved,
 setting-mismatched blank series described above was copied into this experiment.
 
+In addition, all 135 prepared nonblank channels match concentration-labelled
+24 September low-power measurements, while none matches the original coded
+10 September blind experiment. The intended release dataset must be selected
+before its correct blank can be established.
+
 ### Stability
 
 The folders dated 19 May, 3 July, and 24 September 2024 correspond to elapsed
@@ -88,6 +99,10 @@ The 3 July and 24 September collections also contain repeated or relabelled
 spectra, and the earlier two dates do not provide uniform three-substrate
 coverage at every concentration in the master archive. These folders are kept
 as `provenance_conflict`, even where the historical processing can be replayed.
+No setting- and material-matched AuAgBC blank was found for the intended
+low-power stability points. A folder-local high-power AuAgBC candidate could
+apply only to a confirmed same-batch high-power subset, not to the mixed day-1
+family; its embedded timestamp is after midnight on 20 May.
 
 ### Optimisation
 
@@ -99,6 +114,13 @@ contains 43 historical processed files whose stems do not match any raw file in
 that folder; these are classified as `orphan_derived`. Modern summary outputs
 for the 500 ms low-power and 750 ms medium-power sets are internally
 reproducible to CSV rounding.
+
+The only date- and setting-compatible blank candidate with an AuAgBC-like label
+found for these three optimisation sets is
+`Test 4-ATP/24-09-24/Blank/Blanck_AABC_750_5_5_H.csv` for the high-power set.
+It remains provisional until the author confirms that `AABC` means AuAgBC/AAB
+and that the substrate contained no 4-ATP. No matched AuAgBC blank was found for
+the 500 ms low-power or 750 ms medium-power set.
 
 ### Analytical enhancement factor
 
@@ -226,8 +248,9 @@ Before describing every raw file as verified, the following should be supplied
 or confirmed:
 
 1. the blind-sample code-to-concentration key;
-2. the correct 4-ATP blank measurements for calibration, blind, optimisation,
-   and stability experiments;
+2. confirmation of the provisional 24 September high-power blank and the still
+   missing or unidentified AuAgBC blanks at `500_5_5_L`, `750_5_5_L`, and
+   `750_5_5_M`, as detailed in `4ATP_BLANK_AUDIT.md`;
 3. the intended 750 ms low-power calibration file list, especially mixed 500 ms
    records;
 4. the day-1 stability manifest and the intended three substrate replicates;

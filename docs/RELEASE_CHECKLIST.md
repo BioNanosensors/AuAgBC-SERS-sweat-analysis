@@ -51,12 +51,17 @@ items below remain limitations; public visibility does not mark them resolved.
 - [x] Record and resolve the byte-identical processed candidates at
   dataset-manifest rows 1694 and 1700 as acquisition/publication aliases.
 - [x] Document the repository's current no-licence status and proposed scope.
+- [x] Trace all 120 prepared 4-ATP blank copies to three five-channel master
+  exports and publish an experiment-by-experiment candidate assessment.
 
 ## Required before an unqualified public data release
 
 - [ ] Resolve or explicitly withdraw the conflicting calibration and stability labels documented in `DATA_AUDIT.md`.
 - [ ] Supply the blind-sample decoding key.
-- [ ] Identify the correct 4-ATP blank files.
+- [ ] Confirm the provisional 24 September high-power AuAgBC blank and locate or
+  identify the missing setting-matched AuAgBC blanks listed in
+  `4ATP_BLANK_AUDIT.md`; do not reuse the historical composite as if it were
+  independently acquired for every experiment.
 - [ ] Confirm the AEF extraction and acquisition-time scaling rule.
 - [ ] Privately verify which signed consent version and collection session
   covers each of the four originally tested volunteers; never publish the

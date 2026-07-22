@@ -1,5 +1,8 @@
 source_name,sha256,bytes,hash_status,role,note
 Raman_spectra_data.zip,1b8460a5230bc74e5fe72d47d05d9172ebc9fe48b3024c2ee9e9b44d5fb4680a,132298137,verified_before_extraction,submitted_data_archive,Source of the complete quarantined CSV snapshot.
 Scripts.zip,9c0a8852ea5457911f0860b36ce86cd52783e4b4d6889834366ed941920f119a,293315,verified_before_extraction,legacy_script_archive,Inventoried only; superseded scripts are not distributed.
+Tex.zip,c73c0126f6b5c2d88f5f4bfd4bed77349b2590f92673ab9448f3b9fcdcd5ba50,61666,verified_source_file,method_definition_source,Submitted manuscript source used to confirm the analytical blank definition and portable 4-ATP acquisition settings; not redistributed here.
+PDFs.zip,0dd193d01bd36f0dace705a5003d85eacd686f8bca5698d1f64ef04e2d27c4a9,61601494,verified_source_file,rendered_manuscript_source,Submitted rendered article and supporting information used to visually confirm the method statements; not redistributed here.
+Thesis_MCeIM_DPV.pdf,fcbd81d10f444262b4f75007927d604f478dd4ff3c7c9326c897bd7fdfe3e359,16886679,verified_source_file,method_definition_source,Submitted thesis used as a corroborating methodological source from the same project; not redistributed here.
 Mediciones Raman.zip,,,not_computed_expanded_directory,benchtop_master_search_collection,Used as read-only provenance evidence; the ZIP itself was not available to hash.
 Mediciones Raman portátil.zip,,,not_computed_expanded_directory,portable_master_search_collection,Used as read-only provenance evidence; the ZIP itself was not available to hash.
