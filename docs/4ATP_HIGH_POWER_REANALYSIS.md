@@ -72,19 +72,22 @@ not be attributed solely to the confirmed blank.
 
 ## Reproduce and verify
 
-The persistent release is generated and exactly checked only in the canonical
-environment: Windows x64, Python 3.12.13, and the exact direct-package
-constraints in `requirements-release.txt`. From the repository root, install
-it first:
+The persistent release is generated on Windows x64 with Python 3.12.13. Exact
+Windows verification accepts Python 3.12.10 or 3.12.13 because 3.12.10 is the
+latest official Windows binary available to GitHub Actions for this series.
+Both use the exact direct-package constraints in `requirements-release.txt`.
+From the repository root, install them first:
 
 ```text
 python -m pip install -e ".[test]" -c requirements-release.txt
 ```
 
-The generator and exact check refuse a different operating system, machine
-architecture, Python, or direct-package version. This restriction is necessary
-because the FFT cutoff branch is sensitive to platform-level numerical
-differences. Regenerate the two lineages and their compact audit packages with:
+The generator refuses any other generation environment. The exact check refuses
+a different operating system, machine architecture, Python series, or direct-
+package version; it permits only the recorded 3.12.13 versus 3.12.10 patch
+string to differ. This restriction is necessary because the FFT cutoff branch
+is sensitive to platform-level numerical differences. Regenerate the two
+lineages and their compact audit packages with:
 
 ```text
 python scripts/reprocess_4atp_750_5_5_h.py

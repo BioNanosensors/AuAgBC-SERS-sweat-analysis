@@ -139,10 +139,11 @@ python scripts/reproduce_legacy_families.py
 python scripts/validate_legacy_reproduction.py
 ```
 
-Before regenerating the persistent high-power release, use Windows x64 with
-Python 3.12.13 and install the exact direct-package versions in
-`requirements-release.txt` as constraints. The generator and exact check
-refuse to run from a different platform or package environment.
+Persistent generation uses Windows x64 with Python 3.12.13. Exact Windows
+verification accepts Python 3.12.10 or 3.12.13 because 3.12.10 is the latest
+official Windows binary available to GitHub Actions for this series. Both use
+the exact direct-package constraints in `requirements-release.txt`; the
+generator and exact check refuse any other platform or package environment.
 
 ```text
 python -m pip install -e ".[test]" -c requirements-release.txt

@@ -225,7 +225,7 @@ def test_persistent_generation_environment_guard_rejects_version_drift(
     monkeypatch.setattr(
         REPROCESS.platform,
         "python_version",
-        lambda: REPROCESS.CANONICAL_PYTHON_VERSION,
+        lambda: REPROCESS.GENERATION_PYTHON_VERSION,
     )
     monkeypatch.setattr(
         REPROCESS.platform,
@@ -243,7 +243,7 @@ def test_persistent_generation_environment_guard_rejects_version_drift(
         lambda distribution: expected[distribution],
     )
     report = REPROCESS._validate_canonical_release_environment(PROJECT_ROOT)
-    assert report["python"] == REPROCESS.CANONICAL_PYTHON_VERSION
+    assert report["python"] == REPROCESS.GENERATION_PYTHON_VERSION
     assert report["system"] == REPROCESS.CANONICAL_PLATFORM_SYSTEM
     assert report["machine"] == REPROCESS.CANONICAL_PLATFORM_MACHINE
     assert report["packages"] == dict(
@@ -266,3 +266,41 @@ def test_persistent_generation_environment_guard_rejects_version_drift(
     monkeypatch.setattr(REPROCESS.platform, "system", lambda: "Linux")
     with pytest.raises(REPROCESS.ReanalysisError, match="platform Linux"):
         REPROCESS._validate_canonical_release_environment(PROJECT_ROOT)
+
+    monkeypatch.setattr(
+        REPROCESS.platform,
+        "system",
+        lambda: REPROCESS.CANONICAL_PLATFORM_SYSTEM,
+    )
+    monkeypatch.setattr(REPROCESS.platform, "python_version", lambda: "3.12.10")
+    with pytest.raises(REPROCESS.ReanalysisError, match="expected 3.12.13"):
+        REPROCESS._validate_canonical_release_environment(PROJECT_ROOT)
+    check_report = REPROCESS._validate_canonical_release_environment(
+        PROJECT_ROOT, allow_check_patch=True
+    )
+    assert check_report["python"] == "3.12.10"
+
+
+def test_release_comparison_allows_only_the_python_check_patch_difference() -> None:
+    errors: list[str] = []
+    REPROCESS._compare_values(
+        "3.12.13",
+        "3.12.10",
+        path=(
+            "controlled_legacy_confirmed_blank/package_metadata.json."
+            "software_environment.python"
+        ),
+        errors=errors,
+    )
+    assert errors == []
+
+    REPROCESS._compare_values(
+        "2.5.0",
+        "2.4.0",
+        path=(
+            "controlled_legacy_confirmed_blank/package_metadata.json."
+            "software_environment.dependencies.numpy"
+        ),
+        errors=errors,
+    )
+    assert errors

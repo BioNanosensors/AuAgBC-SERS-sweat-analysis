@@ -66,7 +66,8 @@ HISTORICAL_PROCESSED_RELATIVE = Path(
     "data/quarantine/legacy_snapshot/Optimisation/750_5_5_H/Processed Spectra"
 )
 RELEASE_REQUIREMENTS_RELATIVE = Path("requirements-release.txt")
-CANONICAL_PYTHON_VERSION = "3.12.13"
+GENERATION_PYTHON_VERSION = "3.12.13"
+CHECK_PYTHON_VERSIONS = ("3.12.10", "3.12.13")
 CANONICAL_PLATFORM_SYSTEM = "Windows"
 CANONICAL_PLATFORM_MACHINE = "AMD64"
 
@@ -319,7 +320,9 @@ def _installed_distribution_version(distribution: str) -> str:
         return "not-installed"
 
 
-def _validate_canonical_release_environment(repository: Path) -> dict[str, object]:
+def _validate_canonical_release_environment(
+    repository: Path, *, allow_check_patch: bool = False
+) -> dict[str, object]:
     """Refuse persistent publication from a noncanonical numerical stack."""
     expected = _expected_release_packages(repository)
     actual: dict[str, str] = {}
@@ -327,9 +330,14 @@ def _validate_canonical_release_environment(repository: Path) -> dict[str, objec
     python_version = platform.python_version()
     platform_system = platform.system()
     platform_machine = platform.machine()
-    if python_version != CANONICAL_PYTHON_VERSION:
+    allowed_python = (
+        CHECK_PYTHON_VERSIONS
+        if allow_check_patch
+        else (GENERATION_PYTHON_VERSION,)
+    )
+    if python_version not in allowed_python:
         mismatches.append(
-            f"Python {python_version} (expected {CANONICAL_PYTHON_VERSION})"
+            f"Python {python_version} (expected {' or '.join(allowed_python)})"
         )
     if platform_system != CANONICAL_PLATFORM_SYSTEM:
         mismatches.append(
@@ -1749,6 +1757,12 @@ def _compare_values(
     rtol: float = 1e-7,
     atol: float = 1e-6,
 ) -> None:
+    if path.endswith("package_metadata.json.software_environment.python"):
+        # The committed release records its generation patch (3.12.13), while
+        # GitHub's latest official Windows binary for this series is 3.12.10.
+        # Both are explicitly allowed for checking; all numerical products,
+        # dependency versions, platform fields, and other metadata still compare.
+        return
     if isinstance(expected, dict) and isinstance(actual, dict):
         if set(expected) != set(actual):
             errors.append(f"{path}: JSON object keys differ")
@@ -1919,7 +1933,7 @@ def generate_release(repository: Path) -> dict[str, object]:
 
 
 def check_release(repository: Path) -> list[str]:
-    _validate_canonical_release_environment(repository)
+    _validate_canonical_release_environment(repository, allow_check_patch=True)
     errors = check_configuration_files(repository)
     if errors:
         return errors
