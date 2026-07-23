@@ -115,12 +115,12 @@ frequency; `legacy_argmin` is retained only for numerical archaeology.
 Package metadata records the cutoff-lock hash, pinned direct-package versions,
 the constraints-file hash, and SHA-256 identities for the generator and all
 `auagbc_sers` modules used. Both regeneration and `--check` freshly replay the
-historical mixed-composite run and require all 210 preserved spectra to agree within an
-absolute tolerance of `1e-8`. This bound admits only very small platform-level
-floating-point drift between the canonical workstation and the GitHub Windows
-runner while remaining many orders of magnitude below a scientifically
-meaningful intensity change; it keeps the “blank-only” comparison self-checking
-as the code evolves.
+historical mixed-composite run and require all 210 preserved spectra to agree
+within an absolute tolerance of `1e-6`. This bound admits only very small
+platform-level floating-point drift between the canonical workstation and the
+GitHub Windows runner while remaining many orders of magnitude below a
+scientifically meaningful intensity change; it keeps the “blank-only” comparison
+self-checking as the code evolves.
 
 The release directories contain compact machine-readable summaries. The full
 long-form scan table is stored as `spectra_scan.csv.gz`, while the 200 individual

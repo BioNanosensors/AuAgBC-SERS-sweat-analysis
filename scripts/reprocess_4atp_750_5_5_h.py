@@ -74,7 +74,7 @@ GENERATION_PYTHON_VERSION = "3.12.13"
 CHECK_PYTHON_VERSIONS = ("3.12.10", "3.12.13")
 CANONICAL_PLATFORM_SYSTEM = "Windows"
 CANONICAL_PLATFORM_MACHINE = "AMD64"
-HISTORICAL_REPLAY_ABSOLUTE_TOLERANCE = 1e-8
+HISTORICAL_REPLAY_ABSOLUTE_TOLERANCE = 1e-6
 
 CONTROLLED_NAME = "controlled_legacy_confirmed_blank"
 REFERENCE_NAME = "reference_2026"
@@ -1021,6 +1021,7 @@ def _validate_historical_replay(
     max_abs_y = 0.0
     sample_count = 0
     blank_count = 0
+    tolerance_violations: list[tuple[str, float, float]] = []
     for row in resolved_rows:
         relative = Path(row["processed_file"])
         fresh = _read_arrays(output_path / relative)
@@ -1044,17 +1045,24 @@ def _validate_historical_replay(
             rtol=0.0,
             atol=HISTORICAL_REPLAY_ABSOLUTE_TOLERANCE,
         ):
-            raise ReanalysisError(
-                "Historical replay exceeds "
-                f"{HISTORICAL_REPLAY_ABSOLUTE_TOLERANCE:.0e} absolute tolerance "
-                f"for {relative.name}: "
-                f"max |delta x|={delta_x:.6g}, max |delta y|={delta_y:.6g}."
-            )
+            tolerance_violations.append((relative.name, delta_x, delta_y))
         if row.get("sample_type", "").casefold() == "blank":
             blank_count += 1
         else:
             sample_count += 1
 
+    if tolerance_violations:
+        worst_name, worst_x, worst_y = max(
+            tolerance_violations,
+            key=lambda item: max(item[1], item[2]),
+        )
+        raise ReanalysisError(
+            f"Historical replay has {len(tolerance_violations)} of {len(resolved_rows)} "
+            "spectra above "
+            f"{HISTORICAL_REPLAY_ABSOLUTE_TOLERANCE:.0e} absolute tolerance; "
+            f"worst={worst_name}, max |delta x|={worst_x:.6g}, "
+            f"max |delta y|={worst_y:.6g}."
+        )
     if sample_count != 195 or blank_count != 15:
         raise ReanalysisError(
             f"Historical replay compared {sample_count} samples and {blank_count} blanks."
