@@ -67,6 +67,8 @@ HISTORICAL_PROCESSED_RELATIVE = Path(
 )
 RELEASE_REQUIREMENTS_RELATIVE = Path("requirements-release.txt")
 CANONICAL_PYTHON_VERSION = "3.12.13"
+CANONICAL_PLATFORM_SYSTEM = "Windows"
+CANONICAL_PLATFORM_MACHINE = "AMD64"
 
 CONTROLLED_NAME = "controlled_legacy_confirmed_blank"
 REFERENCE_NAME = "reference_2026"
@@ -323,9 +325,19 @@ def _validate_canonical_release_environment(repository: Path) -> dict[str, objec
     actual: dict[str, str] = {}
     mismatches: list[str] = []
     python_version = platform.python_version()
+    platform_system = platform.system()
+    platform_machine = platform.machine()
     if python_version != CANONICAL_PYTHON_VERSION:
         mismatches.append(
             f"Python {python_version} (expected {CANONICAL_PYTHON_VERSION})"
+        )
+    if platform_system != CANONICAL_PLATFORM_SYSTEM:
+        mismatches.append(
+            f"platform {platform_system} (expected {CANONICAL_PLATFORM_SYSTEM})"
+        )
+    if platform_machine.casefold() != CANONICAL_PLATFORM_MACHINE.casefold():
+        mismatches.append(
+            f"machine {platform_machine} (expected {CANONICAL_PLATFORM_MACHINE})"
         )
     for distribution, expected_version in expected.items():
         actual_version = _installed_distribution_version(distribution)
@@ -336,13 +348,15 @@ def _validate_canonical_release_environment(repository: Path) -> dict[str, objec
             )
     if mismatches:
         raise ReanalysisError(
-            "Persistent release generation requires the canonical environment: "
+            "Persistent release generation and exact checking require the canonical environment: "
             + "; ".join(mismatches)
             + '. Install it with: python -m pip install -e ".[test]" '
             "-c requirements-release.txt"
         )
     return {
         "python": python_version,
+        "system": platform_system,
+        "machine": platform_machine,
         "packages": dict(sorted(actual.items(), key=lambda item: item[0].casefold())),
     }
 
@@ -1601,6 +1615,8 @@ def _write_lineage_package(
     }
     software["dependencies"] = dict(software["dependencies"])
     software["dependencies"]["pytest"] = _installed_distribution_version("pytest")
+    software["system"] = platform.system()
+    software["machine"] = platform.machine()
     metadata = {
         "schema_version": 1,
         "lineage": lineage.name,
@@ -1903,6 +1919,7 @@ def generate_release(repository: Path) -> dict[str, object]:
 
 
 def check_release(repository: Path) -> list[str]:
+    _validate_canonical_release_environment(repository)
     errors = check_configuration_files(repository)
     if errors:
         return errors

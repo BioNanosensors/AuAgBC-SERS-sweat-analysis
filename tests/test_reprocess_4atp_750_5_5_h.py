@@ -192,6 +192,8 @@ def test_release_metadata_records_environment_code_and_warning_scopes() -> None:
         metadata_by_lineage[lineage] = metadata
         software = metadata["software_environment"]
         assert software["python"] == "3.12.13"
+        assert software["system"] == "Windows"
+        assert software["machine"] == "AMD64"
         assert software["dependencies"] == expected_dependencies
         assert metadata["run_warnings"] == []
         assert "warnings" not in metadata
@@ -226,12 +228,24 @@ def test_persistent_generation_environment_guard_rejects_version_drift(
         lambda: REPROCESS.CANONICAL_PYTHON_VERSION,
     )
     monkeypatch.setattr(
+        REPROCESS.platform,
+        "system",
+        lambda: REPROCESS.CANONICAL_PLATFORM_SYSTEM,
+    )
+    monkeypatch.setattr(
+        REPROCESS.platform,
+        "machine",
+        lambda: REPROCESS.CANONICAL_PLATFORM_MACHINE,
+    )
+    monkeypatch.setattr(
         REPROCESS,
         "_installed_distribution_version",
         lambda distribution: expected[distribution],
     )
     report = REPROCESS._validate_canonical_release_environment(PROJECT_ROOT)
     assert report["python"] == REPROCESS.CANONICAL_PYTHON_VERSION
+    assert report["system"] == REPROCESS.CANONICAL_PLATFORM_SYSTEM
+    assert report["machine"] == REPROCESS.CANONICAL_PLATFORM_MACHINE
     assert report["packages"] == dict(
         sorted(expected.items(), key=lambda item: item[0].casefold())
     )
@@ -242,4 +256,13 @@ def test_persistent_generation_environment_guard_rejects_version_drift(
         lambda distribution: "0.0.0" if distribution == "numpy" else expected[distribution],
     )
     with pytest.raises(REPROCESS.ReanalysisError, match="numpy 0.0.0"):
+        REPROCESS._validate_canonical_release_environment(PROJECT_ROOT)
+
+    monkeypatch.setattr(
+        REPROCESS,
+        "_installed_distribution_version",
+        lambda distribution: expected[distribution],
+    )
+    monkeypatch.setattr(REPROCESS.platform, "system", lambda: "Linux")
+    with pytest.raises(REPROCESS.ReanalysisError, match="platform Linux"):
         REPROCESS._validate_canonical_release_environment(PROJECT_ROOT)

@@ -139,9 +139,10 @@ python scripts/reproduce_legacy_families.py
 python scripts/validate_legacy_reproduction.py
 ```
 
-Before regenerating the persistent high-power release, use Python 3.12.13 and
-install the exact direct-package versions in `requirements-release.txt` as
-constraints. The generator refuses to publish from a different environment.
+Before regenerating the persistent high-power release, use Windows x64 with
+Python 3.12.13 and install the exact direct-package versions in
+`requirements-release.txt` as constraints. The generator and exact check
+refuse to run from a different platform or package environment.
 
 ```text
 python -m pip install -e ".[test]" -c requirements-release.txt
