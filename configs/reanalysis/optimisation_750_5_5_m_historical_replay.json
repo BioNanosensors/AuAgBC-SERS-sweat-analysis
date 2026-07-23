@@ -1,0 +1,122 @@
+{
+  "schema_version": "1.0",
+  "lineage": "optimisation_750_5_5_M_historical_computational_replay",
+  "claim_scope": "computational_lineage_only",
+  "release_classification": "audit_evidence_only",
+  "scientific_blank_status": "no_confirmed_medium_power_blank",
+  "paths": {
+    "source_inventory": "configs/reanalysis/optimisation_750_5_5_m_historical_replay_sources.csv",
+    "channel_manifest": "configs/reanalysis/optimisation_750_5_5_m_historical_replay_manifest.csv",
+    "fft_locks": "metadata/processing_locks/optimisation_750_5_5_m_historical_replay_fft_cutoffs.csv",
+    "output_directory": "data/processed/4atp/optimisation/750_5_5_M/historical_computational_replay"
+  },
+  "expected_composition": {
+    "source_files": 43,
+    "AAB_sample_exports": 39,
+    "BC_sample_exports": 3,
+    "assembled_blank_exports": 1,
+    "channels": 225,
+    "AAB_sample_channels": 195,
+    "BC_sample_channels": 15,
+    "assembled_blank_channels": 15,
+    "processed_files": 43,
+    "points_per_channel": 432
+  },
+  "vendor_csv_reader": {
+    "header_row_index": 99,
+    "note": "Recovered historical parser quirk: pandas header index 99 treats physical line 100, the 80th spectral row, as the header and retains data lines 101-532, the final 432 of 512 spectral points. Intensity channels are then addressed by position."
+  },
+  "blank_operation": {
+    "source_record_id": "M750-CH-211",
+    "source_channel_index": 1,
+    "operation": "rowwise_subtraction_by_position",
+    "axis_alignment": "none",
+    "interpolation": "none",
+    "status": "provenance_conflict",
+    "warning": "The assembled blank is embedded-labelled AAB_Blank_750_5_5_H and is not a confirmed 750_5_5_M blank. This replay preserves historical arithmetic only."
+  },
+  "processing": {
+    "first_iarpls": {
+      "lambda_by_role": {
+        "AAB_sample": 3000.0,
+        "BC_sample": 1000.0,
+        "assembled_blank": 700.0
+      },
+      "diff_order": 2,
+      "max_iter": 50,
+      "tolerance": 0.001
+    },
+    "fft_filter": {
+      "percentile_by_role": {
+        "AAB_sample": 10.0,
+        "BC_sample": 10.0,
+        "assembled_blank": 5.0
+      },
+      "peak_rule": "closest_magnitude_to_percentile",
+      "tie_atol_epsilon_multiplier": 32,
+      "expected_tie_channels": 13,
+      "expected_forensic_overrides": 5,
+      "butterworth_order": 3,
+      "filter": "scipy.signal.filtfilt",
+      "locks": "Source-hash-bound forensic FFT bins; locks reproduce preserved history and are not recommended scientific parameters."
+    },
+    "second_iarpls": {
+      "lambda": 80.0,
+      "diff_order": 2,
+      "max_iter": 50,
+      "tolerance": 0.001
+    },
+    "savgol": "not_applied"
+  },
+  "acceptance": {
+    "axis_array_equal": true,
+    "axis_max_abs_cm-1": 0.0,
+    "intensity_rtol": 0.0,
+    "intensity_rmse_max": 1e-07,
+    "intensity_max_abs_max": 1e-06
+  },
+  "deterministic_package": {
+    "files": [
+      "README.md",
+      "package_metadata.json",
+      "resolved_manifest.csv",
+      "replay_metrics.csv",
+      "replayed_spectra.zip"
+    ],
+    "zip_member_prefix": "spectra/",
+    "zip_timestamp": [
+      1980,
+      1,
+      1,
+      0,
+      0,
+      0
+    ],
+    "zip_permissions_octal": "100644",
+    "zip_compression": "deflate",
+    "zip_compresslevel": 9,
+    "csv_float_format": ".17g",
+    "text_encoding": "utf-8",
+    "line_ending": "LF"
+  },
+  "validated_environment": {
+    "generation_python": "3.12.13",
+    "check_python": [
+      "3.12.10",
+      "3.12.13"
+    ],
+    "system": "Windows",
+    "machine": "AMD64",
+    "zlib_compile": "1.3.1",
+    "zlib_runtime": "1.3.1",
+    "packages": {
+      "numpy": "2.5.0",
+      "pandas": "3.0.3",
+      "scipy": "1.18.0",
+      "pybaselines": "1.2.1",
+      "PyYAML": "6.0.3",
+      "pytest": "9.1.1"
+    }
+  },
+  "interpretation_limit": "The replay proves how the stored numbers were computed. It does not prove that the inputs, labels, replicates, or mixed high-power blank were scientifically valid for the medium-power experiment."
+}

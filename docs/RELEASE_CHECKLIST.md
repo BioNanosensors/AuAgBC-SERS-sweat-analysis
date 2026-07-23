@@ -74,6 +74,18 @@ items below remain limitations; public visibility does not mark them resolved.
   not five or three independent blank substrates.
 - [x] Use `100 µM` for `0.0001 M` in the new lineage while preserving the
   historical paper-facing `100 mM` header typo unchanged.
+- [x] Recover an explicit source-column mapping for all 43 historical
+  `750_5_5_M` processed files: 39 AAB, three BC, and one 15-channel assembled
+  blank file, covering 225 channels.
+- [x] Replay all 225 medium-power historical channels with exact parsed
+  Raman-shift arrays and machine-scale intensity bounds, and publish the
+  per-channel metrics and source-hash-bound FFT decisions as `audit_evidence`.
+- [x] Record that the replay proves computation only: the workflow used the
+  first channel of the mixed high-power assembled blank, so the blank and
+  historical outputs remain `provenance_conflict`.
+- [x] Keep the replay separate from the publication snapshot and decline to
+  publish a `reference_2026` medium-power result without a setting-matched
+  AuAgBC blank.
 
 ## Required before an unqualified public data release
 
@@ -91,7 +103,10 @@ items below remain limitations; public visibility does not mark them resolved.
   low- and medium-power blanks, or scientifically document withdrawal or
   reanalysis of the affected comparisons. The author's uncertain recollection
   is not file-level evidence, and the historical high-power composite must not
-  be reused as if independently acquired for every experiment.
+  be reused as if independently acquired for every experiment. The recovered
+  `750_5_5_M` computation does not satisfy this item because it identifies use
+  of the conflicting historical composite rather than a valid medium-power
+  blank.
 - [ ] Confirm the AEF extraction and acquisition-time scaling rule.
 - [ ] Complete scientific review before presenting the high-power
   `reference_2026` reanalysis as more accurate, preferred, or suitable for new

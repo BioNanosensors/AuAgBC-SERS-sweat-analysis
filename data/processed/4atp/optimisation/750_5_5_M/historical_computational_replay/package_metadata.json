@@ -1,0 +1,132 @@
+{
+  "schema_version": "1.0",
+  "package": "4atp_750_5_5_M_historical_computational_replay",
+  "claim_scope": "computational_lineage_only",
+  "release_classification": "audit_evidence_only",
+  "byte_identity_claimed": false,
+  "scientific_blank_status": "no_confirmed_medium_power_blank",
+  "composition": {
+    "source_files": 43,
+    "source_roles": {
+      "AAB_sample": 39,
+      "BC_sample": 3,
+      "assembled_blank": 1
+    },
+    "spectral_channels": 225,
+    "replayed_spectra_files": 43,
+    "points_per_channel": 432
+  },
+  "hash_contract": {
+    "config_sha256": "c5dad9bfcfedcfa17c9c4e2a8c1ee356149fd1d07c258edd806e3302db9f9fc7",
+    "source_inventory_sha256": "eb74c7255ecfcfd813db8ee744a5866ea6603f7ece917e0bef6e69bd767cd285",
+    "channel_manifest_sha256": "03fc0c35d72fd145bdd432fc7e50921eb336e77725a59f5576f332cea3f70eda",
+    "fft_locks_sha256": "10022b48ff08074a6f6be3721f9b275dff8dcd6418719acecab750da0356d679",
+    "replay_script_sha256": "b17da79c740c0c71f83087fb0cb1e2bb86c2ef52d954ebbd27f0cfbc88ff2b00"
+  },
+  "package_file_hashes": {
+    "README.md": "427f2f0302b4fcc99f7fd4aff6d16362c4ae2fc48a220fd1eaafe0d435d2a79e",
+    "resolved_manifest.csv": "fb56addeec0484a46263708ed820f9b439929266326c061fe77a52396f03f427",
+    "replay_metrics.csv": "1684fddfcc93f736a0e969caa45793634ef8f2ef777a450b26daee6b6c6030a3",
+    "replayed_spectra.zip": "b84dee4892693c6f55f871fad176a3bdee5227a37892c4f51a389a09fb2848db"
+  },
+  "acceptance": {
+    "axis_array_equal": true,
+    "axis_max_abs_cm-1": 0.0,
+    "intensity_rtol": 0.0,
+    "intensity_rmse_max": 1e-07,
+    "intensity_max_abs_max": 1e-06
+  },
+  "observed": {
+    "passing_channels": 225,
+    "failing_channels": 0,
+    "exact_axis_channels": 225,
+    "exact_intensity_channels": 0,
+    "worst_intensity_rmse": 6.294167560348376e-08,
+    "worst_intensity_max_abs": 2.2915082809049636e-07,
+    "fft_tie_channels": 13,
+    "forensic_fft_overrides": 5
+  },
+  "historical_blank": {
+    "source_record_id": "M750-CH-211",
+    "operation": "rowwise_subtraction_by_position",
+    "status": "provenance_conflict",
+    "warning": "The assembled blank is embedded-labelled AAB_Blank_750_5_5_H and is not a confirmed 750_5_5_M blank. This replay preserves historical arithmetic only."
+  },
+  "processing_summary": {
+    "first_iarpls": {
+      "lambda_by_role": {
+        "AAB_sample": 3000.0,
+        "BC_sample": 1000.0,
+        "assembled_blank": 700.0
+      },
+      "diff_order": 2,
+      "max_iter": 50,
+      "tolerance": 0.001
+    },
+    "fft_filter": {
+      "percentile_by_role": {
+        "AAB_sample": 10.0,
+        "BC_sample": 10.0,
+        "assembled_blank": 5.0
+      },
+      "peak_rule": "closest_magnitude_to_percentile",
+      "tie_atol_epsilon_multiplier": 32,
+      "expected_tie_channels": 13,
+      "expected_forensic_overrides": 5,
+      "butterworth_order": 3,
+      "filter": "scipy.signal.filtfilt",
+      "locks": "Source-hash-bound forensic FFT bins; locks reproduce preserved history and are not recommended scientific parameters."
+    },
+    "second_iarpls": {
+      "lambda": 80.0,
+      "diff_order": 2,
+      "max_iter": 50,
+      "tolerance": 0.001
+    },
+    "savgol": "not_applied"
+  },
+  "validated_environment": {
+    "generation_python": "3.12.13",
+    "check_python": [
+      "3.12.10",
+      "3.12.13"
+    ],
+    "system": "Windows",
+    "machine": "AMD64",
+    "zlib_compile": "1.3.1",
+    "zlib_runtime": "1.3.1",
+    "packages": {
+      "numpy": "2.5.0",
+      "pandas": "3.0.3",
+      "scipy": "1.18.0",
+      "pybaselines": "1.2.1",
+      "PyYAML": "6.0.3",
+      "pytest": "9.1.1"
+    }
+  },
+  "deterministic_serialization": {
+    "files": [
+      "README.md",
+      "package_metadata.json",
+      "resolved_manifest.csv",
+      "replay_metrics.csv",
+      "replayed_spectra.zip"
+    ],
+    "zip_member_prefix": "spectra/",
+    "zip_timestamp": [
+      1980,
+      1,
+      1,
+      0,
+      0,
+      0
+    ],
+    "zip_permissions_octal": "100644",
+    "zip_compression": "deflate",
+    "zip_compresslevel": 9,
+    "csv_float_format": ".17g",
+    "text_encoding": "utf-8",
+    "line_ending": "LF"
+  },
+  "interpretation_limit": "The replay proves how the stored numbers were computed. It does not prove that the inputs, labels, replicates, or mixed high-power blank were scientifically valid for the medium-power experiment."
+}

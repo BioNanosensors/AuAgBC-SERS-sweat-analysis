@@ -7,16 +7,18 @@
   "publication_snapshot_file_count": 17,
   "raw_processing_manifest_rows": 1450,
   "legacy_script_inventory_rows": 69,
-  "copied_audit_report_count": 23,
-  "dataset_manifest_rows": 2850,
+  "copied_audit_report_count": 29,
+  "dataset_manifest_rows": 2899,
   "status_counts": {
-    "audit_evidence": 23,
+    "audit_evidence": 29,
     "legacy_derived": 64,
-    "provenance_conflict": 1914,
+    "provenance_conflict": 1915,
     "publication_snapshot": 17,
     "raw_author_confirmed": 1,
-    "raw_unverified": 807,
+    "raw_unverified": 849,
     "regenerated_partial_provenance": 24
   },
-  "regenerated_4atp_release_file_count": 30
+  "regenerated_4atp_release_file_count": 35,
+  "medium_power_computational_replay_source_file_count": 43,
+  "medium_power_computational_replay_file_count": 5
 }

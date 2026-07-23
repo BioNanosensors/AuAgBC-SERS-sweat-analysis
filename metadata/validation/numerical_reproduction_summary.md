@@ -1,5 +1,19 @@
 > **Superseded package result (20 July 2026).** This exploratory report used a separate data-frame replay. Its conclusion that 27 large differences demonstrate provenance mismatches is not supported by the released workflow. The deterministic package replay later reproduced all 955 paired spectra exactly (RMSE and maximum absolute difference both zero). See `package_reproduction_summary.csv`, `package_reproduction_metrics.csv`, and `../../docs/DATA_AUDIT.md`. The report below is retained only as evidence of the historical FFT cutoff's sensitivity to approximately 1e-12 parsing and summation differences.
 
+> **Medium-power lineage correction (23 July 2026).** The original stem-pair
+> audit correctly found zero name-paired sources for
+> `Optimisation/750_5_5_M` inside the prepared folder, but its inference that
+> none of the 43 outputs could be regenerated was too broad. A later explicit
+> mapping to 42 vendor exports and one assembled 15-channel blank reproduces
+> all 43 files and all 225 channels: parsed Raman-shift arrays are exact, the
+> worst intensity RMSE is approximately `6.294e-8`, and the worst maximum
+> absolute difference is approximately `2.292e-7`. This is
+> computational-lineage evidence only. The historical workflow uses the first
+> channel of a mixed high-power assembled blank, so its scientific context
+> remains unresolved. See
+> `../../docs/4ATP_MEDIUM_POWER_COMPUTATIONAL_REPLAY.md` and the persistent
+> replay package.
+
 # Numerical reproduction audit
 
 Runtime: Python 3.12.10; NumPy 2.5.0; pandas 3.0.3; SciPy 1.18.0; pybaselines 1.2.1.
@@ -31,10 +45,14 @@ the median RMSE in every family is between `2.80e-12` and `2.94e-11`. Their
 large errors therefore indicate raw/processed provenance mismatches, not floating
 point drift. Exact file-level metrics are in `v2_profile_pair_metrics.csv`.
 
-`Optimisation/750_5_5_M` has 210 Stability-style raw files but 43 processed files
-with entirely different AAB/BC names and multi-column 432-point schemas. There
-are zero feasible name-paired raw/processed spectra in that folder, so none of
-those 43 outputs can be regenerated from the curated raw folder.
+`Optimisation/750_5_5_M` has 210 prepared split files but 43 historical
+multi-column processed files with AAB, BC, and blank names. This exploratory
+same-stem method found zero feasible pairs within that prepared folder. A later
+source-column audit recovered the distinct vendor-export lineage, including
+the otherwise absent BC inputs, and numerically replayed all 225 channels. The
+prepared-folder pairing result is retained here to document why filename
+matching alone was insufficient; it must not be cited as evidence that the
+historical computation remains unrecoverable.
 
 ## Other legacy families
 
@@ -72,9 +90,11 @@ those 43 outputs can be regenerated from the curated raw folder.
 
 ## Repository implication
 
-No complete processed folder is currently fully regenerable. The five large
-portable v2 folders and the Blind-sample AAB subset contain strong reproducible
-majorities and can be rebuilt after quarantining the listed discrepancies. The
-750_5_5_M, Calibration, Analytical Enhancement, and Proof-of-concept processed
-folders require corrected raw provenance and/or the missing exact blank before a
-scientific repository should assert full reproducibility.
+The five large portable-v2 folders have an exact deterministic package replay.
+The `750_5_5_M` folder now also has a complete but separate 43-file,
+225-channel historical computational replay from explicitly mapped vendor
+sources. That result resolves executable lineage only; its assembled
+high-power blank remains invalid for a scientifically verified medium-power
+analysis. Calibration, Analytical Enhancement, and Proof of concept still
+require corrected raw provenance and/or missing processing evidence before
+complete scientific reproducibility can be claimed.

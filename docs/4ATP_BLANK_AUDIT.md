@@ -148,6 +148,18 @@ Its instrument header claims a 25 July high-power acquisition, but its intensity
 columns are the same mixed September composite traced above. It is an assembled
 historical input, not an independent blank acquisition.
 
+The recovered `750_5_5_M` workflow confirms this file's computational role: it
+subtracts only the first intensity channel, row by row and without axis
+interpolation, from all 210 nonblank AAB and BC channels. The resulting replay
+reproduces all 43 historical processed files within the machine-scale bounds
+documented in
+[the medium-power computational-lineage replay](4ATP_MEDIUM_POWER_COMPUTATIONAL_REPLAY.md).
+
+This identifies the historical calculation; it does not validate the blank.
+The first channel remains part of the same mixed high-power composite, and no
+evidence makes it a medium-power AuAgBC blank. The `750_5_5_M` decision
+therefore remains **No confirmed blank**.
+
 ## Assessment by experiment
 
 | Experiment or release scope | Required context | Best evidence found | Current decision |
@@ -157,7 +169,7 @@ historical input, not an independent blank acquisition.
 | Historical coded blind experiment, not selected | 10 September 2024, low-power samples | Same-date file is `AABC Blank_750_5_5_H.csv`; its embedded tag says `AAG` | Not selected for release; blank remains unresolved |
 | Optimisation, 500 ms low power | 3 July 2024, `500_5_5_L` | No setting-matched AuAgBC blank found | No confirmed blank |
 | Optimisation, 750 ms high power | 24 September 2024, `750_5_5_H` | `Blanck_AABC_750_5_5_H.csv` matches date, material, analyte-free identity, and settings | Confirmed context match |
-| Optimisation, 750 ms medium power | 24 September 2024, `750_5_5_M` | No medium-power AuAgBC blank found | No confirmed blank |
+| Optimisation, 750 ms medium power | 24 September 2024, `750_5_5_M` | Historical calculation used the first channel of the assembled mixed high-power `AAB_Blank.csv`; no medium-power AuAgBC blank was found | Computational role recovered; no confirmed blank |
 | Stability, day 1 | 19 May 2024; intended `750_5_5_L` | A folder-local AuAgBC blank exists only at high power and has a 20 May timestamp; the prepared family also mixes dates/settings | No blank valid for the complete family |
 | Stability, day 45 | 3 July 2024, `750_5_5_L` | Same-date low-power file is labelled bare BC | No confirmed blank |
 | Stability, day 128 | 24 September 2024, `750_5_5_L` | Same-date AuAgBC-like candidate is high power | No confirmed blank |
@@ -194,6 +206,14 @@ snapshot for release. The 10 September decoding key is therefore not required
 for the selected release scope, but it would still be required before the
 historical coded experiment could be released or used to substantiate the
 original blinded-validation lineage.
+
+## Medium-power computational replay does not close the blank gap
+
+The explicit source mapping and successful 225-channel replay resolve how the
+historical `750_5_5_M` numbers were calculated. They do not alter the material,
+date, or power evidence for the reference spectrum. Consequently, the replay
+must not be described as a corrected medium-power analysis, and its FFT locks
+must not be reused as scientifically selected parameters for a new experiment.
 
 ## Blank files still needed
 

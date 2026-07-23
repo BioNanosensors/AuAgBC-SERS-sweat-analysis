@@ -127,6 +127,74 @@ def test_valid_tiny_repository_passes(tmp_path: Path) -> None:
     assert report["counts"]["manifest_files_hashed"] == 1
 
 
+def test_summary_counts_both_4atp_release_roots_and_medium_sources(
+    tmp_path: Path,
+) -> None:
+    root, _ = _tiny_repository(tmp_path)
+    additions = [
+        root
+        / "data"
+        / "processed"
+        / "4atp"
+        / "optimisation"
+        / "750_5_5_H"
+        / "reference_2026"
+        / "package.csv",
+        root
+        / "data"
+        / "processed"
+        / "4atp"
+        / "optimisation"
+        / "750_5_5_M"
+        / "historical_computational_replay"
+        / "replay_metrics.csv",
+        root
+        / "data"
+        / "quarantine"
+        / "computational_lineage_sources"
+        / "4atp"
+        / "optimisation"
+        / "750_5_5_M"
+        / "samples"
+        / "source.csv",
+    ]
+    for path in additions:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("x,y\n1,2\n", encoding="utf-8")
+
+    manifest_path = root / "metadata" / "dataset_manifest.csv"
+    with manifest_path.open(encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+        fieldnames = list(rows[0])
+    for path in additions:
+        rows.append(
+            {
+                "repository_path": path.relative_to(root).as_posix(),
+                "repository_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "repository_bytes": path.stat().st_size,
+                "status": "raw_unverified",
+            }
+        )
+    _write_csv(manifest_path, fieldnames, rows)
+    summary_path = root / "metadata" / "curation_summary.json"
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary.update(
+        {
+            "regenerated_4atp_release_file_count": 2,
+            "medium_power_computational_replay_source_file_count": 1,
+            "medium_power_computational_replay_file_count": 1,
+            "dataset_manifest_rows": 4,
+            "status_counts": {"raw_unverified": 4},
+        }
+    )
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
+
+    report = VERIFY_MODULE.verify_repository(root)
+
+    assert report["ok"] is True
+    assert report["error_count"] == 0
+
+
 def test_tampered_file_reports_size_hash_and_nonzero_exit(
     tmp_path: Path, capsys
 ) -> None:

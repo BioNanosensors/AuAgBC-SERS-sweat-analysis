@@ -69,6 +69,27 @@ CONFIRMED_4ATP_REANALYSIS_RELEASE_ROOT = Path(
 CONFIRMED_4ATP_FFT_CUTOFF_LOCK = Path(
     "metadata/processing_locks/optimisation_750_5_5_h_fft_cutoffs.csv"
 )
+MEDIUM_4ATP_REPLAY_SOURCE_ROOT = Path(
+    "data/quarantine/computational_lineage_sources/4atp/optimisation/750_5_5_M"
+)
+MEDIUM_4ATP_REPLAY_RELEASE_ROOT = Path(
+    "data/processed/4atp/optimisation/750_5_5_M/"
+    "historical_computational_replay"
+)
+MEDIUM_4ATP_FFT_CUTOFF_LOCK = Path(
+    "metadata/processing_locks/"
+    "optimisation_750_5_5_m_historical_replay_fft_cutoffs.csv"
+)
+MEDIUM_4ATP_REPLAY_REQUIRED_FILES = {
+    "README.md",
+    "package_metadata.json",
+    "replay_metrics.csv",
+    "replayed_spectra.zip",
+    "resolved_manifest.csv",
+}
+PERSISTENT_MANIFEST_FINGERPRINT_PATHS = (
+    Path("metadata/validation/numerical_reproduction_summary.md"),
+)
 CONFIRMED_4ATP_REANALYSIS_PACKAGES = {
     "controlled_legacy_confirmed_blank": {
         "status": "regenerated_partial_provenance",
@@ -718,8 +739,11 @@ def write_reference_metadata(metadata_root: Path) -> None:
                 "hash_status": "not_computed_expanded_directory",
                 "role": "portable_master_search_collection",
                 "note": (
-                    "Used as read-only provenance evidence except for the separately hashed and "
-                    "distributed author-confirmed 24 September high-power blank."
+                    "Used as read-only provenance evidence except for two distributed source sets: "
+                    "the separately hashed author-confirmed 24 September high-power blank under "
+                    "data/raw, and 42 exact unchanged 24 September 750_5_5_M AAB/BC vendor exports "
+                    "under data/quarantine/computational_lineage_sources. The latter remain "
+                    "raw_unverified computational-lineage inputs."
                 ),
             },
         ],
@@ -745,10 +769,11 @@ def write_reference_metadata(metadata_root: Path) -> None:
         ["conflict_id", "scope", "severity", "finding", "affected_count", "evidence", "resolution_status"],
         [
             {"conflict_id": "cross_label_duplicate_content", "scope": "curated raw spectra", "severity": "critical", "finding": "Identical spectrum bytes occur under different stated concentrations.", "affected_count": "103 groups; 277 files", "evidence": "provenance/duplicate_content_groups.csv and provenance/concentration_label_conflicts.csv", "resolution_status": "unresolved"},
-            {"conflict_id": "shared_blank_wrong_context", "scope": "blind, calibration, optimisation, stability", "severity": "critical", "finding": "The same 15 high-power blank spectra are reused across eight sets that require different sessions and settings. Their exact historical origins are identified, but the shared composite is not a confirmed context-matched analytical blank. A separate 24 September high-power blank is author-confirmed for the matching optimisation condition. An exhaustive search of 1,623 portable CSV paths found no explicit AuAgBC blank at the required low- or medium-power settings.", "affected_count": "120 exact copies across 8 sets; 3 historical source exports; 1 separate confirmed high-power match; 4 contextual candidates; 0 target matches", "evidence": "provenance/shared_blank_origin_summary.csv; provenance/4atp_blank_family_assessment.csv; provenance/4atp_blank_search_summary.csv; provenance/4atp_blank_unresolved_candidates.csv", "resolution_status": "historical_sources_identified_one_context_match_confirmed_portable_collection_exhausted_others_unresolved"},
+            {"conflict_id": "shared_blank_wrong_context", "scope": "blind, calibration, optimisation, stability", "severity": "critical", "finding": "The same 15 high-power blank spectra are reused across eight sets that require different sessions and settings. Their exact historical origins are identified, but the shared composite is not a confirmed context-matched analytical blank. A separate 24 September high-power blank is author-confirmed for the matching optimisation condition. An exhaustive search of 1,623 portable CSV paths found no explicit AuAgBC blank at the required low- or medium-power settings.", "affected_count": "120 exact copies across 8 sets; 3 historical source exports; 1 separate confirmed high-power match; 4 contextual candidates; 0 target matches", "evidence": "provenance/shared_blank_origin_summary.csv; provenance/4atp_blank_family_assessment.csv; provenance/4atp_blank_search_summary.csv; provenance/4atp_blank_unresolved_candidates.csv; docs/4ATP_MEDIUM_POWER_COMPUTATIONAL_REPLAY.md", "resolution_status": "historical_sources_identified_one_context_match_confirmed_portable_collection_exhausted_others_unresolved"},
             {"conflict_id": "stability_19may_label_mismatch", "scope": "Stability/19_05_24", "severity": "critical", "finding": "Curated concentration labels disagree with the best matching master spectra.", "affected_count": "105 matched columns", "evidence": "provenance/concentration_label_conflicts.csv", "resolution_status": "unresolved"},
             {"conflict_id": "stability_content_overlap", "scope": "all stability dates", "severity": "critical", "finding": "Stability folders substantially overlap calibration or other-date content instead of forming independent dated acquisitions.", "affected_count": "unique content: 149/165, 103/159, and 20/210", "evidence": "provenance/duplicate_content_groups.csv", "resolution_status": "unresolved"},
-            {"conflict_id": "optimisation_750m_orphan_derivatives", "scope": "Optimisation/750_5_5_M/Processed Spectra", "severity": "high", "finding": "Legacy processed filenames have no same-stem raw partners.", "affected_count": "43 files", "evidence": "validation/numerical_reproduction_summary.md", "resolution_status": "quarantined"},
+            {"conflict_id": "optimisation_750m_orphan_derivatives", "scope": "Optimisation/750_5_5_M/Processed Spectra", "severity": "high", "finding": "The prepared folder has no same-stem source partners for the 43 historical multi-column files. An explicit mapping to 42 vendor exports and one assembled blank now reproduces all 43 files and 225 channels within machine-scale numerical bounds, resolving the computational orphan finding but not experimental provenance.", "affected_count": "43 files; 225 channels", "evidence": "docs/4ATP_MEDIUM_POWER_COMPUTATIONAL_REPLAY.md; data/processed/4atp/optimisation/750_5_5_M/historical_computational_replay/resolved_manifest.csv; data/processed/4atp/optimisation/750_5_5_M/historical_computational_replay/replay_metrics.csv", "resolution_status": "computational_mapping_resolved_provenance_not_verified"},
+            {"conflict_id": "optimisation_750m_historical_blank_context", "scope": "Optimisation/750_5_5_M", "severity": "critical", "finding": "The recovered historical workflow subtracts the first channel of an assembled mixed high-power blank from all 210 nonblank medium-power channels. Numerical replay establishes that this operation generated the preserved outputs, but no evidence makes that channel a setting-matched 750_5_5_M AuAgBC blank.", "affected_count": "43 historical files; 225 replayed channels; 210 nonblank channels use the conflicting reference", "evidence": "docs/4ATP_MEDIUM_POWER_COMPUTATIONAL_REPLAY.md; provenance/shared_blank_origin_summary.csv; provenance/4atp_blank_family_assessment.csv", "resolution_status": "unresolved_no_setting_matched_medium_power_blank"},
             {"conflict_id": "portable_poc_embedded_metadata", "scope": "Proof of concept/Portable Raman", "severity": "high", "finding": "Six human-sweat raw files use outer publication aliases that differ from embedded acquisition aliases. The author-confirmed crosswalk resolves the numbering; the embedded V2S2 session in the two AA_HS copies is a confirmed metadata typo whose canonical session is V2S1. Historical bytes are preserved.", "affected_count": "6 human-sweat raw files", "evidence": "provenance/proof_of_concept_label_evidence.csv", "resolution_status": "resolved_by_author_confirmed_crosswalk_and_session_correction"},
             {"conflict_id": "families_not_exactly_regenerated", "scope": "calibration, analytical enhancement, proof of concept", "severity": "high", "finding": "Candidate recipes do not exactly regenerate supplied processed outputs from the paired curated raw files; missing or different blanks/source columns are implicated.", "affected_count": "3 analysis families", "evidence": "validation/numerical_reproduction_summary.md", "resolution_status": "unresolved"},
         ],
@@ -1344,15 +1369,227 @@ def add_confirmed_4atp_reanalysis_manifest_entries(
     return release_counts
 
 
+def add_medium_4atp_replay_manifest_entries(
+    repository_root: Path,
+    manifest: list[dict[str, object]],
+    status_counts: Counter[str],
+) -> Counter[str]:
+    """Manifest the computation-only 750_5_5_M replay and its exact inputs.
+
+    These files deliberately remain separate from the confirmed-blank
+    high-power reanalysis.  The 42 vendor exports are useful raw-like records
+    whose identities remain unverified, while the assembled blank has a known
+    setting conflict and therefore stays quarantined as ``provenance_conflict``.
+    """
+    source_root = repository_root / MEDIUM_4ATP_REPLAY_SOURCE_ROOT
+    release_root = repository_root / MEDIUM_4ATP_REPLAY_RELEASE_ROOT
+    cutoff_lock = repository_root / MEDIUM_4ATP_FFT_CUTOFF_LOCK
+    present = (source_root.exists(), release_root.exists(), cutoff_lock.exists())
+    if not any(present):
+        return Counter()
+    if not all(present):
+        missing = [
+            label
+            for label, exists in zip(
+                ("exact source root", "replay release root", "FFT cutoff lock"),
+                present,
+            )
+            if not exists
+        ]
+        raise RuntimeError(
+            "Medium-power computational replay is incomplete; missing "
+            + ", ".join(missing)
+        )
+    for path, label in (
+        (source_root, "source root"),
+        (release_root, "release root"),
+    ):
+        if path.is_symlink() or not path.is_dir():
+            raise RuntimeError(
+                f"Medium-power computational replay {label} must be an ordinary "
+                f"directory: {path}"
+            )
+    if cutoff_lock.is_symlink() or not cutoff_lock.is_file():
+        raise RuntimeError(
+            "The medium-power computational replay FFT cutoff lock is missing "
+            f"or unsafe: {cutoff_lock}"
+        )
+
+    source_files: list[Path] = []
+    for path in sorted(
+        source_root.rglob("*"),
+        key=lambda item: item.relative_to(source_root).as_posix().casefold(),
+    ):
+        relative = path.relative_to(source_root)
+        if path.is_symlink():
+            raise RuntimeError(
+                "Symlinks are not permitted in the medium-power replay sources: "
+                + relative.as_posix()
+            )
+        if path.is_dir():
+            continue
+        if not path.is_file():
+            raise RuntimeError(
+                "Unsupported medium-power replay source entry: "
+                + relative.as_posix()
+            )
+        source_files.append(path)
+
+    expected_blank = source_root / "historical_blank" / "AAB_Blank.csv"
+    sample_files = [
+        path
+        for path in source_files
+        if path.parent == source_root / "samples" and path.suffix.casefold() == ".csv"
+    ]
+    unexpected_sources = [
+        path
+        for path in source_files
+        if path not in sample_files and path != expected_blank
+    ]
+    aab_samples = [path for path in sample_files if path.name.startswith("AAB_")]
+    bc_samples = [path for path in sample_files if path.name.startswith("BC_")]
+    if (
+        len(source_files) != 43
+        or len(sample_files) != 42
+        or len(aab_samples) != 39
+        or len(bc_samples) != 3
+        or not expected_blank.is_file()
+        or unexpected_sources
+    ):
+        unexpected = ", ".join(
+            path.relative_to(source_root).as_posix()
+            for path in unexpected_sources[:5]
+        )
+        raise RuntimeError(
+            "Medium-power computational replay source composition must be "
+            "39 AAB exports, 3 BC exports, and historical_blank/AAB_Blank.csv"
+            + (f"; unexpected: {unexpected}" if unexpected else "")
+        )
+
+    release_files = [
+        path
+        for path in sorted(
+            release_root.rglob("*"),
+            key=lambda item: item.relative_to(release_root).as_posix().casefold(),
+        )
+        if path.is_file()
+    ]
+    unsafe_release_entries = [
+        path
+        for path in release_root.rglob("*")
+        if path.is_symlink() or (not path.is_file() and not path.is_dir())
+    ]
+    release_names = {
+        path.relative_to(release_root).as_posix() for path in release_files
+    }
+    if unsafe_release_entries or release_names != MEDIUM_4ATP_REPLAY_REQUIRED_FILES:
+        raise RuntimeError(
+            "Medium-power computational replay release must contain exactly: "
+            + ", ".join(sorted(MEDIUM_4ATP_REPLAY_REQUIRED_FILES))
+        )
+
+    replay_counts: Counter[str] = Counter()
+    for path in sorted(sample_files, key=lambda item: item.name.casefold()):
+        digest = sha256_file(path)
+        add_manifest_row(
+            manifest,
+            repository_root,
+            path,
+            source_name="portable_raman_master_collection_24_09_2024",
+            source_relative_path=(
+                "Originales/24-09-24/4 ATP/750_5_5_M/" + path.name
+            ),
+            source_sha256=digest,
+            source_bytes=path.stat().st_size,
+            status="raw_unverified",
+            role="historical_computational_replay_source",
+            substitutions=0,
+            note=(
+                "Exact unchanged vendor export recovered for the historical "
+                "medium-power computation replay; sample identity and labels "
+                "remain unverified, so the file stays in quarantine."
+            ),
+        )
+        status_counts["raw_unverified"] += 1
+        replay_counts["raw_unverified"] += 1
+
+    blank_digest = sha256_file(expected_blank)
+    add_manifest_row(
+        manifest,
+        repository_root,
+        expected_blank,
+        source_name="historical_assembled_blank",
+        source_relative_path="4-ATP/AAB/AAB_Blank.csv",
+        source_sha256=blank_digest,
+        source_bytes=expected_blank.stat().st_size,
+        status="provenance_conflict",
+        role="historical_blank_composite_source",
+        substitutions=0,
+        note=(
+            "Exact unchanged 15-channel blank file used by the historical "
+            "calculation. Its embedded label and traced constituents are "
+            "high-power measurements, not a confirmed 750_5_5_M blank."
+        ),
+    )
+    status_counts["provenance_conflict"] += 1
+    replay_counts["provenance_conflict"] += 1
+
+    add_manifest_row(
+        manifest,
+        repository_root,
+        cutoff_lock,
+        source_name="historical_4atp_750_5_5_m_computational_replay",
+        source_relative_path=(
+            "forensically recovered from the preserved processed spectra by "
+            "scripts/replay_4atp_750_5_5_m.py"
+        ),
+        source_sha256="",
+        source_bytes="",
+        status="audit_evidence",
+        role="processing_parameter_lock",
+        substitutions=0,
+        note=(
+            "Source-hash-bound FFT peak-bin choices for 225 channels. The locks "
+            "preserve floating-point tie branches and are forensic computational "
+            "evidence, not scientifically recommended filter parameters."
+        ),
+    )
+    status_counts["audit_evidence"] += 1
+    replay_counts["audit_evidence"] += 1
+
+    for path in release_files:
+        add_manifest_row(
+            manifest,
+            repository_root,
+            path,
+            source_name="historical_4atp_750_5_5_m_computational_replay",
+            source_relative_path="generated by scripts/replay_4atp_750_5_5_m.py",
+            source_sha256="",
+            source_bytes="",
+            status="audit_evidence",
+            role="historical_computational_replay",
+            substitutions=0,
+            note=(
+                "Computation-only replay evidence. It reproduces how the stored "
+                "numbers were calculated but does not validate the samples, "
+                "labels, replicates, or mixed high-power blank for 750_5_5_M."
+            ),
+        )
+        status_counts["audit_evidence"] += 1
+        replay_counts["audit_evidence"] += 1
+    return replay_counts
+
+
 def refresh_confirmed_4atp_reanalysis_metadata(
     repository_root: Path,
 ) -> dict[str, object]:
-    """Refresh only persistent 4-ATP reanalysis rows and summary counters.
+    """Refresh the managed persistent 4-ATP release suffix and counters.
 
     This intentionally does not require or rebuild the external source archive.
-    Existing release rows must form a suffix of the manifest, which guarantees
-    that removing and appending them cannot change any established numeric row
-    reference.  Proof-of-concept sidecars therefore remain current and are not
+    Existing high-power reanalysis and medium-power computational-replay rows
+    must together form a suffix of the manifest. Removing and appending that
+    suffix in a stable order cannot change any established numeric row
+    reference. Proof-of-concept sidecars therefore remain current and are not
     rewritten by this focused operation.
     """
     repository_root = repository_root.resolve()
@@ -1382,28 +1619,55 @@ def refresh_confirmed_4atp_reanalysis_metadata(
 
     release_prefix = CONFIRMED_4ATP_REANALYSIS_RELEASE_ROOT.as_posix() + "/"
     support_path = CONFIRMED_4ATP_FFT_CUTOFF_LOCK.as_posix()
+    medium_source_prefix = MEDIUM_4ATP_REPLAY_SOURCE_ROOT.as_posix() + "/"
+    medium_release_prefix = MEDIUM_4ATP_REPLAY_RELEASE_ROOT.as_posix() + "/"
+    medium_support_path = MEDIUM_4ATP_FFT_CUTOFF_LOCK.as_posix()
     release_indices = [
         index
         for index, row in enumerate(rows)
         if str(row.get("repository_path", "")).startswith(release_prefix)
         or str(row.get("repository_path", "")) == support_path
+        or str(row.get("repository_path", "")).startswith(medium_source_prefix)
+        or str(row.get("repository_path", "")).startswith(medium_release_prefix)
+        or str(row.get("repository_path", "")) == medium_support_path
     ]
     if release_indices:
         expected_suffix = list(range(release_indices[0], len(rows)))
         if release_indices != expected_suffix:
             raise RuntimeError(
-                "Existing confirmed-blank reanalysis rows are not a manifest suffix; "
+                "Existing managed 4-ATP release rows are not a manifest suffix; "
                 "refusing to change established dataset_manifest_row references."
             )
         base_rows = rows[: release_indices[0]]
     else:
         base_rows = rows
 
+    rows_by_repository_path = {
+        str(row.get("repository_path", "")): row for row in base_rows
+    }
+    for relative_path in PERSISTENT_MANIFEST_FINGERPRINT_PATHS:
+        manifest_row = rows_by_repository_path.get(relative_path.as_posix())
+        repository_file = repository_root / relative_path
+        if manifest_row is None and not repository_file.exists():
+            continue
+        if manifest_row is None or not repository_file.is_file():
+            raise RuntimeError(
+                "Persistent manifest file and row must either both exist or "
+                f"both be absent: {relative_path.as_posix()}"
+            )
+        manifest_row["repository_sha256"] = sha256_file(repository_file)
+        manifest_row["repository_bytes"] = repository_file.stat().st_size
+
     status_counts: Counter[str] = Counter(
         str(row.get("status") or "") for row in base_rows
     )
     manifest = list(base_rows)
     release_status_counts = add_confirmed_4atp_reanalysis_manifest_entries(
+        repository_root,
+        manifest,
+        status_counts,
+    )
+    medium_status_counts = add_medium_4atp_replay_manifest_entries(
         repository_root,
         manifest,
         status_counts,
@@ -1418,6 +1682,18 @@ def refresh_confirmed_4atp_reanalysis_metadata(
     summary["copied_audit_report_count"] = status_counts.get("audit_evidence", 0)
     summary["regenerated_4atp_release_file_count"] = sum(
         release_status_counts.values()
+    ) + (
+        len(MEDIUM_4ATP_REPLAY_REQUIRED_FILES)
+        if medium_status_counts
+        else 0
+    )
+    summary["medium_power_computational_replay_source_file_count"] = (
+        43 if medium_status_counts else 0
+    )
+    summary["medium_power_computational_replay_file_count"] = (
+        len(MEDIUM_4ATP_REPLAY_REQUIRED_FILES)
+        if medium_status_counts
+        else 0
     )
     summary["dataset_manifest_rows"] = len(manifest)
     summary["status_counts"] = dict(sorted(status_counts.items()))
@@ -1433,6 +1709,18 @@ def refresh_confirmed_4atp_reanalysis_metadata(
         "dataset_manifest_rows": len(manifest),
         "regenerated_4atp_release_file_count": sum(
             release_status_counts.values()
+        ) + (
+            len(MEDIUM_4ATP_REPLAY_REQUIRED_FILES)
+            if medium_status_counts
+            else 0
+        ),
+        "medium_power_computational_replay_source_file_count": (
+            43 if medium_status_counts else 0
+        ),
+        "medium_power_computational_replay_file_count": (
+            len(MEDIUM_4ATP_REPLAY_REQUIRED_FILES)
+            if medium_status_counts
+            else 0
         ),
         "status_counts": dict(sorted(status_counts.items())),
     }
@@ -1452,9 +1740,9 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
         "--refresh-reanalysis-metadata",
         action="store_true",
         help=(
-            "Refresh only the persistent confirmed-blank reanalysis rows in "
+            "Refresh only the managed persistent 4-ATP release rows in "
             "dataset_manifest.csv and curation_summary.json; no external archive "
-            "or quarantine rebuild is required."
+            "or legacy-snapshot rebuild is required."
         ),
     )
     return parser.parse_args(list(argv) if argv is not None else None)
@@ -1733,8 +2021,47 @@ def main(argv: Iterable[str] | None = None) -> int:
                     "`package_reproduction_summary.csv`, `package_reproduction_metrics.csv`, and "
                     "`../../docs/DATA_AUDIT.md`. The report below is retained only as evidence of the historical "
                     "FFT cutoff's sensitivity to approximately 1e-12 parsing and summation differences.\n\n"
+                    "> **Medium-power lineage correction (23 July 2026).** The original stem-pair audit correctly "
+                    "found zero name-paired sources for `Optimisation/750_5_5_M` inside the prepared folder, but "
+                    "its inference that none of the 43 outputs could be regenerated was too broad. A later explicit "
+                    "mapping to 42 vendor exports and one assembled 15-channel blank reproduces all 43 files and "
+                    "225 channels. Parsed Raman-shift arrays are exact, the worst intensity RMSE is approximately "
+                    "`6.294e-8`, and the worst maximum absolute difference is approximately `2.292e-7`. This is "
+                    "computational-lineage evidence only; the mixed high-power blank remains scientifically "
+                    "unresolved. See `../../docs/4ATP_MEDIUM_POWER_COMPUTATIONAL_REPLAY.md` and the persistent "
+                    "replay package.\n\n"
                 )
                 existing = destination.read_text(encoding="utf-8-sig")
+                existing = existing.replace(
+                    "`Optimisation/750_5_5_M` has 210 Stability-style raw files but 43 processed files\n"
+                    "with entirely different AAB/BC names and multi-column 432-point schemas. There\n"
+                    "are zero feasible name-paired raw/processed spectra in that folder, so none of\n"
+                    "those 43 outputs can be regenerated from the curated raw folder.\n",
+                    "`Optimisation/750_5_5_M` has 210 prepared split files but 43 historical\n"
+                    "multi-column processed files with AAB, BC, and blank names. This exploratory\n"
+                    "same-stem method found zero feasible pairs within that prepared folder. A later\n"
+                    "source-column audit recovered the distinct vendor-export lineage, including\n"
+                    "the otherwise absent BC inputs, and numerically replayed all 225 channels. The\n"
+                    "prepared-folder pairing result is retained here to document why filename\n"
+                    "matching alone was insufficient; it must not be cited as evidence that the\n"
+                    "historical computation remains unrecoverable.\n",
+                )
+                existing = existing.replace(
+                    "No complete processed folder is currently fully regenerable. The five large\n"
+                    "portable v2 folders and the Blind-sample AAB subset contain strong reproducible\n"
+                    "majorities and can be rebuilt after quarantining the listed discrepancies. The\n"
+                    "750_5_5_M, Calibration, Analytical Enhancement, and Proof-of-concept processed\n"
+                    "folders require corrected raw provenance and/or the missing exact blank before a\n"
+                    "scientific repository should assert full reproducibility.\n",
+                    "The five large portable-v2 folders have an exact deterministic package replay.\n"
+                    "The `750_5_5_M` folder now also has a complete but separate 43-file,\n"
+                    "225-channel historical computational replay from explicitly mapped vendor\n"
+                    "sources. That result resolves executable lineage only; its assembled\n"
+                    "high-power blank remains invalid for a scientifically verified medium-power\n"
+                    "analysis. Calibration, Analytical Enhancement, and Proof of concept still\n"
+                    "require corrected raw provenance and/or missing processing evidence before\n"
+                    "complete scientific reproducibility can be claimed.\n",
+                )
                 destination.write_text(supersession_notice + existing, encoding="utf-8", newline="\n")
             add_manifest_row(
                 manifest,
@@ -1769,16 +2096,22 @@ def main(argv: Iterable[str] | None = None) -> int:
         metadata_root / "legacy_script_inventory.csv",
     )
 
-    # Sort only the pre-existing release rows.  The persistent reanalysis
-    # package is appended afterwards so historical numeric manifest-row joins
-    # remain stable across regeneration.
+    # Sort only the pre-existing release rows. Persistent 4-ATP packages are
+    # appended afterwards in a stable order so historical numeric manifest-row
+    # joins remain stable across regeneration.
     manifest.sort(key=lambda row: str(row["repository_path"]).casefold())
     reanalysis_status_counts = add_confirmed_4atp_reanalysis_manifest_entries(
         repository_root,
         manifest,
         status_counts,
     )
+    medium_replay_status_counts = add_medium_4atp_replay_manifest_entries(
+        repository_root,
+        manifest,
+        status_counts,
+    )
     audit_report_count += reanalysis_status_counts.get("audit_evidence", 0)
+    audit_report_count += medium_replay_status_counts.get("audit_evidence", 0)
     write_mapping_sidecars(repository_root, manifest)
     write_csv(
         metadata_root / "dataset_manifest.csv",
@@ -1798,6 +2131,18 @@ def main(argv: Iterable[str] | None = None) -> int:
         "copied_audit_report_count": audit_report_count,
         "regenerated_4atp_release_file_count": sum(
             reanalysis_status_counts.values()
+        ) + (
+            len(MEDIUM_4ATP_REPLAY_REQUIRED_FILES)
+            if medium_replay_status_counts
+            else 0
+        ),
+        "medium_power_computational_replay_source_file_count": (
+            43 if medium_replay_status_counts else 0
+        ),
+        "medium_power_computational_replay_file_count": (
+            len(MEDIUM_4ATP_REPLAY_REQUIRED_FILES)
+            if medium_replay_status_counts
+            else 0
         ),
         "dataset_manifest_rows": len(manifest),
         "status_counts": dict(sorted(status_counts.items())),

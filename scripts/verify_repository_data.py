@@ -41,8 +41,14 @@ STATUS_DEFINITION_REQUIRED_COLUMNS = {
     "meaning",
     "may_be_aggregated_without_review",
 }
-CONFIRMED_4ATP_REANALYSIS_PREFIX = (
-    "data/processed/4atp/optimisation/750_5_5_H/"
+FOUR_ATP_RELEASE_PREFIXES = (
+    "data/processed/4atp/optimisation/750_5_5_H/",
+    "data/processed/4atp/optimisation/750_5_5_M/"
+    "historical_computational_replay/",
+)
+MEDIUM_4ATP_REPLAY_SOURCE_PREFIX = (
+    "data/quarantine/computational_lineage_sources/4atp/optimisation/"
+    "750_5_5_M/"
 )
 SCAN_DIRECTORIES = ("data", "metadata", "docs", "configs")
 MAX_REPORTED_ERRORS = 50
@@ -465,7 +471,15 @@ def verify_repository(repository_root: Path) -> dict[str, Any]:
         "legacy_script_inventory_rows": inventory_rows,
         "copied_audit_report_count": status_counts.get("audit_evidence", 0),
         "regenerated_4atp_release_file_count": sum(
-            path.startswith(CONFIRMED_4ATP_REANALYSIS_PREFIX)
+            path.startswith(FOUR_ATP_RELEASE_PREFIXES)
+            for path in dataset_paths
+        ),
+        "medium_power_computational_replay_source_file_count": sum(
+            path.startswith(MEDIUM_4ATP_REPLAY_SOURCE_PREFIX)
+            for path in dataset_paths
+        ),
+        "medium_power_computational_replay_file_count": sum(
+            path.startswith(FOUR_ATP_RELEASE_PREFIXES[1])
             for path in dataset_paths
         ),
         "dataset_manifest_rows": len(dataset_rows),

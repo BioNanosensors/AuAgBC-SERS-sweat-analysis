@@ -61,6 +61,16 @@ changes the workflow. The 195 sample spectra in both new runs remain
 Raman axes differ from the corresponding vendor axes by approximately
 0.39937 cm⁻¹.
 
+For the medium-power `750_5_5_M` optimisation, read the separate
+[computational-lineage replay record](docs/4ATP_MEDIUM_POWER_COMPUTATIONAL_REPLAY.md).
+An explicit mapping from 42 unchanged vendor exports and one assembled
+15-channel blank numerically reproduces all 43 preserved historical files and
+all 225 channels within machine-scale bounds. This establishes computation
+only. The historical workflow subtracts the first channel of a mixed
+high-power assembled blank, not a confirmed medium-power AuAgBC blank, so the
+preserved outputs remain `provenance_conflict` and the replay package is
+classified as `audit_evidence`.
+
 ## Install
 
 Python 3.10 or newer is required.
@@ -161,6 +171,17 @@ python scripts/reprocess_4atp_750_5_5_h.py
 python scripts/reprocess_4atp_750_5_5_h.py --check
 ```
 
+Regenerate or verify the computation-only medium-power historical replay:
+
+```text
+python scripts/replay_4atp_750_5_5_m.py
+python scripts/replay_4atp_750_5_5_m.py --check
+```
+
+This check covers 43 files, 225 channels, exact parsed Raman-shift arrays, and
+source-hash-bound FFT decisions. Its numerical success does not validate the
+mixed high-power historical blank for `750_5_5_M`.
+
 This high-power release uses the auditable 610-row cutoff lock in
 `metadata/processing_locks/optimisation_750_5_5_h_fft_cutoffs.csv`. It binds
 each canonical FFT peak index to its exact source hash, intensity selector, and
@@ -235,6 +256,8 @@ scientific review before quantitative interpretation.
 | `configs/` | Portable run examples with explicit parameters |
 | `data/published_snapshot/` | Article-facing summary data and manuscript values |
 | `data/processed/4atp/optimisation/750_5_5_H/` | Separately labelled controlled-legacy, `reference_2026`, and comparison packages |
+| `data/quarantine/computational_lineage_sources/4atp/optimisation/750_5_5_M/` | Unchanged vendor exports and the conflicting assembled blank retained for historical computation replay |
+| `data/processed/4atp/optimisation/750_5_5_M/historical_computational_replay/` | Computation-only replay package and per-channel validation evidence |
 | `data/quarantine/legacy_snapshot/` | Submitted CSV snapshot with unresolved provenance clearly isolated |
 | `metadata/` | Checksums, origin matches, author-confirmed code crosswalks, conflicts, script inventory, and validation metrics |
 | `docs/PAPER_DATA_MAP.md` | Figure/table-to-data map |
@@ -242,6 +265,7 @@ scientific review before quantitative interpretation.
 | `docs/ETHICS_APPROVAL.md` | Scope and limitations of the later CFATA/CEID approval letter |
 | `docs/4ATP_BLANK_AUDIT.md` | Historical blank origins, experiment-specific candidates, and unresolved decisions |
 | `docs/4ATP_HIGH_POWER_REANALYSIS.md` | Three-lineage high-power reanalysis design, results, and interpretation limits |
+| `docs/4ATP_MEDIUM_POWER_COMPUTATIONAL_REPLAY.md` | Medium-power source mapping, recovered algorithm, numerical bounds, and unresolved blank limitation |
 | `docs/LICENSING.md` | Proposed path-level licensing arrangement and required decisions |
 | `docs/RELEASE_CHECKLIST.md` | Items requiring author confirmation before an unqualified public release |
 | `tests/` | Synthetic and regression tests |

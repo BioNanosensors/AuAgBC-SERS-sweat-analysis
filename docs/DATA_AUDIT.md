@@ -120,12 +120,31 @@ family; its embedded timestamp is after midnight on 20 May.
 
 The 500 ms low-power and 750 ms high-power processed folders are reproduced
 exactly by the recovered stand-alone v2 algorithm when it is run through this
-repository's deterministic reader and pipeline. The raw labels still inherit
-the duplicate-content issues described above. The 750 ms medium-power folder
-contains 43 historical processed files whose stems do not match any raw file in
-that folder; these are classified as `orphan_derived`. Modern summary outputs
-for the 500 ms low-power and 750 ms medium-power sets are internally
-reproducible to CSV rounding.
+repository's deterministic reader and pipeline. Their raw labels still inherit
+the duplicate-content issues described above.
+
+The 750 ms medium-power prepared folder contains 210 split spectra, whereas its
+historical processed directory contains 43 multi-column AAB, BC, and blank
+files with different names and 225 total intensity channels. The earlier
+same-stem audit correctly found no pairs inside the prepared folder, but its
+conclusion that no computational lineage could be recovered was too broad. An
+explicit mapping to 42 vendor exports and one assembled 15-channel blank now
+reproduces all 43 historical files. Every Raman-shift array is equal after
+numerical parsing; all 225 intensity channels pass `RMSE <= 1e-7` and maximum
+absolute difference `<= 1e-6`.
+
+This is a computational-lineage result, not experimental validation. The
+recovered workflow subtracts the first channel of the assembled historical
+blank from all 210 nonblank channels. That assembled file is the mixed
+high-power composite traced elsewhere in this audit, not a setting-matched
+`750_5_5_M` AuAgBC blank. The source vendor exports remain `raw_unverified`,
+the assembled blank and preserved 43 outputs remain `provenance_conflict`, and
+the replay package is `audit_evidence`. See
+[the medium-power computational-lineage replay record](4ATP_MEDIUM_POWER_COMPUTATIONAL_REPLAY.md).
+
+Modern summary outputs for the 500 ms low-power and 750 ms medium-power sets
+remain internally reproducible to CSV rounding, but summary reproducibility
+does not establish a verified raw-to-publication lineage.
 
 The date- and setting-compatible high-power blank found for these optimisation
 sets is
@@ -138,6 +157,13 @@ low-power or 750 ms medium-power set. The supplied portable collection has now
 been exhausted for these settings; resolution requires new laboratory evidence,
 a newly supplied source file, or withdrawal and reanalysis of the affected
 claim.
+
+Recovery of the medium-power computation does not change the blank search
+result. No matched AuAgBC blank was found for the 500 ms low-power or 750 ms
+medium-power set. A corrected medium-power reanalysis therefore still requires
+new laboratory evidence, a newly supplied source file, a repeat experiment, or
+a scientifically documented withdrawal or qualification of the affected
+claim. No `reference_2026` medium-power package is published.
 
 The high-power condition now has three strictly separate lineages:
 

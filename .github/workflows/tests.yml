@@ -48,3 +48,5 @@ jobs:
         run: python -m pip install -e ".[test]" -c requirements-release.txt
       - name: Verify locked confirmed-blank 4-ATP reanalysis
         run: python scripts/reprocess_4atp_750_5_5_h.py --check
+      - name: Verify medium-power historical computational replay
+        run: python scripts/replay_4atp_750_5_5_m.py --check

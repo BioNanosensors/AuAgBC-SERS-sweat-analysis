@@ -1,6 +1,6 @@
 # Preserve scientific CSV/JSON bytes so SHA-256 manifests remain valid on
 # Windows, macOS, and Linux regardless of each user's Git line-ending setting.
-*.csv -text
+*.csv -text whitespace=cr-at-eol
 *.json -text
 *.gz -text
 *.zip -text
