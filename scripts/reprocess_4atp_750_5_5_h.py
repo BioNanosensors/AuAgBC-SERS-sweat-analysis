@@ -44,6 +44,7 @@ for import_root in (REPOSITORY_ROOT, SOURCE_ROOT):
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
+from auagbc_sers.errors import RamanPipelineError  # noqa: E402
 from auagbc_sers.io import read_spectrum_file, sha256_file  # noqa: E402
 from auagbc_sers.models import PeakSpec  # noqa: E402
 from auagbc_sers.pipeline import process_job  # noqa: E402
@@ -1910,10 +1911,23 @@ def _refresh_release_metadata(repository: Path) -> dict[str, object]:
     return refresh_confirmed_4atp_reanalysis_metadata(repository)
 
 
+def _temporary_parent(repository: Path) -> Path:
+    """Keep scratch outputs on the repository volume for portable provenance."""
+    parent = repository / ".workbench"
+    if parent.exists() and (parent.is_symlink() or not parent.is_dir()):
+        raise ReanalysisError(
+            f"Temporary work root is not an ordinary directory: {parent}"
+        )
+    parent.mkdir(parents=True, exist_ok=True)
+    return parent
+
+
 def generate_release(repository: Path) -> dict[str, object]:
     _validate_canonical_release_environment(repository)
     write_configuration_files(repository)
-    with tempfile.TemporaryDirectory(prefix="auagbc-750h-reanalysis-") as temporary:
+    with tempfile.TemporaryDirectory(
+        prefix="auagbc-750h-reanalysis-", dir=_temporary_parent(repository)
+    ) as temporary:
         temporary_root = Path(temporary)
         historical_replay = _validate_historical_replay(
             repository, temporary_root / "historical_replay"
@@ -1937,7 +1951,9 @@ def check_release(repository: Path) -> list[str]:
     errors = check_configuration_files(repository)
     if errors:
         return errors
-    with tempfile.TemporaryDirectory(prefix="auagbc-750h-check-") as temporary:
+    with tempfile.TemporaryDirectory(
+        prefix="auagbc-750h-check-", dir=_temporary_parent(repository)
+    ) as temporary:
         temporary_root = Path(temporary)
         historical_replay = _validate_historical_replay(
             repository, temporary_root / "historical_replay"
@@ -2018,7 +2034,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         report = generate_release(repository)
         print(json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False))
         return 0
-    except (OSError, ValueError, ReanalysisError) as exc:
+    except (OSError, ValueError, ReanalysisError, RamanPipelineError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
 
