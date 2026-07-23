@@ -351,8 +351,15 @@ def fft_butterworth(
     *,
     percentile: float,
     order: int,
+    peak_index: int | None = None,
+    tie_break: str = "lowest_frequency",
 ) -> tuple[np.ndarray, dict[str, Any], list[str]]:
-    """Historical FFT-selected low-pass filter plus short/degenerate guards."""
+    """FFT-selected low-pass filter plus explicit reproducibility controls.
+
+    ``peak_index`` is a release-lock override.  It converts a cutoff that was
+    resolved once by the historical automatic rule into an explicit parameter,
+    avoiding hardware-dependent branch changes during an audited replay.
+    """
     warnings: list[str] = []
     if len(y) < 10:
         warnings.append("FFT Butterworth skipped because the spectrum has fewer than 10 points.")
@@ -377,16 +384,66 @@ def fft_butterworth(
     fft, fftfreq = _scipy_fft()
     signal = _scipy_signal()
     n = len(y)
-    fft_signal = fft(y, n)
     frequencies = np.abs(fftfreq(n, d=abs(dx) * 1e-2)[: n // 2])
-    magnitude = np.abs(fft_signal[: n // 2])
-    peaks, _ = signal.find_peaks(magnitude)
-    if not len(peaks) or not np.max(frequencies) > 0:
+    if not np.max(frequencies) > 0:
         warnings.append("FFT Butterworth skipped because no usable FFT peaks were found.")
         return y.copy(), {"applied": False, "reason": "no_fft_peaks"}, warnings
-    threshold = float(np.percentile(magnitude[peaks], percentile))
-    closest = int(np.argmin(np.abs(magnitude[peaks] - threshold)))
-    peak_index = int(peaks[closest])
+    if peak_index is None:
+        fft_signal = fft(y, n)
+        magnitude = np.abs(fft_signal[: n // 2])
+        peaks, _ = signal.find_peaks(magnitude)
+        if not len(peaks):
+            warnings.append("FFT Butterworth skipped because no usable FFT peaks were found.")
+            return y.copy(), {"applied": False, "reason": "no_fft_peaks"}, warnings
+        threshold = float(np.percentile(magnitude[peaks], percentile))
+        distances = np.abs(magnitude[peaks] - threshold)
+        closest = int(np.argmin(distances))
+        tie_break = str(tie_break).strip().casefold()
+        if tie_break == "legacy_argmin":
+            tie_candidates = np.asarray([closest], dtype=int)
+        elif tie_break == "lowest_frequency":
+            # Linear percentiles can be exact midpoints between two peak
+            # magnitudes.  Their computed distances may then differ by only a
+            # few floating-point ulps across CPUs.  Treat those as one tie and
+            # choose the lowest-frequency peak (``peaks`` is ascending).
+            minimum = float(distances[closest])
+            absolute_tolerance = (
+                32.0
+                * np.finfo(float).eps
+                * max(
+                    1.0,
+                    abs(threshold),
+                    abs(float(magnitude[peaks[closest]])),
+                )
+            )
+            tie_candidates = np.flatnonzero(
+                np.isclose(
+                    distances,
+                    minimum,
+                    rtol=0.0,
+                    atol=absolute_tolerance,
+                )
+            )
+            closest = int(tie_candidates[0])
+        else:
+            raise ConfigurationError(
+                "FFT tie_break must be 'lowest_frequency' or 'legacy_argmin'."
+            )
+        peak_index = int(peaks[closest])
+        cutoff_source = "fft_percentile"
+        tie_candidate_count = int(len(tie_candidates))
+    else:
+        numeric_peak_index = _finite_float(peak_index, "FFT peak-index override")
+        if not numeric_peak_index.is_integer():
+            raise ConfigurationError("FFT peak-index override must be an integer.")
+        peak_index = int(numeric_peak_index)
+        if peak_index < 1 or peak_index >= len(frequencies) - 1:
+            raise ConfigurationError(
+                f"FFT peak-index override {peak_index} is outside the usable range "
+                f"1..{len(frequencies) - 2}."
+            )
+        cutoff_source = "manifest_filter_fft_peak_index"
+        tie_candidate_count = 0
     cutoff = float(frequencies[peak_index] / np.max(frequencies))
     clipped_cutoff = float(np.clip(cutoff, 1e-4, 0.999))
     if clipped_cutoff != cutoff:
@@ -409,6 +466,9 @@ def fft_butterworth(
         "order": order,
         "cutoff": clipped_cutoff,
         "fft_peak_index": peak_index,
+        "cutoff_source": cutoff_source,
+        "tie_break": "explicit_peak_index" if cutoff_source.startswith("manifest_") else tie_break,
+        "fft_tie_candidate_count": tie_candidate_count,
     }, warnings
 
 
@@ -469,11 +529,18 @@ def preprocess_signal(
     filter_method = str(filter_settings.get("method", "none")).lower()
     if filter_method == "fft_butterworth":
         percentile_key = "percentile_blank" if is_blank else "percentile_sample"
+        explicit_peak_index = spectrum.manifest_metadata.get(
+            "filter_fft_peak_index"
+        )
+        if explicit_peak_index in (None, ""):
+            explicit_peak_index = None
         y, filter_resolved, filter_warnings = fft_butterworth(
             spectrum.x,
             y,
             percentile=filter_settings.get(percentile_key, filter_settings.get("percentile", 10.0)),
             order=int(filter_settings.get("order", 3)),
+            peak_index=explicit_peak_index,
+            tie_break=str(filter_settings.get("tie_break", "lowest_frequency")),
         )
         warnings.extend(filter_warnings)
         resolved["filter"] = {"method": filter_method, **filter_resolved}

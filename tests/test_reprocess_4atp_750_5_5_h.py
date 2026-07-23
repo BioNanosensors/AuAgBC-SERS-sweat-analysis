@@ -59,6 +59,7 @@ def test_controlled_manifest_has_one_confirmed_blank_and_explicit_lambdas() -> N
     }
     assert {row["baseline_lambda"] for row in samples} == {"3000"}
     assert {row["baseline_lambda"] for row in blanks} == {"8000"}
+    assert all(row["filter_fft_peak_index"].isdigit() for row in rows)
     assert {row["provenance_status"] for row in samples} == {"raw_unverified"}
     assert {row["provenance_status"] for row in blanks} == {
         "raw_author_confirmed"
@@ -76,6 +77,49 @@ def test_reference_manifest_does_not_inherit_legacy_blank_lambda() -> None:
     assert {row["analysis_lineage"] for row in rows} == {
         REPROCESS.REFERENCE_NAME
     }
+    assert all(row["filter_fft_peak_index"].isdigit() for row in rows)
+
+
+def test_fft_cutoff_lock_has_exact_lineage_coverage_and_known_branch() -> None:
+    locks = REPROCESS._fft_cutoff_locks(PROJECT_ROOT)
+
+    assert {name: len(rows) for name, rows in locks.items()} == {
+        REPROCESS.HISTORICAL_NAME: 210,
+        REPROCESS.CONTROLLED_NAME: 200,
+        REPROCESS.REFERENCE_NAME: 200,
+    }
+    sample = (
+        "data/quarantine/legacy_snapshot/Optimisation/750_5_5_H/"
+        "4ATP_100fM_rep1_acc1.csv"
+    )
+    assert locks[REPROCESS.HISTORICAL_NAME][(sample, "1")][
+        "filter_fft_peak_index"
+    ] == "180"
+    assert locks[REPROCESS.CONTROLLED_NAME][(sample, "1")][
+        "filter_fft_peak_index"
+    ] == "92"
+    assert locks[REPROCESS.REFERENCE_NAME][(sample, "1")][
+        "filter_fft_peak_index"
+    ] == "154"
+
+
+def test_fft_cutoff_lock_rejects_cutoff_index_mismatch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    lock_path = PROJECT_ROOT / REPROCESS.FFT_CUTOFF_LOCK_RELATIVE
+    original_reader = REPROCESS._read_csv_rows
+    fields, rows = original_reader(lock_path)
+    tampered = [dict(row) for row in rows]
+    tampered[0]["normalized_cutoff"] = "0.123456789"
+
+    def read_rows(path: Path) -> tuple[list[str], list[dict[str, str]]]:
+        if path == lock_path:
+            return fields, tampered
+        return original_reader(path)
+
+    monkeypatch.setattr(REPROCESS, "_read_csv_rows", read_rows)
+    with pytest.raises(REPROCESS.ReanalysisError, match="cutoff does not match"):
+        REPROCESS._fft_cutoff_locks(PROJECT_ROOT)
 
 
 def test_concentration_contract_is_thirteen_by_fifteen_and_uses_100_micromolar() -> None:
@@ -202,6 +246,15 @@ def test_release_metadata_records_environment_code_and_warning_scopes() -> None:
         assert constraints["sha256"] == REPROCESS.sha256_file(
             PROJECT_ROOT / "requirements-release.txt"
         )
+        cutoff_lock = metadata["fft_cutoff_lock"]
+        assert cutoff_lock == {
+            "path": REPROCESS.FFT_CUTOFF_LOCK_RELATIVE.as_posix(),
+            "sha256": REPROCESS.sha256_file(
+                PROJECT_ROOT / REPROCESS.FFT_CUTOFF_LOCK_RELATIVE
+            ),
+            "lineage": lineage,
+            "records_pinned": 200,
+        }
         for code_file in metadata["code_identity"]:
             path = PROJECT_ROOT / code_file["path"]
             assert path.is_file()
@@ -213,9 +266,25 @@ def test_release_metadata_records_environment_code_and_warning_scopes() -> None:
     }
     assert controlled["historical_replay_validation"]["status"] == "pass"
     assert controlled["historical_replay_validation"]["spectra_compared"] == 210
+    assert controlled["historical_replay_validation"]["fft_cutoff_lock"][
+        "records_pinned"
+    ] == 210
     reference = metadata_by_lineage[REPROCESS.REFERENCE_NAME]
     assert reference["record_warning_counts"] == {}
     assert reference["numerical_library_warnings"]
+
+
+def test_dataset_manifest_includes_fft_cutoff_lock() -> None:
+    rows = _read_rows(PROJECT_ROOT / "metadata" / "dataset_manifest.csv")
+    matches = [
+        row
+        for row in rows
+        if row["repository_path"] == REPROCESS.FFT_CUTOFF_LOCK_RELATIVE.as_posix()
+    ]
+
+    assert len(matches) == 1
+    assert matches[0]["status"] == "audit_evidence"
+    assert matches[0]["role"] == "processing_parameter_lock"
 
 
 def test_persistent_generation_environment_guard_rejects_version_drift(

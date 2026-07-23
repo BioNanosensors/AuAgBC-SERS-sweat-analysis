@@ -67,6 +67,9 @@ HISTORICAL_PROCESSED_RELATIVE = Path(
     "data/quarantine/legacy_snapshot/Optimisation/750_5_5_H/Processed Spectra"
 )
 RELEASE_REQUIREMENTS_RELATIVE = Path("requirements-release.txt")
+FFT_CUTOFF_LOCK_RELATIVE = Path(
+    "metadata/processing_locks/optimisation_750_5_5_h_fft_cutoffs.csv"
+)
 GENERATION_PYTHON_VERSION = "3.12.13"
 CHECK_PYTHON_VERSIONS = ("3.12.10", "3.12.13")
 CANONICAL_PLATFORM_SYSTEM = "Windows"
@@ -75,6 +78,7 @@ CANONICAL_PLATFORM_MACHINE = "AMD64"
 CONTROLLED_NAME = "controlled_legacy_confirmed_blank"
 REFERENCE_NAME = "reference_2026"
 COMPARISON_NAME = "comparison"
+HISTORICAL_NAME = "historical_mixed_blank_legacy"
 
 CONTROLLED_MANIFEST_NAME = (
     "optimisation_750_5_5_h_confirmed_blank_legacy_v2_manifest.csv"
@@ -105,7 +109,25 @@ MANIFEST_FIELDS = (
     "blank_replication_design",
     "intensity_column",
     "baseline_lambda",
+    "filter_fft_peak_index",
     "analysis_lineage",
+)
+
+FFT_CUTOFF_LOCK_FIELDS = (
+    "lineage",
+    "file",
+    "source_sha256",
+    "manifest_intensity_selector",
+    "source_intensity_column",
+    "record_id",
+    "sample_type",
+    "spectrum_points",
+    "positive_frequency_max_index",
+    "filter_fft_peak_index",
+    "normalized_cutoff",
+    "percentile",
+    "order",
+    "lock_basis",
 )
 
 CONCENTRATION_LABELS = {
@@ -223,6 +245,119 @@ def _read_csv_rows(path: Path) -> tuple[list[str], list[dict[str, str]]]:
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle)
         return list(reader.fieldnames or []), [dict(row) for row in reader]
+
+
+def _fft_cutoff_locks(
+    repository: Path,
+) -> dict[str, dict[tuple[str, str], dict[str, str]]]:
+    """Load and validate the record-level cutoff lock used by this release.
+
+    The historical percentile rule contains true midpoint ties.  The lock is
+    analogous to a dependency lockfile: it records the peak index resolved by
+    the canonical run so an audited replay cannot take a different CPU-specific
+    floating-point branch.
+    """
+    path = repository / FFT_CUTOFF_LOCK_RELATIVE
+    fieldnames, rows = _read_csv_rows(path)
+    if tuple(fieldnames) != FFT_CUTOFF_LOCK_FIELDS:
+        raise ReanalysisError(
+            f"FFT cutoff lock columns differ from the required schema: {fieldnames}"
+        )
+    expected_counts = {
+        HISTORICAL_NAME: 210,
+        CONTROLLED_NAME: 200,
+        REFERENCE_NAME: 200,
+    }
+    result: dict[str, dict[tuple[str, str], dict[str, str]]] = {
+        name: {} for name in expected_counts
+    }
+    record_ids: dict[str, set[str]] = {name: set() for name in expected_counts}
+    source_hashes: dict[str, str] = {}
+    for line_number, row in enumerate(rows, start=2):
+        lineage = row.get("lineage", "").strip()
+        if lineage not in expected_counts:
+            raise ReanalysisError(
+                f"FFT cutoff lock row {line_number} has unknown lineage {lineage!r}."
+            )
+        file = row.get("file", "").strip().replace("\\", "/")
+        selector = row.get("manifest_intensity_selector", "").strip()
+        record_id = row.get("record_id", "").strip()
+        source_column = row.get("source_intensity_column", "").strip()
+        sample_type = row.get("sample_type", "").strip().casefold()
+        lock_basis = row.get("lock_basis", "").strip()
+        source_hash = row.get("source_sha256", "").strip().casefold()
+        if (
+            not file
+            or not selector
+            or not record_id
+            or not source_column
+            or not lock_basis
+            or sample_type not in {"4atp", "blank"}
+            or len(source_hash) != 64
+            or any(character not in "0123456789abcdef" for character in source_hash)
+        ):
+            raise ReanalysisError(
+                f"FFT cutoff lock row {line_number} has an empty identity field."
+            )
+        key = (file, selector)
+        if key in result[lineage]:
+            raise ReanalysisError(
+                f"FFT cutoff lock duplicates {lineage} selector {key}."
+            )
+        if record_id in record_ids[lineage]:
+            raise ReanalysisError(
+                f"FFT cutoff lock duplicates {lineage} record_id {record_id!r}."
+            )
+        record_ids[lineage].add(record_id)
+        try:
+            peak_index = int(row["filter_fft_peak_index"])
+            cutoff = float(row["normalized_cutoff"])
+            percentile = float(row["percentile"])
+            order = int(row["order"])
+            points = int(row["spectrum_points"])
+            denominator = int(row["positive_frequency_max_index"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ReanalysisError(
+                f"FFT cutoff lock row {line_number} has invalid numerical fields."
+            ) from exc
+        expected_points = 441 if lineage == REFERENCE_NAME else 512
+        if points != expected_points or denominator != points // 2 - 1:
+            raise ReanalysisError(
+                f"FFT cutoff lock row {line_number} has an inconsistent point-count contract."
+            )
+        if not 1 <= peak_index < denominator:
+            raise ReanalysisError(
+                f"FFT cutoff lock row {line_number} peak {peak_index} is outside 1..{denominator - 1}."
+            )
+        if not np.isclose(cutoff, peak_index / denominator, rtol=0.0, atol=1e-15):
+            raise ReanalysisError(
+                f"FFT cutoff lock row {line_number} cutoff does not match its peak index."
+            )
+        expected_percentile = 60.0 if lineage == REFERENCE_NAME else (5.0 if sample_type == "blank" else 10.0)
+        expected_order = 2 if lineage == REFERENCE_NAME else 3
+        if percentile != expected_percentile or order != expected_order:
+            raise ReanalysisError(
+                f"FFT cutoff lock row {line_number} has percentile/order "
+                f"{percentile}/{order}, expected {expected_percentile}/{expected_order}."
+            )
+        if file in source_hashes and source_hashes[file] != source_hash:
+            raise ReanalysisError(
+                f"FFT cutoff lock assigns conflicting hashes to {file}."
+            )
+        source_hashes[file] = source_hash
+        result[lineage][key] = dict(row)
+    for lineage, expected in expected_counts.items():
+        if len(result[lineage]) != expected:
+            raise ReanalysisError(
+                f"FFT cutoff lock requires {expected} {lineage} rows; found {len(result[lineage])}."
+            )
+    for file, expected_hash in source_hashes.items():
+        source = repository / Path(file)
+        if not source.is_file() or sha256_file(source) != expected_hash:
+            raise ReanalysisError(
+                f"FFT cutoff lock source identity does not match {file}."
+            )
+    return result
 
 
 def _cell(value: object) -> str:
@@ -407,6 +542,8 @@ def build_manifest_rows(repository: Path, *, lineage: str) -> list[dict[str, str
     """Build one explicit 200-row manifest without relabelling source files."""
     if lineage not in {CONTROLLED_NAME, REFERENCE_NAME}:
         raise ReanalysisError(f"Unknown reanalysis lineage: {lineage}")
+    cutoff_locks = _fft_cutoff_locks(repository)[lineage]
+    used_locks: set[tuple[str, str]] = set()
     rows: list[dict[str, str]] = []
     for source in _sample_source_rows(repository):
         concentration = _decimal(
@@ -422,9 +559,20 @@ def build_manifest_rows(repository: Path, *, lineage: str) -> list[dict[str, str
                 f"Sample provenance unexpectedly changed for {source['file']}: "
                 f"{source.get('provenance_status')!r}"
             )
+        file = source["file"].replace("\\", "/")
+        lock_key = (file, "1")
+        if lock_key not in cutoff_locks:
+            raise ReanalysisError(
+                f"{lineage}: no FFT cutoff lock exists for {lock_key}."
+            )
+        if cutoff_locks[lock_key]["sample_type"].casefold() != "4atp":
+            raise ReanalysisError(
+                f"{lineage}: FFT cutoff lock sample type differs for {file}."
+            )
+        used_locks.add(lock_key)
         rows.append(
             {
-                "file": source["file"].replace("\\", "/"),
+                "file": file,
                 "record_group": ANALYSIS_RECORD_GROUP,
                 "sample_type": "4atp",
                 "concentration_molar": str(source["concentration_molar"]).strip(),
@@ -443,6 +591,9 @@ def build_manifest_rows(repository: Path, *, lineage: str) -> list[dict[str, str
                 "blank_replication_design": "",
                 "intensity_column": "1",
                 "baseline_lambda": "3000" if lineage == CONTROLLED_NAME else "",
+                "filter_fft_peak_index": cutoff_locks[lock_key][
+                    "filter_fft_peak_index"
+                ],
                 "analysis_lineage": lineage,
             }
         )
@@ -453,9 +604,24 @@ def build_manifest_rows(repository: Path, *, lineage: str) -> list[dict[str, str
     if sha256_file(blank_path) != CONFIRMED_BLANK_SHA256:
         raise ReanalysisError("Confirmed blank SHA-256 does not match the audited source.")
     for accumulation in range(1, 6):
+        file = _portable(CONFIRMED_BLANK_RELATIVE)
+        selector = str(accumulation)
+        lock_key = (file, selector)
+        if lock_key not in cutoff_locks:
+            raise ReanalysisError(
+                f"{lineage}: no FFT cutoff lock exists for {lock_key}."
+            )
+        if (
+            cutoff_locks[lock_key]["sample_type"].casefold() != "blank"
+            or cutoff_locks[lock_key]["source_intensity_column"] != selector
+        ):
+            raise ReanalysisError(
+                f"{lineage}: FFT cutoff lock blank identity differs for {lock_key}."
+            )
+        used_locks.add(lock_key)
         rows.append(
             {
-                "file": _portable(CONFIRMED_BLANK_RELATIVE),
+                "file": file,
                 "record_group": ANALYSIS_RECORD_GROUP,
                 "sample_type": "blank",
                 "concentration_molar": "",
@@ -470,10 +636,18 @@ def build_manifest_rows(repository: Path, *, lineage: str) -> list[dict[str, str
                 "source_record_group": CONFIRMED_BLANK_SOURCE_GROUP,
                 "source_axis_status": "vendor_original",
                 "blank_replication_design": "one_export_five_technical_scans",
-                "intensity_column": str(accumulation),
+                "intensity_column": selector,
                 "baseline_lambda": "8000" if lineage == CONTROLLED_NAME else "",
+                "filter_fft_peak_index": cutoff_locks[lock_key][
+                    "filter_fft_peak_index"
+                ],
                 "analysis_lineage": lineage,
             }
+        )
+    if used_locks != set(cutoff_locks):
+        unused = sorted(set(cutoff_locks) - used_locks)
+        raise ReanalysisError(
+            f"{lineage}: FFT cutoff lock has selectors absent from the manifest: {unused[:5]}"
         )
     validate_manifest_rows(rows, lineage=lineage)
     return rows
@@ -516,6 +690,17 @@ def validate_manifest_rows(
         raise ReanalysisError(f"{lineage}: every row must use portable_raman")
     if {row.get("acquisition") for row in rows} != {"750_5_5_H"}:
         raise ReanalysisError(f"{lineage}: every row must use acquisition 750_5_5_H")
+    try:
+        locked_peaks = [int(row.get("filter_fft_peak_index", "")) for row in rows]
+    except (TypeError, ValueError) as exc:
+        raise ReanalysisError(
+            f"{lineage}: every row requires an integer filter_fft_peak_index lock"
+        ) from exc
+    maximum_frequency_index = 219 if lineage == REFERENCE_NAME else 255
+    if any(peak < 1 or peak >= maximum_frequency_index for peak in locked_peaks):
+        raise ReanalysisError(
+            f"{lineage}: filter_fft_peak_index must lie in 1..{maximum_frequency_index - 1}"
+        )
     selectors = [
         (row.get("file"), row.get("intensity_column")) for row in rows
     ]
@@ -702,6 +887,11 @@ def _run_profiles(repository: Path, temporary_root: Path) -> dict[str, LineageRu
             numerical_library_warnings=library_warnings,
         )
     _validate_resolved_lambdas(results)
+    cutoff_locks = _fft_cutoff_locks(repository)
+    for name in (CONTROLLED_NAME, REFERENCE_NAME):
+        _validate_resolved_fft_locks(
+            results[name].output_path, cutoff_locks[name], label=name
+        )
     return results
 
 
@@ -717,11 +907,36 @@ def _validate_historical_replay(
     source_manifest = repository / "metadata" / "raw_processing_manifest.csv"
     fieldnames, all_rows = _read_csv_rows(source_manifest)
     rows = [
-        row
+        dict(row)
         for row in all_rows
         if row.get("record_group", "").strip() == SOURCE_RECORD_GROUP
     ]
     rows.sort(key=lambda row: (row["file"].casefold(), row["file"]))
+    cutoff_locks = _fft_cutoff_locks(repository)[HISTORICAL_NAME]
+    used_locks: set[tuple[str, str]] = set()
+    for row in rows:
+        file = row["file"].replace("\\", "/")
+        lock_key = (file, "1")
+        if lock_key not in cutoff_locks:
+            raise ReanalysisError(
+                f"Historical replay has no FFT cutoff lock for {lock_key}."
+            )
+        lock = cutoff_locks[lock_key]
+        if lock["sample_type"].casefold() != row.get("sample_type", "").casefold():
+            raise ReanalysisError(
+                f"Historical FFT cutoff lock sample type differs for {file}."
+            )
+        row["intensity_column"] = "1"
+        row["filter_fft_peak_index"] = lock["filter_fft_peak_index"]
+        used_locks.add(lock_key)
+    if used_locks != set(cutoff_locks):
+        unused = sorted(set(cutoff_locks) - used_locks)
+        raise ReanalysisError(
+            f"Historical FFT cutoff lock has selectors absent from replay: {unused[:5]}"
+        )
+    for field in ("intensity_column", "filter_fft_peak_index"):
+        if field not in fieldnames:
+            fieldnames.append(field)
     samples = [row for row in rows if row.get("sample_type", "").casefold() == "4atp"]
     blanks = [row for row in rows if row.get("sample_type", "").casefold() == "blank"]
     if len(rows) != 210 or len(samples) != 195 or len(blanks) != 15:
@@ -784,6 +999,9 @@ def _validate_historical_replay(
             )
 
     _, resolved_rows = _read_csv_rows(output_path / "resolved_manifest.csv")
+    _validate_resolved_fft_locks(
+        output_path, cutoff_locks, label=HISTORICAL_NAME
+    )
     historical_root = repository / HISTORICAL_PROCESSED_RELATIVE
     expected_names = {Path(row["processed_file"]).name for row in resolved_rows}
     historical_names = {
@@ -839,6 +1057,11 @@ def _validate_historical_replay(
         "historical_blank_spectra_compared": blank_count,
         "max_abs_raman_shift_difference_cm-1": max_abs_x,
         "max_abs_intensity_difference": max_abs_y,
+        "fft_cutoff_lock": {
+            "path": _portable(FFT_CUTOFF_LOCK_RELATIVE),
+            "sha256": sha256_file(repository / FFT_CUTOFF_LOCK_RELATIVE),
+            "records_pinned": len(cutoff_locks),
+        },
         "status": "pass",
     }
 
@@ -866,6 +1089,59 @@ def _validate_resolved_lambdas(runs: Mapping[str, LineageRun]) -> None:
                     f"{name}: incorrect lambda source for {row['record_id']}: "
                     f"{first.get('lambda_source')!r}"
                 )
+
+
+def _validate_resolved_fft_locks(
+    output_path: Path,
+    locks: Mapping[tuple[str, str], Mapping[str, str]],
+    *,
+    label: str,
+) -> None:
+    """Require every processed record to consume its audited cutoff lock."""
+    _, report_rows = _read_csv_rows(output_path / "processing_report.csv")
+    by_record = {row["record_id"]: row for row in locks.values()}
+    if len(by_record) != len(locks) or len(report_rows) != len(locks):
+        raise ReanalysisError(
+            f"{label}: processing report and FFT cutoff lock counts differ."
+        )
+    observed_ids = {row["record_id"] for row in report_rows}
+    if observed_ids != set(by_record):
+        missing = sorted(set(by_record) - observed_ids)
+        extra = sorted(observed_ids - set(by_record))
+        raise ReanalysisError(
+            f"{label}: FFT cutoff lock record IDs differ; missing={missing[:5]}, extra={extra[:5]}."
+        )
+    for report in report_rows:
+        lock = by_record[report["record_id"]]
+        if (
+            report["file"] != lock["file"]
+            or report["source_intensity_column"]
+            != lock["source_intensity_column"]
+            or int(report["points"]) != int(lock["spectrum_points"])
+        ):
+            raise ReanalysisError(
+                f"{label}: FFT cutoff lock identity differs for {report['record_id']}."
+            )
+        resolved = json.loads(report["resolved_parameters_json"])["filter"]
+        if (
+            int(resolved.get("fft_peak_index", -1))
+            != int(lock["filter_fft_peak_index"])
+            or not np.isclose(
+                float(resolved.get("cutoff", math.nan)),
+                float(lock["normalized_cutoff"]),
+                rtol=0.0,
+                atol=1e-15,
+            )
+            or float(resolved.get("percentile", math.nan))
+            != float(lock["percentile"])
+            or int(resolved.get("order", -1)) != int(lock["order"])
+            or resolved.get("cutoff_source")
+            != "manifest_filter_fft_peak_index"
+            or resolved.get("tie_break") != "explicit_peak_index"
+        ):
+            raise ReanalysisError(
+                f"{label}: record {report['record_id']} did not consume its FFT cutoff lock."
+            )
 
 
 def _read_arrays(path: Path) -> SpectrumArrays:
@@ -1575,7 +1851,9 @@ def _package_readme(name: str) -> str:
         "OS-specific platform string. `package_metadata.json` retains the exact "
         "Python/dependency versions, code-file hashes, deterministic method and "
         "count metadata, run-level warnings, per-record warning counts, and captured "
-        "numerical-library warnings.\n"
+        "numerical-library warnings. The manifest-visible `filter_fft_peak_index` "
+        "values come from the audited cutoff lock and prevent hardware-dependent "
+        "midpoint ties from changing a replayed filter.\n"
     )
 
 
@@ -1638,6 +1916,12 @@ def _write_lineage_package(
             "path": _portable(RELEASE_REQUIREMENTS_RELATIVE),
             "sha256": sha256_file(repository / RELEASE_REQUIREMENTS_RELATIVE),
         },
+        "fft_cutoff_lock": {
+            "path": _portable(FFT_CUTOFF_LOCK_RELATIVE),
+            "sha256": sha256_file(repository / FFT_CUTOFF_LOCK_RELATIVE),
+            "lineage": lineage.name,
+            "records_pinned": 200,
+        },
         "code_identity": _code_identity(repository),
         "run_warnings": run["warnings"],
         "record_warning_counts": _record_warning_counts(
@@ -1664,6 +1948,7 @@ def _write_lineage_package(
             "The 195 prepared sample spectra remain raw_unverified.",
             "Prepared sample Raman axes differ from corresponding vendor axes by approximately 0.39937 cm-1.",
             "The confirmed blank provides technical scans from one export, not independent blank substrates.",
+            "Per-record FFT cutoff indices are locked to the canonical run because the recovered percentile rule has hardware-sensitive midpoint ties.",
         ],
     }
     if lineage.name == CONTROLLED_NAME:

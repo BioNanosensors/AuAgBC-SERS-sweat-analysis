@@ -53,8 +53,9 @@ synonym for `verified`.
 
 The controlled legacy rerun changes only the blank selection. It retains the
 historical native grid, raw mean-blank subtraction, first iARPLS baseline,
-order-3 FFT-selected Butterworth filter, second iARPLS baseline, and lack of
-normalization. The manifest records the historical first-baseline values
+order-3 Butterworth filter whose canonically resolved FFT peak index is locked
+per record, second iARPLS baseline, and lack of normalization. The manifest
+records both that cutoff index and the historical first-baseline values
 explicitly as 3000 for samples and 8000 for blank channels, avoiding reliance
 on the misspelled source name `Blanck`. Comparing it with the preserved
 historical sample spectra isolates the **blank-only effect**.
@@ -62,7 +63,8 @@ historical sample spectra isolates the **blank-only effect**.
 The `reference_2026` profile changes several operations at once: it uses an
 increasing intersection grid and a crop starting near 341.607 cm⁻¹, applies
 fixed current baseline parameters, uses an order-2 FFT-selected filter with
-different percentiles, subtracts the processed mean blank, and applies an
+different percentiles (also locked after canonical resolution), subtracts the
+processed mean blank, and applies an
 additional post-blank AsLS baseline. Comparing `reference_2026` with the
 controlled legacy rerun therefore measures a **workflow effect**, not a second
 blank-only effect.
@@ -85,9 +87,8 @@ python -m pip install -e ".[test]" -c requirements-release.txt
 The generator refuses any other generation environment. The exact check refuses
 a different operating system, machine architecture, Python series, or direct-
 package version; it permits only the recorded 3.12.13 versus 3.12.10 patch
-string to differ. This restriction is necessary because the FFT cutoff branch
-is sensitive to platform-level numerical differences. Regenerate the two
-lineages and their compact audit packages with:
+string to differ. Regenerate the two lineages and their compact audit packages
+with:
 
 ```text
 python scripts/reprocess_4atp_750_5_5_h.py
@@ -100,9 +101,20 @@ without replacing them with:
 python scripts/reprocess_4atp_750_5_5_h.py --check
 ```
 
-Package metadata records the pinned direct-package versions, the constraints-
-file hash, and SHA-256 identities for the generator and all `auagbc_sers`
-modules used. Both regeneration and `--check` freshly replay the historical
+The source-hash-bound cutoff lock at
+`metadata/processing_locks/optimisation_750_5_5_h_fft_cutoffs.csv` records all
+610 canonical decisions: 210 historical, 200 controlled-legacy, and 200
+`reference_2026` records. Each row binds the source SHA-256, selector, record
+identity, sample type, processed point count, FFT peak index, normalized cutoff,
+percentile, order, and resolution basis. Release replay consumes the explicit
+index before filtering and therefore bypasses the hardware-sensitive automatic
+peak-selection branch. For unlocked future analyses, the current automatic
+rule treats ULP-scale midpoint candidates as a tie and chooses the lowest
+frequency; `legacy_argmin` is retained only for numerical archaeology.
+
+Package metadata records the cutoff-lock hash, pinned direct-package versions,
+the constraints-file hash, and SHA-256 identities for the generator and all
+`auagbc_sers` modules used. Both regeneration and `--check` freshly replay the historical
 mixed-composite run and require all 210 preserved spectra to agree within an
 absolute tolerance of `1e-9`; this keeps the “blank-only” comparison
 self-checking as the code evolves.

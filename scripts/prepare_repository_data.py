@@ -66,6 +66,9 @@ CONFIRMED_4ATP_BLANK_BYTES = 27_476
 CONFIRMED_4ATP_REANALYSIS_RELEASE_ROOT = Path(
     "data/processed/4atp/optimisation/750_5_5_H"
 )
+CONFIRMED_4ATP_FFT_CUTOFF_LOCK = Path(
+    "metadata/processing_locks/optimisation_750_5_5_h_fft_cutoffs.csv"
+)
 CONFIRMED_4ATP_REANALYSIS_PACKAGES = {
     "controlled_legacy_confirmed_blank": {
         "status": "regenerated_partial_provenance",
@@ -1116,6 +1119,34 @@ def add_confirmed_4atp_reanalysis_manifest_entries(
             "under package(s): " + ", ".join(missing_packages)
         )
 
+    cutoff_lock = repository_root / CONFIRMED_4ATP_FFT_CUTOFF_LOCK
+    if not cutoff_lock.is_file() or cutoff_lock.is_symlink():
+        raise RuntimeError(
+            "The confirmed-blank reanalysis FFT cutoff lock is missing or unsafe: "
+            f"{cutoff_lock}"
+        )
+    add_manifest_row(
+        manifest,
+        repository_root,
+        cutoff_lock,
+        source_name="confirmed_blank_4atp_reanalysis",
+        source_relative_path=(
+            "resolved from the canonical Windows release by "
+            "scripts/reprocess_4atp_750_5_5_h.py"
+        ),
+        source_sha256="",
+        source_bytes="",
+        status="audit_evidence",
+        role="processing_parameter_lock",
+        substitutions=0,
+        note=(
+            "Source-hash-bound per-record FFT peak indices for the historical, "
+            "controlled confirmed-blank, and reference lineages; prevents "
+            "hardware-dependent percentile midpoint branches during replay."
+        ),
+    )
+    status_counts["audit_evidence"] += 1
+
     for path, specification in release_files:
         status = specification["status"]
         add_manifest_row(
@@ -1173,10 +1204,12 @@ def refresh_confirmed_4atp_reanalysis_metadata(
         )
 
     release_prefix = CONFIRMED_4ATP_REANALYSIS_RELEASE_ROOT.as_posix() + "/"
+    support_path = CONFIRMED_4ATP_FFT_CUTOFF_LOCK.as_posix()
     release_indices = [
         index
         for index, row in enumerate(rows)
         if str(row.get("repository_path", "")).startswith(release_prefix)
+        or str(row.get("repository_path", "")) == support_path
     ]
     if release_indices:
         expected_suffix = list(range(release_indices[0], len(rows)))

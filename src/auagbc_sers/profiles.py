@@ -42,6 +42,9 @@ _LEGACY_BASE = {
         "order": 3,
         "percentile_sample": 10.0,
         "percentile_blank": 5.0,
+        # Preserve the recovered script's exact np.argmin branch for numerical
+        # archaeology. Audited releases pin its resolved peak index per record.
+        "tie_break": "legacy_argmin",
     },
     "second_baseline": {
         "enabled": True,
@@ -114,6 +117,7 @@ PROFILES: dict[str, dict[str, Any]] = {
             "order": 2,
             "percentile_sample": 60.0,
             "percentile_blank": 60.0,
+            "tie_break": "lowest_frequency",
         },
         "second_baseline": {
             "enabled": True,

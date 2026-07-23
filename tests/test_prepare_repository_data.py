@@ -130,15 +130,21 @@ def test_raw_processing_manifest_includes_confirmed_blank_without_master_directo
 
 def _release_fixture(repository_root: Path) -> list[Path]:
     release_root = repository_root / PREPARE.CONFIRMED_4ATP_REANALYSIS_RELEASE_ROOT
-    paths = [
+    release_paths = [
         release_root / "controlled_legacy_confirmed_blank" / "spectra.csv",
         release_root / "reference_2026" / "spectra.csv",
         release_root / "comparison" / "sample_metrics.csv",
     ]
-    for index, path in enumerate(paths, start=1):
+    for index, path in enumerate(release_paths, start=1):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(f"x,y\n{index},{index + 1}\n", encoding="utf-8")
-    return paths
+    cutoff_lock = repository_root / PREPARE.CONFIRMED_4ATP_FFT_CUTOFF_LOCK
+    cutoff_lock.parent.mkdir(parents=True, exist_ok=True)
+    cutoff_lock.write_text(
+        "lineage,record_id,filter_fft_peak_index\nfixture,row1,1\n",
+        encoding="utf-8",
+    )
+    return [cutoff_lock, *release_paths]
 
 
 def test_reanalysis_release_is_fully_manifested_with_conservative_statuses(
@@ -159,10 +165,18 @@ def test_reanalysis_release_is_fully_manifested_with_conservative_statuses(
         "regenerated_partial_provenance": 2,
         "audit_evidence": 1,
     }
-    assert status_counts == release_counts
-    expected_release_paths = sorted(
-        path.relative_to(repository_root).as_posix() for path in release_paths
-    )
+    assert status_counts == {
+        "regenerated_partial_provenance": 2,
+        "audit_evidence": 2,
+    }
+    expected_release_paths = [
+        PREPARE.CONFIRMED_4ATP_FFT_CUTOFF_LOCK.as_posix(),
+        *sorted(
+            path.relative_to(repository_root).as_posix()
+            for path in release_paths
+            if path != repository_root / PREPARE.CONFIRMED_4ATP_FFT_CUTOFF_LOCK
+        ),
+    ]
     assert [row["repository_path"] for row in manifest] == expected_release_paths
     by_package = {
         Path(str(row["repository_path"])).parts[-2]: row for row in manifest
@@ -243,18 +257,23 @@ def test_refresh_reanalysis_metadata_preserves_base_rows_and_needs_no_archive(
 
     _, rows = _read_csv(metadata_root / "dataset_manifest.csv")
     assert rows[0] == {key: str(value) for key, value in base_row.items()}
-    expected_release_paths = sorted(
-        path.relative_to(repository_root).as_posix() for path in release_paths
-    )
+    expected_release_paths = [
+        PREPARE.CONFIRMED_4ATP_FFT_CUTOFF_LOCK.as_posix(),
+        *sorted(
+            path.relative_to(repository_root).as_posix()
+            for path in release_paths
+            if path != repository_root / PREPARE.CONFIRMED_4ATP_FFT_CUTOFF_LOCK
+        ),
+    ]
     assert [row["repository_path"] for row in rows[1:]] == expected_release_paths
     summary = json.loads(
         (metadata_root / "curation_summary.json").read_text(encoding="utf-8")
     )
-    assert summary["dataset_manifest_rows"] == 4
+    assert summary["dataset_manifest_rows"] == 5
     assert summary["regenerated_4atp_release_file_count"] == 3
-    assert summary["copied_audit_report_count"] == 1
+    assert summary["copied_audit_report_count"] == 2
     assert summary["status_counts"] == {
-        "audit_evidence": 1,
+        "audit_evidence": 2,
         "raw_unverified": 1,
         "regenerated_partial_provenance": 2,
     }

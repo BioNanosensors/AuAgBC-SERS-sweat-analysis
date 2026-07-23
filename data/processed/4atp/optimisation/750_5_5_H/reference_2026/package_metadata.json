@@ -2,7 +2,7 @@
   "code_identity": [
     {
       "path": "scripts/reprocess_4atp_750_5_5_h.py",
-      "sha256": "6746864a47126258f702e1e9c8ffd478473c139cb7f1c1de2743cd7de8d84cde"
+      "sha256": "440614038003b7f8076cd08daddc970b825ef038b447f77234fa986f19167cd6"
     },
     {
       "path": "pyproject.toml",
@@ -38,11 +38,11 @@
     },
     {
       "path": "src/auagbc_sers/processing.py",
-      "sha256": "b5d45633db5ca5e3eb7d32720bdbfff716a3c2b21154f9cc5c62b1eb7b426e99"
+      "sha256": "3cdd1437dae8426f038ae15871c6b0c465d79a924ae855b4bb4c6e716d520973"
     },
     {
       "path": "src/auagbc_sers/profiles.py",
-      "sha256": "4d60a32c31515ed7532989aebd027a66022bda09a4ae972dba9c74b8b421e76f"
+      "sha256": "211c508e5fe9d76f8d172f6af81b7c817736bc5a00db5014a4592949106401af"
     }
   ],
   "configuration": {
@@ -66,6 +66,12 @@
   "environment_constraints": {
     "path": "requirements-release.txt",
     "sha256": "5466c13c25191a4559e8e9bdff26618c4ca4198c7864bc3cebdf22757fd215e7"
+  },
+  "fft_cutoff_lock": {
+    "lineage": "reference_2026",
+    "path": "metadata/processing_locks/optimisation_750_5_5_h_fft_cutoffs.csv",
+    "records_pinned": 200,
+    "sha256": "56f008d5495c43a40db926a2a701f16fe9fa384b5c958efdf477123b7d621b36"
   },
   "grid": {
     "group_by": [
@@ -91,12 +97,13 @@
   "limitations": [
     "The 195 prepared sample spectra remain raw_unverified.",
     "Prepared sample Raman axes differ from corresponding vendor axes by approximately 0.39937 cm-1.",
-    "The confirmed blank provides technical scans from one export, not independent blank substrates."
+    "The confirmed blank provides technical scans from one export, not independent blank substrates.",
+    "Per-record FFT cutoff indices are locked to the canonical run because the recovered percentile rule has hardware-sensitive midpoint ties."
   ],
   "lineage": "reference_2026",
   "manifest": {
     "path": "configs/reanalysis/optimisation_750_5_5_h_confirmed_blank_reference_2026_manifest.csv",
-    "sha256": "3b1acd71efe31efc7866347c24a133bb27dba490dd6da6894d159c14194392f1"
+    "sha256": "44229a02098213974b5d623472ed92fa72ad91f2c403d3b206a005ca2d781818"
   },
   "numerical_library_warnings": [
     "ParameterWarning: almost all baseline points are below the data, indicating that \"tol\" is too low and/or \"max_iter\" is too high"
@@ -105,7 +112,7 @@
   "profile": "reference_2026",
   "provenance_status": "regenerated_partial_provenance",
   "record_warning_counts": {},
-  "run_id": "b7292479a1bee39ced68",
+  "run_id": "091aa375124aa379d830",
   "run_warnings": [],
   "schema_version": 1,
   "software_environment": {

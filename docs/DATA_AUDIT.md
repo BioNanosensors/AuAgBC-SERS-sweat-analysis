@@ -242,9 +242,9 @@ definitive script. A common historical portable workflow was:
 5. estimate a second iARPLS baseline; and
 6. save a two-column spectrum.
 
-The unified package reproduces every paired spectrum in the stability and
-500/750-H optimisation folders, including the numerical values as parsed from
-CSV:
+On the canonical generation computer, the unified package reproduced every
+paired spectrum in the stability and 500/750-H optimisation folders, including
+the numerical values as parsed from CSV:
 
 | Family | Paired spectra | Exact numerical matches | Missing outputs | Extra outputs |
 | --- | ---: | ---: | ---: | ---: |
@@ -260,11 +260,18 @@ An earlier exploratory audit, retained under `metadata/validation/`, reported
 data-frame-based replay. Differences of approximately 1e-12 in parsing or
 summation could change which discrete FFT peak was selected as the Butterworth
 cutoff and send the historical algorithm down a different branch. A
-package-native replay using the same deterministic reader as the released
-workflow resolves all 27: 955 of 955 pairs have zero RMSE and zero maximum
-absolute difference. The older reports remain as development evidence of this
-numerical sensitivity; they are superseded for package-reproduction claims and
-must not be interpreted as provenance conflicts.
+package-native replay using the same reader as the released workflow resolves
+all 27 on the canonical computer: 955 of 955 pairs have zero RMSE and zero
+maximum absolute difference. The automatic legacy cutoff rule itself is not
+cross-hardware deterministic when a percentile falls exactly between two FFT
+peak magnitudes. The high-power audited release therefore uses the explicit,
+source-hash-bound 610-row cutoff lock in
+`metadata/processing_locks/optimisation_750_5_5_h_fft_cutoffs.csv`; its replay
+does not rerun that ambiguous selection. The other legacy-family results remain
+numerical-archaeology evidence from the canonical run, not a claim of
+bit-identical behavior on every CPU. The older reports remain as development
+evidence of this sensitivity and must not be interpreted as provenance
+conflicts.
 
 For blind samples, a different legacy strategy using a single blank reproduces
 123 of 135 sample columns at 1e-9 and 130 at 1e-7; five material discrepancies

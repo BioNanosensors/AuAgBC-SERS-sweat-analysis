@@ -2,7 +2,7 @@
   "code_identity": [
     {
       "path": "scripts/reprocess_4atp_750_5_5_h.py",
-      "sha256": "6746864a47126258f702e1e9c8ffd478473c139cb7f1c1de2743cd7de8d84cde"
+      "sha256": "440614038003b7f8076cd08daddc970b825ef038b447f77234fa986f19167cd6"
     },
     {
       "path": "pyproject.toml",
@@ -38,11 +38,11 @@
     },
     {
       "path": "src/auagbc_sers/processing.py",
-      "sha256": "b5d45633db5ca5e3eb7d32720bdbfff716a3c2b21154f9cc5c62b1eb7b426e99"
+      "sha256": "3cdd1437dae8426f038ae15871c6b0c465d79a924ae855b4bb4c6e716d520973"
     },
     {
       "path": "src/auagbc_sers/profiles.py",
-      "sha256": "4d60a32c31515ed7532989aebd027a66022bda09a4ae972dba9c74b8b421e76f"
+      "sha256": "211c508e5fe9d76f8d172f6af81b7c817736bc5a00db5014a4592949106401af"
     }
   ],
   "configuration": {
@@ -67,6 +67,12 @@
     "path": "requirements-release.txt",
     "sha256": "5466c13c25191a4559e8e9bdff26618c4ca4198c7864bc3cebdf22757fd215e7"
   },
+  "fft_cutoff_lock": {
+    "lineage": "controlled_legacy_confirmed_blank",
+    "path": "metadata/processing_locks/optimisation_750_5_5_h_fft_cutoffs.csv",
+    "records_pinned": 200,
+    "sha256": "56f008d5495c43a40db926a2a701f16fe9fa384b5c958efdf477123b7d621b36"
+  },
   "grid": {
     "groups": [],
     "mode": "native"
@@ -74,6 +80,11 @@
   "historical_replay_validation": {
     "absolute_tolerance": 1e-09,
     "comparison": "fresh historical-composite replay versus preserved snapshot",
+    "fft_cutoff_lock": {
+      "path": "metadata/processing_locks/optimisation_750_5_5_h_fft_cutoffs.csv",
+      "records_pinned": 210,
+      "sha256": "56f008d5495c43a40db926a2a701f16fe9fa384b5c958efdf477123b7d621b36"
+    },
     "historical_blank_spectra_compared": 15,
     "max_abs_intensity_difference": 0.0,
     "max_abs_raman_shift_difference_cm-1": 0.0,
@@ -85,12 +96,13 @@
   "limitations": [
     "The 195 prepared sample spectra remain raw_unverified.",
     "Prepared sample Raman axes differ from corresponding vendor axes by approximately 0.39937 cm-1.",
-    "The confirmed blank provides technical scans from one export, not independent blank substrates."
+    "The confirmed blank provides technical scans from one export, not independent blank substrates.",
+    "Per-record FFT cutoff indices are locked to the canonical run because the recovered percentile rule has hardware-sensitive midpoint ties."
   ],
   "lineage": "controlled_legacy_confirmed_blank",
   "manifest": {
     "path": "configs/reanalysis/optimisation_750_5_5_h_confirmed_blank_legacy_v2_manifest.csv",
-    "sha256": "a2e49cae5b0815eee1392243d68267d390c9014ba05bb2cda5f73b2d766b4a5a"
+    "sha256": "cdf634652019cdf07e46fabaa763e0374c1f71d9550f676a4c52953f22b1a768"
   },
   "numerical_library_warnings": [],
   "processed_spectra_zip_members": 200,
@@ -99,7 +111,7 @@
   "record_warning_counts": {
     "Raman-shift spacing is non-uniform (relative SD 0.221); FFT used the median spacing.": 200
   },
-  "run_id": "98fbc26a98093d1d2b74",
+  "run_id": "eb028d9610df6f74b370",
   "run_warnings": [],
   "schema_version": 1,
   "software_environment": {

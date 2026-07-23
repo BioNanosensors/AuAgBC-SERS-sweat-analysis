@@ -157,6 +157,13 @@ python scripts/reprocess_4atp_750_5_5_h.py
 python scripts/reprocess_4atp_750_5_5_h.py --check
 ```
 
+This high-power release uses the auditable 610-row cutoff lock in
+`metadata/processing_locks/optimisation_750_5_5_h_fft_cutoffs.csv`. It binds
+each canonical FFT peak index to its exact source hash, intensity selector, and
+processing contract, so a midpoint tie cannot send another CPU down a different
+Butterworth branch. The resolved index remains visible in the generated
+manifests and processing reports.
+
 The release products are under
 `data/processed/4atp/optimisation/750_5_5_H/`. Large scan-level and
 per-spectrum tables are compressed as `.csv.gz` and deterministic ZIP archives;
@@ -188,7 +195,9 @@ similarity.
   averaging, applies configured baseline/filter/blank steps, and records all
   resolved parameters.
 - `legacy_individual`: the portable v2 chain recovered from the historical
-  scripts and used for numerical archaeology.
+  scripts and used for numerical archaeology. Its original `np.argmin` tie
+  behavior is retained for fidelity; audited high-power release runs use the
+  explicit per-record cutoff lock instead.
 - `legacy_sg2`, `legacy_sg3`, and `spyder_tuned`: named historical variants kept
   so their assumptions cannot be confused with the reference workflow.
 

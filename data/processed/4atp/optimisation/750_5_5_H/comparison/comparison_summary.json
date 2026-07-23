@@ -152,6 +152,11 @@
   "historical_replay_validation": {
     "absolute_tolerance": 1e-09,
     "comparison": "fresh historical-composite replay versus preserved snapshot",
+    "fft_cutoff_lock": {
+      "path": "metadata/processing_locks/optimisation_750_5_5_h_fft_cutoffs.csv",
+      "records_pinned": 210,
+      "sha256": "56f008d5495c43a40db926a2a701f16fe9fa384b5c958efdf477123b7d621b36"
+    },
     "historical_blank_spectra_compared": 15,
     "max_abs_intensity_difference": 0.0,
     "max_abs_raman_shift_difference_cm-1": 0.0,
