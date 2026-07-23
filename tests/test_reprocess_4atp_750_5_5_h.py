@@ -385,4 +385,8 @@ def test_release_numeric_comparison_accepts_only_machine_scale_drift() -> None:
 
     branch_scale = REPROCESS.pd.DataFrame({"intensity": ["0", "4936.565"]})
     errors = REPROCESS._compare_frames(expected, branch_scale, "spectra.csv")
-    assert errors == ["spectra.csv: numeric column 'intensity' differs"]
+    assert len(errors) == 1
+    assert "numeric column 'intensity' differs at 1/2 rows" in errors[0]
+    assert "worst tolerance row=2" in errors[0]
+    assert "delta/allowed=" in errors[0]
+    assert "max |delta|=686.565" in errors[0]

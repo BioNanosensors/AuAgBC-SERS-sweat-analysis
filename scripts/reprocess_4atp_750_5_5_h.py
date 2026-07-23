@@ -2115,14 +2115,77 @@ def _compare_frames(expected: pd.DataFrame, actual: pd.DataFrame, label: str) ->
         right_nonempty = right.astype("string").fillna("").str.len() > 0
         numeric_mask = left_numeric.notna() | right_numeric.notna()
         if numeric_mask.any() and (numeric_mask == (left_nonempty | right_nonempty)).all():
-            if not np.allclose(
-                left_numeric.to_numpy(dtype=float),
-                right_numeric.to_numpy(dtype=float),
+            left_values = left_numeric.to_numpy(dtype=float)
+            right_values = right_numeric.to_numpy(dtype=float)
+            close = np.isclose(
+                left_values,
+                right_values,
                 rtol=RELEASE_COMPARISON_RELATIVE_TOLERANCE,
                 atol=RELEASE_COMPARISON_ABSOLUTE_TOLERANCE,
                 equal_nan=True,
-            ):
-                errors.append(f"{label}: numeric column {column!r} differs")
+            )
+            if not np.all(close):
+                failed = ~close
+                finite_failed = failed & np.isfinite(left_values) & np.isfinite(
+                    right_values
+                )
+                if np.any(finite_failed):
+                    differences = np.abs(left_values - right_values)
+                    allowed = RELEASE_COMPARISON_ABSOLUTE_TOLERANCE + (
+                        RELEASE_COMPARISON_RELATIVE_TOLERANCE
+                        * np.abs(right_values)
+                    )
+                    tolerance_ratios = np.divide(
+                        differences,
+                        allowed,
+                        out=np.full_like(differences, math.inf),
+                        where=allowed > 0,
+                    )
+                    ranked = np.where(finite_failed, tolerance_ratios, -np.inf)
+                    worst = int(np.argmax(ranked))
+                    maximum_absolute = float(np.max(differences[finite_failed]))
+                    scales = np.maximum(np.abs(left_values), np.abs(right_values))
+                    relative_differences = np.divide(
+                        differences,
+                        scales,
+                        out=np.full_like(differences, math.inf),
+                        where=scales > 0,
+                    )
+                    maximum_relative = float(
+                        np.max(relative_differences[finite_failed])
+                    )
+                    identity_fields: list[str] = []
+                    for identity_column in (
+                        "record_id",
+                        "file",
+                        "concentration_molar",
+                        "replicate",
+                        "accumulation",
+                        "raman_shift_cm-1",
+                        "peak_cm-1",
+                        "comparison",
+                    ):
+                        if identity_column in expected.columns:
+                            identity_fields.append(
+                                f"{identity_column}={expected.iloc[worst][identity_column]!r}"
+                            )
+                    identity = ", ".join(identity_fields) or "no identity columns"
+                    errors.append(
+                        f"{label}: numeric column {column!r} differs at "
+                        f"{int(np.count_nonzero(failed))}/{len(close)} rows; "
+                        f"worst tolerance row={worst + 1} ({identity}), "
+                        f"expected={left_values[worst]:.17g}, "
+                        f"actual={right_values[worst]:.17g}, "
+                        f"|delta|={differences[worst]:.6g}, allowed={allowed[worst]:.6g}, "
+                        f"delta/allowed={tolerance_ratios[worst]:.6g}, "
+                        f"max |delta|={maximum_absolute:.6g}, "
+                        f"max relative delta={maximum_relative:.6g}"
+                    )
+                else:
+                    errors.append(
+                        f"{label}: numeric column {column!r} has "
+                        f"{int(np.count_nonzero(failed))}/{len(close)} non-finite mismatches"
+                    )
         else:
             left_text = left.astype("string").fillna("").tolist()
             right_text = right.astype("string").fillna("").tolist()
