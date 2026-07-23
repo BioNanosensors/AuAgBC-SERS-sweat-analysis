@@ -164,6 +164,12 @@ processing contract, so a midpoint tie cannot send another CPU down a different
 Butterworth branch. The resolved index remains visible in the generated
 manifests and processing reports.
 
+The cross-platform check uses narrow, lineage-scoped numerical bounds for the
+reference workflow's iterative numerical steps while keeping axes, identities,
+schemas, labels, and lock fields strict. The measured rationale and exact
+contracts are documented in
+[the high-power reanalysis note](docs/4ATP_HIGH_POWER_REANALYSIS.md).
+
 The release products are under
 `data/processed/4atp/optimisation/750_5_5_H/`. Large scan-level and
 per-spectrum tables are compressed as `.csv.gz` and deterministic ZIP archives;

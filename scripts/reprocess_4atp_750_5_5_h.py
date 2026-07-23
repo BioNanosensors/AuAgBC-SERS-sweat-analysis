@@ -76,7 +76,29 @@ CANONICAL_PLATFORM_SYSTEM = "Windows"
 CANONICAL_PLATFORM_MACHINE = "AMD64"
 RELEASE_COMPARISON_RELATIVE_TOLERANCE = 1e-7
 RELEASE_COMPARISON_ABSOLUTE_TOLERANCE = 1e-5
+REFERENCE_INTENSITY_ABSOLUTE_TOLERANCE = 2e-4
+REFERENCE_CV_RELATIVE_TOLERANCE = 1e-4
+AXIS_COMPARISON_ABSOLUTE_TOLERANCE = 1e-12
 HISTORICAL_REPLAY_ABSOLUTE_TOLERANCE = RELEASE_COMPARISON_ABSOLUTE_TOLERANCE
+
+REFERENCE_DRIFT_NUMERIC_COLUMNS = {
+    "absolute_change",
+    "cv_percent",
+    "intensity_mean",
+    "intensity_processed",
+    "intensity_sd",
+    "mean_signed_difference",
+}
+AXIS_NUMERIC_COLUMNS = {
+    "axis_max_abs_difference_cm-1",
+    "center_cm-1",
+    "left_observed_shift_cm-1",
+    "raman_shift_cm-1",
+    "right_observed_shift_cm-1",
+    "window_cm-1",
+    "x_max_cm-1",
+    "x_min_cm-1",
+}
 
 CONTROLLED_NAME = "controlled_legacy_confirmed_blank"
 REFERENCE_NAME = "reference_2026"
@@ -1937,6 +1959,14 @@ def _write_lineage_package(
             "path": _portable(RELEASE_REQUIREMENTS_RELATIVE),
             "sha256": sha256_file(repository / RELEASE_REQUIREMENTS_RELATIVE),
         },
+        "cross_platform_release_check": {
+            "default_numeric_relative_tolerance": RELEASE_COMPARISON_RELATIVE_TOLERANCE,
+            "default_numeric_absolute_tolerance": RELEASE_COMPARISON_ABSOLUTE_TOLERANCE,
+            "reference_iterative_intensity_absolute_tolerance": REFERENCE_INTENSITY_ABSOLUTE_TOLERANCE,
+            "reference_near_zero_cv_relative_tolerance": REFERENCE_CV_RELATIVE_TOLERANCE,
+            "axis_absolute_tolerance_cm-1": AXIS_COMPARISON_ABSOLUTE_TOLERANCE,
+            "text_schema_and_identifiers": "exact",
+        },
         "fft_cutoff_lock": {
             "path": _portable(FFT_CUTOFF_LOCK_RELATIVE),
             "sha256": sha256_file(repository / FFT_CUTOFF_LOCK_RELATIVE),
@@ -2100,6 +2130,44 @@ def _compare_values(
         errors.append(f"{path}: values differ ({expected!r} != {actual!r})")
 
 
+def _frame_numeric_tolerances(
+    expected: pd.DataFrame,
+    *,
+    label: str,
+    column: str,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return row-scoped tolerances without weakening identity or axis fields."""
+    relative = np.full(
+        len(expected), RELEASE_COMPARISON_RELATIVE_TOLERANCE, dtype=float
+    )
+    absolute = np.full(
+        len(expected), RELEASE_COMPARISON_ABSOLUTE_TOLERANCE, dtype=float
+    )
+    if column in AXIS_NUMERIC_COLUMNS:
+        relative.fill(0.0)
+        absolute.fill(AXIS_COMPARISON_ABSOLUTE_TOLERANCE)
+        return relative, absolute
+
+    reference_rows = np.zeros(len(expected), dtype=bool)
+    if label.startswith(f"{REFERENCE_NAME}/"):
+        reference_rows.fill(True)
+    elif label.startswith(f"{COMPARISON_NAME}/"):
+        for lineage_column in ("left_lineage", "right_lineage"):
+            if lineage_column in expected.columns:
+                reference_rows |= (
+                    expected[lineage_column]
+                    .astype("string")
+                    .fillna("")
+                    .eq(REFERENCE_NAME)
+                    .to_numpy(dtype=bool)
+                )
+    if column in REFERENCE_DRIFT_NUMERIC_COLUMNS:
+        absolute[reference_rows] = REFERENCE_INTENSITY_ABSOLUTE_TOLERANCE
+    if column == "cv_percent":
+        relative[reference_rows] = REFERENCE_CV_RELATIVE_TOLERANCE
+    return relative, absolute
+
+
 def _compare_frames(expected: pd.DataFrame, actual: pd.DataFrame, label: str) -> list[str]:
     errors: list[str] = []
     if list(expected.columns) != list(actual.columns):
@@ -2117,11 +2185,14 @@ def _compare_frames(expected: pd.DataFrame, actual: pd.DataFrame, label: str) ->
         if numeric_mask.any() and (numeric_mask == (left_nonempty | right_nonempty)).all():
             left_values = left_numeric.to_numpy(dtype=float)
             right_values = right_numeric.to_numpy(dtype=float)
+            relative_tolerance, absolute_tolerance = _frame_numeric_tolerances(
+                expected, label=label, column=str(column)
+            )
             close = np.isclose(
                 left_values,
                 right_values,
-                rtol=RELEASE_COMPARISON_RELATIVE_TOLERANCE,
-                atol=RELEASE_COMPARISON_ABSOLUTE_TOLERANCE,
+                rtol=relative_tolerance,
+                atol=absolute_tolerance,
                 equal_nan=True,
             )
             if not np.all(close):
@@ -2131,9 +2202,8 @@ def _compare_frames(expected: pd.DataFrame, actual: pd.DataFrame, label: str) ->
                 )
                 if np.any(finite_failed):
                     differences = np.abs(left_values - right_values)
-                    allowed = RELEASE_COMPARISON_ABSOLUTE_TOLERANCE + (
-                        RELEASE_COMPARISON_RELATIVE_TOLERANCE
-                        * np.abs(right_values)
+                    allowed = absolute_tolerance + (
+                        relative_tolerance * np.abs(right_values)
                     )
                     tolerance_ratios = np.divide(
                         differences,

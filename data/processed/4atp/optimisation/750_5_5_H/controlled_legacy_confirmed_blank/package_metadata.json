@@ -2,7 +2,7 @@
   "code_identity": [
     {
       "path": "scripts/reprocess_4atp_750_5_5_h.py",
-      "sha256": "a60186b3b93d7add7afcdc7a54ec00d0bd11565f5a6c45e96fed2a4faf620fb5"
+      "sha256": "a60626b78128f051f2c78d548919ef4282705fa847c2f6a2ddea40d49f835e36"
     },
     {
       "path": "pyproject.toml",
@@ -62,6 +62,14 @@
     "replicate_spectra": 40,
     "scan_spectra": 200,
     "source_files": 196
+  },
+  "cross_platform_release_check": {
+    "axis_absolute_tolerance_cm-1": 1e-12,
+    "default_numeric_absolute_tolerance": 1e-05,
+    "default_numeric_relative_tolerance": 1e-07,
+    "reference_iterative_intensity_absolute_tolerance": 0.0002,
+    "reference_near_zero_cv_relative_tolerance": 0.0001,
+    "text_schema_and_identifiers": "exact"
   },
   "environment_constraints": {
     "path": "requirements-release.txt",

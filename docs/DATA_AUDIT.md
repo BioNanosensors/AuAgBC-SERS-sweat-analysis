@@ -273,6 +273,17 @@ bit-identical behavior on every CPU. The older reports remain as development
 evidence of this sensitivity and must not be interpreted as provenance
 conflicts.
 
+The locked cutoff also exposed much smaller reference-only differences on the
+GitHub Windows runner, consistent with variation in the iterative baseline
+solver: 171 of 88,200 scan points differed beyond the generic bound, with a
+worst absolute delta of `0.000140786` intensity units. The release checker
+applies a documented `2e-4`
+absolute bound only to reference intensity and directly propagated difference
+fields, plus a `1e-4` relative bound to CV near zero. Axes, identities, schemas,
+labels, and cutoff-lock fields remain strict. See
+[`4ATP_HIGH_POWER_REANALYSIS.md`](4ATP_HIGH_POWER_REANALYSIS.md) for the measured
+contract and public CI evidence.
+
 For blind samples, a different legacy strategy using a single blank reproduces
 123 of 135 sample columns at 1e-9 and 130 at 1e-7; five material discrepancies
 remain, and the fifteen separately prepared blank outputs are unresolved.

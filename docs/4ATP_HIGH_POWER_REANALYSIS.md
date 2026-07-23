@@ -122,7 +122,18 @@ GitHub Windows runner while remaining many orders of magnitude below a
 scientifically meaningful intensity change; it keeps the “blank-only” comparison
 self-checking as the code evolves. The final machine-readable package comparison
 uses the same `1e-5` absolute tolerance plus a `1e-7` relative tolerance for
-numeric fields; schemas, file sets, labels, and other text remain exact.
+numeric fields. GitHub's Windows runner showed reference-only numerical drift,
+consistent with variation in the iterative baseline solver, at 171 of 88,200
+scan points (0.194%); the largest absolute difference was `0.000140786`
+intensity units in
+[run 29978078395](https://github.com/BioNanosensors/AuAgBC-SERS-sweat-analysis/actions/runs/29978078395).
+The reference intensity and directly propagated difference fields therefore use
+an explicit `2e-4` absolute bound. This worst observed delta was `7.77e-9` of
+that affected spectrum's intensity range. `cv_percent` uses a reference-only
+`1e-4` relative bound because CV becomes numerically unstable when its mean is
+near zero. Raman-shift axes retain a `1e-12` absolute bound; schemas, file sets,
+labels, identities, and other text remain exact. These contracts are also
+recorded in each lineage's `package_metadata.json`.
 
 The release directories contain compact machine-readable summaries. The full
 long-form scan table is stored as `spectra_scan.csv.gz`, while the 200 individual

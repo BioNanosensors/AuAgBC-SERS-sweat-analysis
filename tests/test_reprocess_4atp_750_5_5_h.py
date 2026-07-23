@@ -246,6 +246,14 @@ def test_release_metadata_records_environment_code_and_warning_scopes() -> None:
         assert constraints["sha256"] == REPROCESS.sha256_file(
             PROJECT_ROOT / "requirements-release.txt"
         )
+        assert metadata["cross_platform_release_check"] == {
+            "default_numeric_relative_tolerance": 1e-7,
+            "default_numeric_absolute_tolerance": 1e-5,
+            "reference_iterative_intensity_absolute_tolerance": 2e-4,
+            "reference_near_zero_cv_relative_tolerance": 1e-4,
+            "axis_absolute_tolerance_cm-1": 1e-12,
+            "text_schema_and_identifiers": "exact",
+        }
         cutoff_lock = metadata["fft_cutoff_lock"]
         assert cutoff_lock == {
             "path": REPROCESS.FFT_CUTOFF_LOCK_RELATIVE.as_posix(),
@@ -351,7 +359,7 @@ def test_persistent_generation_environment_guard_rejects_version_drift(
     assert check_report["python"] == "3.12.10"
 
 
-def test_release_comparison_allows_only_the_python_check_patch_difference() -> None:
+def test_release_comparison_allows_python_patch_but_not_dependency_drift() -> None:
     errors: list[str] = []
     REPROCESS._compare_values(
         "3.12.13",
@@ -390,3 +398,90 @@ def test_release_numeric_comparison_accepts_only_machine_scale_drift() -> None:
     assert "worst tolerance row=2" in errors[0]
     assert "delta/allowed=" in errors[0]
     assert "max |delta|=686.565" in errors[0]
+
+
+def test_reference_solver_tolerance_is_scoped_and_bounded() -> None:
+    expected = REPROCESS.pd.DataFrame(
+        {
+            "raman_shift_cm-1": [1960.3834810055885],
+            "intensity_processed": [98.202391099150788],
+        }
+    )
+    measured_windows_drift = expected.copy()
+    measured_windows_drift["intensity_processed"] += 0.000140786
+    reference_label = (
+        "reference_2026/processed_spectra.zip:processed_spectra/row.csv"
+    )
+    assert (
+        REPROCESS._compare_frames(expected, measured_windows_drift, reference_label)
+        == []
+    )
+
+    controlled_errors = REPROCESS._compare_frames(
+        expected,
+        measured_windows_drift,
+        "controlled_legacy_confirmed_blank/processed_spectra.zip:row.csv",
+    )
+    assert controlled_errors
+
+    material_reference_change = expected.copy()
+    material_reference_change["intensity_processed"] += 0.01
+    assert REPROCESS._compare_frames(
+        expected, material_reference_change, reference_label
+    )
+
+    shifted_axis = expected.copy()
+    shifted_axis["raman_shift_cm-1"] += 2e-12
+    axis_errors = REPROCESS._compare_frames(expected, shifted_axis, reference_label)
+    assert any("raman_shift_cm-1" in error for error in axis_errors)
+
+
+def test_reference_tolerance_is_row_scoped_in_comparison_tables() -> None:
+    expected = REPROCESS.pd.DataFrame(
+        {
+            "left_lineage": [
+                REPROCESS.HISTORICAL_NAME,
+                REPROCESS.CONTROLLED_NAME,
+            ],
+            "right_lineage": [
+                REPROCESS.CONTROLLED_NAME,
+                REPROCESS.REFERENCE_NAME,
+            ],
+            "absolute_change": [-10.0, -10.0],
+        }
+    )
+    actual = expected.copy()
+    actual["absolute_change"] += 0.00015
+    errors = REPROCESS._compare_frames(
+        expected,
+        actual,
+        "comparison/peak_level_comparison_metrics.csv",
+    )
+    assert len(errors) == 1
+    assert "differs at 1/2 rows" in errors[0]
+    assert "worst tolerance row=1" in errors[0]
+
+
+def test_reference_near_zero_cv_uses_relative_bound() -> None:
+    expected = REPROCESS.pd.DataFrame(
+        {
+            "concentration_molar": [1e-5],
+            "raman_shift_cm-1": [1775.2144810987268],
+            "cv_percent": [-1174020.9440693541],
+        }
+    )
+    measured_windows_drift = expected.copy()
+    measured_windows_drift["cv_percent"] = -1173913.6205980731
+    assert REPROCESS._compare_frames(
+        expected,
+        measured_windows_drift,
+        "reference_2026/spectra_concentration.csv",
+    ) == []
+
+    excessive_change = expected.copy()
+    excessive_change["cv_percent"] *= 0.99
+    assert REPROCESS._compare_frames(
+        expected,
+        excessive_change,
+        "reference_2026/spectra_concentration.csv",
+    )
