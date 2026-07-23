@@ -1,0 +1,26 @@
+{
+  "input_root": "../..",
+  "manifest": "optimisation_750_5_5_h_confirmed_blank_legacy_v2_manifest.csv",
+  "options": {
+    "aggregation": {
+      "group_by": [
+        "record_group"
+      ]
+    },
+    "blank": {
+      "group_by": [
+        "record_group",
+        "instrument"
+      ],
+      "interpolation": "linear",
+      "sample_types": [
+        "blank"
+      ],
+      "stage": "raw",
+      "strategy": "mean"
+    }
+  },
+  "output_root": "../../outputs/reanalysis/optimisation_750_5_5_h_controlled_legacy_confirmed_blank",
+  "profile": "legacy_individual",
+  "schema_version": "1.0"
+}

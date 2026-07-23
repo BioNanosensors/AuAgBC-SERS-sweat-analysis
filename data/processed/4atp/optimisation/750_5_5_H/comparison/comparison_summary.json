@@ -1,0 +1,173 @@
+{
+  "blank_reference": {
+    "mae": 789.7776945569791,
+    "max_abs": 1906.766577810935,
+    "mean_signed_difference_confirmed_minus_historical": 789.7776945569791,
+    "pearson_r": 0.9989927213793184,
+    "rmse": 930.5803422388985,
+    "sample_minus_confirmed_blank_axis_max_cm-1": -0.39936957141003404,
+    "sample_minus_confirmed_blank_axis_mean_cm-1": -0.39937008009262176,
+    "sample_minus_confirmed_blank_axis_min_cm-1": -0.3993705685700206
+  },
+  "comparisons": {
+    "controlled_legacy_vs_reference_2026": {
+      "concentration_mean": {
+        "count": 13,
+        "median_mae": 2143.0500582571863,
+        "median_nrmse_percent_of_left_range": 24.69796203366422,
+        "median_pearson_r": 0.18751316361312903,
+        "median_rmse": 4106.092929492359
+      },
+      "interpretation": "workflow_effect",
+      "peaks": {
+        "concentration_mean_of_replicate_peak_means:peak_1078.5_height": {
+          "count": 13,
+          "median_percent_change_from_left": 9.585029857606916
+        },
+        "concentration_mean_of_replicate_peak_means:peak_1589.62_height": {
+          "count": 13,
+          "median_percent_change_from_left": 45.68539849996266
+        },
+        "concentration_mean_of_replicate_peak_means:peak_392.32_height": {
+          "count": 13,
+          "median_percent_change_from_left": -82.15643648311621
+        },
+        "scan:peak_1078.5_height": {
+          "count": 195,
+          "median_percent_change_from_left": 5.365633287301994
+        },
+        "scan:peak_1589.62_height": {
+          "count": 195,
+          "median_percent_change_from_left": 17.293138961658986
+        },
+        "scan:peak_392.32_height": {
+          "count": 195,
+          "median_percent_change_from_left": -76.61301398936965
+        }
+      },
+      "scan": {
+        "count": 195,
+        "median_mae": 840.2064397515855,
+        "median_nrmse_percent_of_left_range": 21.742978711419948,
+        "median_pearson_r": 0.5123111529761508,
+        "median_rmse": 2086.8173080491247
+      }
+    },
+    "historical_vs_controlled_legacy": {
+      "concentration_mean": {
+        "count": 13,
+        "median_mae": 173.85824521820695,
+        "median_nrmse_percent_of_left_range": 2.072540468490085,
+        "median_pearson_r": 0.9990167871208722,
+        "median_rmse": 340.4140074898148
+      },
+      "interpretation": "blank_only_effect",
+      "peaks": {
+        "concentration_mean_of_replicate_peak_means:peak_1078.5_height": {
+          "count": 13,
+          "median_percent_change_from_left": 2.0907020261869422
+        },
+        "concentration_mean_of_replicate_peak_means:peak_1589.62_height": {
+          "count": 13,
+          "median_percent_change_from_left": -2.3543014121614436
+        },
+        "concentration_mean_of_replicate_peak_means:peak_392.32_height": {
+          "count": 13,
+          "median_percent_change_from_left": -6.789347960055018
+        },
+        "scan:peak_1078.5_height": {
+          "count": 195,
+          "median_percent_change_from_left": 2.3792769397113327
+        },
+        "scan:peak_1589.62_height": {
+          "count": 195,
+          "median_percent_change_from_left": -0.9766413689408324
+        },
+        "scan:peak_392.32_height": {
+          "count": 195,
+          "median_percent_change_from_left": -7.113274176225069
+        }
+      },
+      "scan": {
+        "count": 195,
+        "median_mae": 169.58016668866415,
+        "median_nrmse_percent_of_left_range": 3.444290406617348,
+        "median_pearson_r": 0.9898817403734949,
+        "median_rmse": 369.73835313834144
+      }
+    },
+    "historical_vs_reference_2026": {
+      "concentration_mean": {
+        "count": 13,
+        "median_mae": 2246.4009822843473,
+        "median_nrmse_percent_of_left_range": 25.06603699622953,
+        "median_pearson_r": 0.16253934139117684,
+        "median_rmse": 4426.811850978673
+      },
+      "interpretation": "combined_blank_and_workflow_effect",
+      "peaks": {
+        "concentration_mean_of_replicate_peak_means:peak_1078.5_height": {
+          "count": 13,
+          "median_percent_change_from_left": 11.330613494861815
+        },
+        "concentration_mean_of_replicate_peak_means:peak_1589.62_height": {
+          "count": 13,
+          "median_percent_change_from_left": 44.538867140453945
+        },
+        "concentration_mean_of_replicate_peak_means:peak_392.32_height": {
+          "count": 13,
+          "median_percent_change_from_left": -82.7474004499158
+        },
+        "scan:peak_1078.5_height": {
+          "count": 195,
+          "median_percent_change_from_left": 6.724011705367554
+        },
+        "scan:peak_1589.62_height": {
+          "count": 195,
+          "median_percent_change_from_left": 15.997273813211756
+        },
+        "scan:peak_392.32_height": {
+          "count": 195,
+          "median_percent_change_from_left": -78.76208677219671
+        }
+      },
+      "scan": {
+        "count": 195,
+        "median_mae": 983.0952203743233,
+        "median_nrmse_percent_of_left_range": 22.012116576656577,
+        "median_pearson_r": 0.48218659195585084,
+        "median_rmse": 2451.1308849140796
+      }
+    }
+  },
+  "counts": {
+    "concentrations": 13,
+    "confirmed_blank_channels": 5,
+    "confirmed_blank_exports": 1,
+    "historical_composite_blank_files": 15,
+    "sample_replicates_per_concentration": 3,
+    "sample_spectra": 195,
+    "technical_scans_per_sample_replicate": 5
+  },
+  "historical_replay_validation": {
+    "absolute_tolerance": 1e-09,
+    "comparison": "fresh historical-composite replay versus preserved snapshot",
+    "historical_blank_spectra_compared": 15,
+    "max_abs_intensity_difference": 0.0,
+    "max_abs_raman_shift_difference_cm-1": 0.0,
+    "profile": "legacy_individual",
+    "sample_spectra_compared": 195,
+    "spectra_compared": 210,
+    "status": "pass"
+  },
+  "interpretation_limits": [
+    "Historical versus controlled legacy isolates the blank-only effect.",
+    "Controlled legacy versus reference_2026 is a workflow effect.",
+    "Historical versus reference_2026 combines blank and workflow effects.",
+    "The 195 prepared sample spectra remain raw_unverified.",
+    "The confirmed blank is one physical export with five technical scans, not independent substrates.",
+    "reference_2026 is not automatically more accurate or scientifically preferred."
+  ],
+  "schema_version": 1,
+  "scope": "portable 4-ATP optimisation 750_5_5_H"
+}

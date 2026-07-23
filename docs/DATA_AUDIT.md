@@ -38,12 +38,14 @@ same bytes occur under filenames that claim different concentrations.
 | `verified` | Identity, acquisition context, and processing lineage agree with an independent source. |
 | `raw_author_confirmed` | Unchanged raw source whose material/sample identity is author-confirmed and whose acquisition metadata matches one explicitly named condition; it must not be generalized to other conditions. |
 | `publication_snapshot` | A table or spectrum preserved because it was used to assemble the manuscript; this does not imply that its complete raw lineage is verified. |
-| `regenerated` | Produced by the current pipeline from inputs named in a portable manifest. |
+| `regenerated` | Produced by the current pipeline from inputs named in a portable manifest whose provenance supports the stated scope. |
+| `regenerated_partial_provenance` | Produced reproducibly by the current pipeline, but at least one named input retains a documented provenance limitation; this is not equivalent to verified. |
 | `legacy_derived` | Produced by an historical script or workflow; retained as evidence. |
 | `raw_unverified` | Numerically plausible raw data whose full experimental identity is not yet independently confirmed. |
 | `provenance_conflict` | Filename or manifest metadata conflicts with the matching master measurement or with another copy of the same spectrum. |
 | `orphan_derived` | A processed file has no same-stem raw input in its stated experiment folder. |
 | `sanitized_copy` | Data values are unchanged, but a private absolute path was replaced with a portable path. |
+| `audit_evidence` | Machine-readable audit or numerical-validation evidence; it is not an experimental spectrum status. |
 
 ## Findings that prevent an unqualified public release
 
@@ -128,11 +130,36 @@ matching 24 September `750_5_5_H` optimisation condition and is distributed
 unchanged under `data/raw/`. No matched AuAgBC blank was found for the 500 ms
 low-power or 750 ms medium-power set.
 
-The preserved high-power processed snapshot was historically generated with
-the mixed 15-spectrum composite, not this newly confirmed blank. Exact replay of
-that snapshot remains historical-lineage evidence. A corrected run using the
-confirmed blank must be labelled as regenerated rather than presented as an
-exact reproduction of the supplied processed files.
+The high-power condition now has three strictly separate lineages:
+
+1. the preserved historical snapshot, generated with the mixed 15-spectrum
+   composite and retained as historical-lineage evidence;
+2. a controlled `legacy_individual` rerun using the one confirmed five-channel
+   blank, which holds the historical algorithm fixed and isolates the
+   blank-only effect; and
+3. a `reference_2026` reanalysis using the confirmed blank but changing the
+   grid, crop, baseline/filter settings, blank-subtraction stage, and post-blank
+   baseline, which measures a wider workflow effect.
+
+The 195 prepared sample spectra match vendor-export intensities, but their
+prepared Raman axes differ from the 39 vendor originals by approximately
+0.39937 cm⁻¹. They remain `raw_unverified`; both new output lineages are
+therefore `regenerated_partial_provenance`. The confirmed blank is one export
+with five technical scans, not independent blank substrates.
+
+The checked numerical audit shows a smaller blank-only change than the full
+workflow change. RMSE is reported in processed-intensity units; NRMSE is RMSE
+divided by the left-lineage intensity range and multiplied by 100. At scan
+level, the median RMSE, Pearson `r`, and NRMSE are
+369.74, 0.98988, and 3.444% for historical → controlled legacy, compared with
+2086.82, 0.51231, and 21.743% for controlled legacy → `reference_2026`. At
+concentration level, the corresponding median values are 340.41, 0.99902, and
+2.073% for the blank-only comparison, while the workflow comparison has median
+RMSE 4106.09, `r = 0.18751`, and NRMSE 24.698%. Full-precision values and the regenerated check
+are documented in [the high-power reanalysis record](4ATP_HIGH_POWER_REANALYSIS.md).
+
+The reference result is not automatically more accurate or scientifically
+preferred. Neither new lineage overwrites the paper-facing historical data.
 
 ### Analytical enhancement factor
 
@@ -253,6 +280,27 @@ See `metadata/validation/package_reproduction_summary.csv` for family counts and
 `metadata/validation/package_reproduction_metrics.csv` for all 955 file-level
 comparisons. An exact reproduction proves how a prepared derivative was
 calculated; it does not prove that the raw file was labelled correctly.
+
+### High-power 4-ATP controlled and reference packages
+
+The reproducible high-power reanalyses are distributed separately under
+`data/processed/4atp/optimisation/750_5_5_H/` as
+`controlled_legacy_confirmed_blank/`, `reference_2026/`, and `comparison/`.
+Large scan-level tables use compressed `.csv.gz` files and the 200 individual
+two-column spectra in each lineage use a deterministic ZIP archive; compact
+summaries, peak tables, and comparison records remain directly readable.
+
+Run or verify them with:
+
+```text
+python scripts/reprocess_4atp_750_5_5_h.py
+python scripts/reprocess_4atp_750_5_5_h.py --check
+```
+
+The new manifests use the correct equivalence `0.0001 M = 100 µM`. The
+paper-facing optimisation snapshot contains `100 mM` at that header position;
+the typo remains unchanged there to preserve historical bytes and is not
+propagated into regenerated data.
 
 ## Information still needed from the laboratory record
 

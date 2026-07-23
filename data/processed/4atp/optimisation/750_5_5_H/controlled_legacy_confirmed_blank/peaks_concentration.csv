@@ -1,0 +1,43 @@
+record_group,sample_type,concentration_molar,concentration_label,instrument,band,center_cm-1,window_cm-1,method,peak_value_mean_of_replicate_means,peak_value_sd_across_replicates,n_replicates,cv_percent
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,0.0001,100 µM,portable_raman,peak_1078.5_height,1078.5,7,height,11426.890864205487,13626.50166158397,3,119.24942509312591
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,0.0001,100 µM,portable_raman,peak_1589.62_height,1589.6199999999999,8,height,7769.4486935800414,7142.1068093277408,3,91.925528966158453
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,0.0001,100 µM,portable_raman,peak_392.32_height,392.31999999999999,10,height,33184.850025176413,9535.202203318484,3,28.733600411285252
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,0.001,1 mM,portable_raman,peak_1078.5_height,1078.5,7,height,5505.4258558572665,8199.6152668143477,3,148.93698474007624
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,0.001,1 mM,portable_raman,peak_1589.62_height,1589.6199999999999,8,height,12501.021626029809,10264.040584800974,3,82.105614179796632
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,0.001,1 mM,portable_raman,peak_392.32_height,392.31999999999999,10,height,39356.041837613906,3496.4105423425676,3,8.884050273066153
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,1.0000000000000001e-05,10 µM,portable_raman,peak_1078.5_height,1078.5,7,height,9954.1085298347134,16867.793337374278,3,169.45558998897479
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,1.0000000000000001e-05,10 µM,portable_raman,peak_1589.62_height,1589.6199999999999,8,height,8658.0436148444514,8414.6545929555596,3,97.188868147169018
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,1.0000000000000001e-05,10 µM,portable_raman,peak_392.32_height,392.31999999999999,10,height,26375.513892386767,22781.937718345027,3,86.375332102708285
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,1.0000000000000001e-09,1 nM,portable_raman,peak_1078.5_height,1078.5,7,height,2707.4394640600299,245.72304804558831,3,9.0758464337779223
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,1.0000000000000001e-09,1 nM,portable_raman,peak_1589.62_height,1589.6199999999999,8,height,1267.5940310431763,132.31752791439834,3,10.438478304091303
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,1.0000000000000001e-09,1 nM,portable_raman,peak_392.32_height,392.31999999999999,10,height,11928.850775137502,6492.045065251813,3,54.423055394260984
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,1.0000000000000001e-15,1 fM,portable_raman,peak_1078.5_height,1078.5,7,height,1953.2130692154981,406.73935554437514,3,20.824116014528858
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,1.0000000000000001e-15,1 fM,portable_raman,peak_1589.62_height,1589.6199999999999,8,height,987.93232109381722,218.86384335643962,3,22.153728416752102
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,1.0000000000000001e-15,1 fM,portable_raman,peak_392.32_height,392.31999999999999,10,height,6402.4374429394602,3847.5677261508681,3,60.095358376268479
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,1e-08,10 nM,portable_raman,peak_1078.5_height,1078.5,7,height,2594.1262599410325,1139.4128933926347,3,43.922800173131698
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,1e-08,10 nM,portable_raman,peak_1589.62_height,1589.6199999999999,8,height,1478.5552936119032,947.86537008833682,3,64.107536199937073
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,1e-08,10 nM,portable_raman,peak_392.32_height,392.31999999999999,10,height,16056.191834104058,15720.207300000764,3,97.90744569089135
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,1e-10,100 pM,portable_raman,peak_1078.5_height,1078.5,7,height,2509.7906384197272,777.53267554889931,3,30.979981503097306
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,1e-10,100 pM,portable_raman,peak_1589.62_height,1589.6199999999999,8,height,1119.2421098441428,348.32484717414587,3,31.121492312565955
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,1e-10,100 pM,portable_raman,peak_392.32_height,392.31999999999999,10,height,14617.677585806125,12177.713602847312,3,83.308128335461205
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,1e-13,100 fM,portable_raman,peak_1078.5_height,1078.5,7,height,2547.7108256404867,1284.427446690049,3,50.41496208138723
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,1e-13,100 fM,portable_raman,peak_1589.62_height,1589.6199999999999,8,height,1220.9182079302236,580.27210504480706,3,47.527516689960777
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,1e-13,100 fM,portable_raman,peak_392.32_height,392.31999999999999,10,height,11900.520829853136,16353.136673889683,3,137.41530230229006
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,1e-14,10 fM,portable_raman,peak_1078.5_height,1078.5,7,height,1995.1691173067818,1628.428390087782,3,81.618564359393645
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,1e-14,10 fM,portable_raman,peak_1589.62_height,1589.6199999999999,8,height,1835.2980504448724,727.33709684994039,3,39.630462020794688
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,1e-14,10 fM,portable_raman,peak_392.32_height,392.31999999999999,10,height,30434.453674336222,7126.8467038341605,3,23.417035114528296
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,9.9999999999999994e-12,10 pM,portable_raman,peak_1078.5_height,1078.5,7,height,2913.5913404671351,751.9210155457539,3,25.807360322027819
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,9.9999999999999994e-12,10 pM,portable_raman,peak_1589.62_height,1589.6199999999999,8,height,1207.5629894626745,362.52575289789553,3,30.021270613734814
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,9.9999999999999994e-12,10 pM,portable_raman,peak_392.32_height,392.31999999999999,10,height,16487.151670852854,17647.311209290503,3,107.03674935245886
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,9.9999999999999995e-07,1 µM,portable_raman,peak_1078.5_height,1078.5,7,height,6888.126191928005,6743.396838707692,3,97.898857407840225
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,9.9999999999999995e-07,1 µM,portable_raman,peak_1589.62_height,1589.6199999999999,8,height,3727.4307137080846,1335.0880003986269,3,35.817915957194771
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,9.9999999999999995e-07,1 µM,portable_raman,peak_392.32_height,392.31999999999999,10,height,28496.833423758177,16638.293580006684,3,58.386464673422715
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,9.9999999999999995e-08,100 nM,portable_raman,peak_1078.5_height,1078.5,7,height,2956.1312177274535,2030.6228462857418,3,68.691904950240925
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,9.9999999999999995e-08,100 nM,portable_raman,peak_1589.62_height,1589.6199999999999,8,height,1662.399219143578,591.50113001089494,3,35.581172271941988
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,9.9999999999999995e-08,100 nM,portable_raman,peak_392.32_height,392.31999999999999,10,height,16699.766344868691,16713.800546715931,3,100.08403831261718
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,9.9999999999999998e-13,1 pM,portable_raman,peak_1078.5_height,1078.5,7,height,1642.6637924886538,1353.5785473115145,3,82.401435613359936
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,9.9999999999999998e-13,1 pM,portable_raman,peak_1589.62_height,1589.6199999999999,8,height,1392.2961747018987,620.07657710209003,3,44.536255171056055
+optimisation_750_5_5_h_confirmed_blank_reanalysis,4atp,9.9999999999999998e-13,1 pM,portable_raman,peak_392.32_height,392.31999999999999,10,height,14903.205881418244,17148.850362914687,3,115.06819740238829
+optimisation_750_5_5_h_confirmed_blank_reanalysis,blank,,Blank,portable_raman,peak_1078.5_height,1078.5,7,height,306.97281297396745,,1,
+optimisation_750_5_5_h_confirmed_blank_reanalysis,blank,,Blank,portable_raman,peak_1589.62_height,1589.6199999999999,8,height,157.13652662700298,,1,
+optimisation_750_5_5_h_confirmed_blank_reanalysis,blank,,Blank,portable_raman,peak_392.32_height,392.31999999999999,10,height,3816.4995086180948,,1,

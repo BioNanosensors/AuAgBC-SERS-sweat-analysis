@@ -33,7 +33,10 @@ publication-summary headers were transparently corrected after author
 confirmation, with both source and corrected hashes recorded in provenance.
 
 - `data/published_snapshot/` contains the paper-facing tables.
-- `data/raw/` and `data/processed/` contain verified or newly generated material.
+- `data/raw/` contains preserved raw-like inputs with explicit statuses ranging
+  from author-confirmed to unresolved; `data/processed/` contains regenerated
+  derivatives, retained legacy products, and audit evidence, each separately
+  classified in the manifest.
 - `data/quarantine/legacy_snapshot/` preserves unresolved CSV files with their
   original relative structure.
 - `metadata/dataset_manifest.csv` records checksums and status for every
@@ -43,6 +46,16 @@ See [the data audit](docs/DATA_AUDIT.md) and the focused
 [4-ATP blank-file audit](docs/4ATP_BLANK_AUDIT.md) before quantitative reuse. A
 `publication_snapshot` label means “used in preparation of the manuscript,” not
 “complete raw lineage independently verified.”
+
+For the high-power `750_5_5_H` optimisation, also read the dedicated
+[reanalysis record](docs/4ATP_HIGH_POWER_REANALYSIS.md). It keeps three lineages
+strictly separate: the historical snapshot made with a mixed 15-spectrum blank
+composite, a controlled `legacy_individual` rerun that changes only to the
+author-confirmed five-channel blank, and a `reference_2026` reanalysis that also
+changes the workflow. The 195 sample spectra in both new runs remain
+`raw_unverified`; their intensities match the vendor exports, but their prepared
+Raman axes differ from the corresponding vendor axes by approximately
+0.39937 cm⁻¹.
 
 ## Install
 
@@ -126,6 +139,30 @@ python scripts/reproduce_legacy_families.py
 python scripts/validate_legacy_reproduction.py
 ```
 
+Before regenerating the persistent high-power release, use Python 3.12.13 and
+install the exact direct-package versions in `requirements-release.txt` as
+constraints. The generator refuses to publish from a different environment.
+
+```text
+python -m pip install -e ".[test]" -c requirements-release.txt
+```
+
+Then regenerate the two separately labelled high-power 4-ATP reanalyses and
+their comparison package, or verify the committed compact products:
+
+```text
+python scripts/reprocess_4atp_750_5_5_h.py
+python scripts/reprocess_4atp_750_5_5_h.py --check
+```
+
+The release products are under
+`data/processed/4atp/optimisation/750_5_5_H/`. Large scan-level and
+per-spectrum tables are compressed as `.csv.gz` and deterministic ZIP archives;
+smaller summaries and audit tables remain directly readable. The 24 files in
+the two lineage packages have `regenerated_partial_provenance` status because
+reproducible processing does not resolve the sample-input axis and label limits;
+the six comparison files are separately labelled `audit_evidence`.
+
 ## Supported input structures
 
 The importer reads all numerical intensity columns rather than silently keeping
@@ -161,6 +198,13 @@ the five audited stability and optimisation families exactly. Results are in
 in `metadata/validation/package_reproduction_metrics.csv`, and are interpreted
 in the [data audit](docs/DATA_AUDIT.md).
 
+For `750_5_5_H`, the controlled legacy rerun is the only comparison that
+isolates the blank-only effect. `reference_2026` changes the grid, crop,
+baseline/filter parameters, blank-subtraction stage, and post-blank baseline;
+its difference is a workflow effect. It is a transparent modern reanalysis,
+not an automatically more accurate or preferred result, and it requires
+scientific review before quantitative interpretation.
+
 ## Repository map
 
 | Path | Contents |
@@ -169,12 +213,14 @@ in the [data audit](docs/DATA_AUDIT.md).
 | `src/auagbc_sers/` | Import, processing, manifest, export, and verification code |
 | `configs/` | Portable run examples with explicit parameters |
 | `data/published_snapshot/` | Article-facing summary data and manuscript values |
+| `data/processed/4atp/optimisation/750_5_5_H/` | Separately labelled controlled-legacy, `reference_2026`, and comparison packages |
 | `data/quarantine/legacy_snapshot/` | Submitted CSV snapshot with unresolved provenance clearly isolated |
 | `metadata/` | Checksums, origin matches, author-confirmed code crosswalks, conflicts, script inventory, and validation metrics |
 | `docs/PAPER_DATA_MAP.md` | Figure/table-to-data map |
 | `docs/HUMAN_DATA_GOVERNANCE.md` | Consent, ethics, pseudonymisation, and public-sharing evidence status |
 | `docs/ETHICS_APPROVAL.md` | Scope and limitations of the later CFATA/CEID approval letter |
 | `docs/4ATP_BLANK_AUDIT.md` | Historical blank origins, experiment-specific candidates, and unresolved decisions |
+| `docs/4ATP_HIGH_POWER_REANALYSIS.md` | Three-lineage high-power reanalysis design, results, and interpretation limits |
 | `docs/LICENSING.md` | Proposed path-level licensing arrangement and required decisions |
 | `docs/RELEASE_CHECKLIST.md` | Items requiring author confirmation before an unqualified public release |
 | `tests/` | Synthetic and regression tests |

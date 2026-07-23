@@ -59,6 +59,21 @@ items below remain limitations; public visibility does not mark them resolved.
 - [x] Select the current 24 September concentration-labelled Blind snapshot for
   release and verify that all 135 nonblank columns have agreeing same-date,
   same-setting concentration-labelled master matches.
+- [x] Preserve the historical `750_5_5_H` optimisation lineage made with the
+  mixed 15-spectrum composite, without overwriting its spectra or paper-facing
+  summary.
+- [x] Add a controlled `legacy_individual` rerun with the author-confirmed
+  five-channel blank so the blank-only effect can be audited separately.
+- [x] Add a separately labelled `reference_2026` high-power reanalysis and
+  comparison package; record that its differences include multiple workflow
+  changes and cannot be attributed only to the blank.
+- [x] Retain `raw_unverified` on the 195 prepared sample inputs and apply
+  `regenerated_partial_provenance` to their new derivatives; record the
+  approximately 0.39937 cm⁻¹ prepared-versus-vendor axis difference.
+- [x] Record that the confirmed blank is one export with five technical scans,
+  not five or three independent blank substrates.
+- [x] Use `100 µM` for `0.0001 M` in the new lineage while preserving the
+  historical paper-facing `100 mM` header typo unchanged.
 
 ## Required before an unqualified public data release
 
@@ -72,6 +87,10 @@ items below remain limitations; public visibility does not mark them resolved.
   composite must not be reused as if independently acquired for every
   experiment.
 - [ ] Confirm the AEF extraction and acquisition-time scaling rule.
+- [ ] Complete scientific review before presenting the high-power
+  `reference_2026` reanalysis as more accurate, preferred, or suitable for new
+  quantitative claims; until then keep it explicitly separate from the
+  paper-facing historical lineage.
 - [ ] Privately verify which signed consent version and collection session
   covers each of the four originally tested volunteers; never publish the
   signed forms.

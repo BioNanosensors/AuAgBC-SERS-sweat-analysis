@@ -1,0 +1,9 @@
+# Canonical direct-package constraints used to generate and verify the
+# persistent high-power 4-ATP release. Install with:
+#   python -m pip install -e ".[test]" -c requirements-release.txt
+numpy==2.5.0
+pandas==3.0.3
+scipy==1.18.0
+pybaselines==1.2.1
+PyYAML==6.0.3
+pytest==9.1.1

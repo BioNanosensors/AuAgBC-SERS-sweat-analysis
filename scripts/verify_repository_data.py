@@ -10,10 +10,12 @@ from __future__ import annotations
 
 import argparse
 import csv
+import gzip
 import hashlib
 import json
 import re
 import sys
+import zipfile
 from collections import Counter
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any, Iterable
@@ -34,6 +36,14 @@ RAW_REQUIRED_COLUMNS = {
     "instrument",
     "acquisition",
 }
+STATUS_DEFINITION_REQUIRED_COLUMNS = {
+    "status",
+    "meaning",
+    "may_be_aggregated_without_review",
+}
+CONFIRMED_4ATP_REANALYSIS_PREFIX = (
+    "data/processed/4atp/optimisation/750_5_5_H/"
+)
 SCAN_DIRECTORIES = ("data", "metadata", "docs", "configs")
 MAX_REPORTED_ERRORS = 50
 
@@ -238,6 +248,16 @@ def _scan_sensitive_content(
     repository_root: Path,
     errors: ErrorCollector,
 ) -> int:
+    def scan_bytes(label_path: str, content: bytes) -> None:
+        for label, pattern in SENSITIVE_PATTERNS:
+            match = pattern.search(content)
+            if match:
+                line = content.count(b"\n", 0, match.start()) + 1
+                errors.add(
+                    f"Sensitive content ({label}) in {label_path}, line {line}; "
+                    "remove or replace it with repository-relative metadata"
+                )
+
     scanned = 0
     root_resolved = repository_root.resolve()
     for directory_name in SCAN_DIRECTORIES:
@@ -262,15 +282,23 @@ def _scan_sensitive_content(
                 relative = path.relative_to(repository_root).as_posix()
                 errors.add(f"Could not scan {relative}: {exc}")
                 continue
-            for label, pattern in SENSITIVE_PATTERNS:
-                match = pattern.search(content)
-                if match:
-                    relative = path.relative_to(repository_root).as_posix()
-                    line = content.count(b"\n", 0, match.start()) + 1
-                    errors.add(
-                        f"Sensitive content ({label}) in {relative}, line {line}; "
-                        "remove or replace it with repository-relative metadata"
-                    )
+            relative = path.relative_to(repository_root).as_posix()
+            if path.suffix.casefold() == ".gz":
+                try:
+                    scan_bytes(relative + "::decompressed", gzip.decompress(content))
+                except (OSError, EOFError) as exc:
+                    errors.add(f"Could not decompress and scan {relative}: {exc}")
+            elif path.suffix.casefold() == ".zip":
+                try:
+                    with zipfile.ZipFile(path) as archive:
+                        for member in sorted(archive.namelist(), key=str.casefold):
+                            if member.endswith("/"):
+                                continue
+                            scan_bytes(relative + "::" + member, archive.read(member))
+                except (OSError, KeyError, zipfile.BadZipFile) as exc:
+                    errors.add(f"Could not open and scan {relative}: {exc}")
+            else:
+                scan_bytes(relative, content)
     return scanned
 
 
@@ -291,6 +319,29 @@ def verify_repository(repository_root: Path) -> dict[str, Any]:
         RAW_REQUIRED_COLUMNS,
         errors,
     )
+    status_rows, status_columns = _read_csv(
+        metadata / "status_definitions.csv",
+        STATUS_DEFINITION_REQUIRED_COLUMNS,
+        errors,
+    )
+
+    defined_statuses: set[str] = set()
+    can_validate_statuses = STATUS_DEFINITION_REQUIRED_COLUMNS <= status_columns
+    if can_validate_statuses:
+        for row_number, row in enumerate(status_rows, start=2):
+            status = (row.get("status") or "").strip()
+            if not status:
+                errors.add(
+                    f"status_definitions.csv row {row_number} has an empty status"
+                )
+                continue
+            if status in defined_statuses:
+                errors.add(
+                    f"status_definitions.csv row {row_number} duplicates status "
+                    f"{status!r}"
+                )
+                continue
+            defined_statuses.add(status)
 
     dataset_paths: set[str] = set()
     casefold_paths: dict[str, str] = {}
@@ -320,7 +371,13 @@ def verify_repository(repository_root: Path) -> dict[str, Any]:
                 continue
             dataset_paths.add(relative)
             casefold_paths[relative.casefold()] = relative
-            status_counts[row.get("status", "")] += 1
+            status = row.get("status") or ""
+            status_counts[status] += 1
+            if can_validate_statuses and status not in defined_statuses:
+                errors.add(
+                    f"{context} uses undefined status {status!r}; add it to "
+                    "status_definitions.csv or correct the manifest row"
+                )
 
             if not path.is_file():
                 errors.add(f"{context} references a missing file: {relative}")
@@ -371,6 +428,18 @@ def verify_repository(repository_root: Path) -> dict[str, Any]:
                 errors.add(f"{context} references a missing file: {relative}")
             checked_raw_paths.add(relative)
 
+    data_root = root / "data"
+    if data_root.is_dir():
+        for path in sorted(data_root.rglob("*")):
+            if not path.is_file():
+                continue
+            relative = path.relative_to(root).as_posix()
+            if relative not in dataset_paths:
+                errors.add(
+                    f"Unmanifested distributable data file: {relative}; add it to "
+                    "dataset_manifest.csv or remove it from data/"
+                )
+
     legacy_paths = [
         path
         for path in dataset_paths
@@ -395,6 +464,10 @@ def verify_repository(repository_root: Path) -> dict[str, Any]:
         "raw_processing_manifest_rows": len(raw_rows),
         "legacy_script_inventory_rows": inventory_rows,
         "copied_audit_report_count": status_counts.get("audit_evidence", 0),
+        "regenerated_4atp_release_file_count": sum(
+            path.startswith(CONFIRMED_4ATP_REANALYSIS_PREFIX)
+            for path in dataset_paths
+        ),
         "dataset_manifest_rows": len(dataset_rows),
         "status_counts": dict(sorted(status_counts.items())),
     }

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import csv
+import gzip
 import hashlib
 import importlib.util
 import json
 import sys
+import zipfile
 from pathlib import Path
 
 
@@ -45,6 +47,17 @@ def _tiny_repository(tmp_path: Path) -> tuple[Path, Path]:
                 "repository_sha256": digest,
                 "repository_bytes": spectrum.stat().st_size,
                 "status": "raw_unverified",
+            }
+        ],
+    )
+    _write_csv(
+        root / "metadata" / "status_definitions.csv",
+        ["status", "meaning", "may_be_aggregated_without_review"],
+        [
+            {
+                "status": "raw_unverified",
+                "meaning": "Tiny-fixture raw file.",
+                "may_be_aggregated_without_review": "no",
             }
         ],
     )
@@ -92,6 +105,7 @@ def _tiny_repository(tmp_path: Path) -> tuple[Path, Path]:
                 "raw_processing_manifest_rows": 1,
                 "legacy_script_inventory_rows": 0,
                 "copied_audit_report_count": 0,
+                "regenerated_4atp_release_file_count": 0,
                 "dataset_manifest_rows": 1,
                 "status_counts": {"raw_unverified": 1},
             }
@@ -159,3 +173,69 @@ def test_duplicate_unsafe_path_and_sensitive_content_are_rejected(tmp_path: Path
     assert "Windows user-home path" in joined
     assert "email address" in joined
     assert spectrum.is_file()  # The verifier is read-only.
+
+
+def test_undefined_manifest_status_is_rejected(tmp_path: Path) -> None:
+    root, _ = _tiny_repository(tmp_path)
+    manifest = root / "metadata" / "dataset_manifest.csv"
+    rows = list(csv.DictReader(manifest.open(encoding="utf-8", newline="")))
+    rows[0]["status"] = "invented_status"
+    _write_csv(manifest, list(rows[0]), rows)
+
+    report = VERIFY_MODULE.verify_repository(root)
+
+    assert report["ok"] is False
+    assert "uses undefined status 'invented_status'" in "\n".join(report["errors"])
+
+
+def test_unmanifested_file_anywhere_under_data_is_rejected(tmp_path: Path) -> None:
+    root, _ = _tiny_repository(tmp_path)
+    orphan = root / "data" / "processed" / "unexpected.csv"
+    orphan.parent.mkdir(parents=True)
+    orphan.write_text("x,y\n1,2\n", encoding="utf-8")
+
+    report = VERIFY_MODULE.verify_repository(root)
+
+    assert report["ok"] is False
+    assert (
+        "Unmanifested distributable data file: data/processed/unexpected.csv"
+        in "\n".join(report["errors"])
+    )
+
+
+def test_sensitive_content_is_scanned_inside_gzip_and_zip(tmp_path: Path) -> None:
+    root, _ = _tiny_repository(tmp_path)
+    compressed_root = root / "data" / "processed" / "compressed"
+    compressed_root.mkdir(parents=True)
+    gzip_path = compressed_root / "sensitive.csv.gz"
+    gzip_path.write_bytes(
+        gzip.compress(b"path\nC:/Users/researcher/private.csv\n", mtime=0)
+    )
+    zip_path = compressed_root / "sensitive.zip"
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("inside.csv", b"email\nperson@example.org\n")
+
+    manifest_path = root / "metadata" / "dataset_manifest.csv"
+    rows = list(csv.DictReader(manifest_path.open(encoding="utf-8", newline="")))
+    for path in (gzip_path, zip_path):
+        rows.append(
+            {
+                "repository_path": path.relative_to(root).as_posix(),
+                "repository_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "repository_bytes": str(path.stat().st_size),
+                "status": "raw_unverified",
+            }
+        )
+    _write_csv(manifest_path, list(rows[0]), rows)
+    summary_path = root / "metadata" / "curation_summary.json"
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary["dataset_manifest_rows"] = 3
+    summary["status_counts"] = {"raw_unverified": 3}
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
+
+    report = VERIFY_MODULE.verify_repository(root)
+    joined = "\n".join(report["errors"])
+
+    assert report["ok"] is False
+    assert "sensitive.csv.gz::decompressed" in joined
+    assert "sensitive.zip::inside.csv" in joined

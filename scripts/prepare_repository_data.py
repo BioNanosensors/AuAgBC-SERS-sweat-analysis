@@ -63,6 +63,51 @@ CONFIRMED_4ATP_BLANK_SOURCE_PATH = (
 )
 CONFIRMED_4ATP_BLANK_SHA256 = "e36f0ad7a57ebab8cba038309284305cfecc98d1586499fe73e266e301257dd9"
 CONFIRMED_4ATP_BLANK_BYTES = 27_476
+CONFIRMED_4ATP_REANALYSIS_RELEASE_ROOT = Path(
+    "data/processed/4atp/optimisation/750_5_5_H"
+)
+CONFIRMED_4ATP_REANALYSIS_PACKAGES = {
+    "controlled_legacy_confirmed_blank": {
+        "status": "regenerated_partial_provenance",
+        "role": "controlled_legacy_confirmed_blank_output",
+        "note": (
+            "Deterministic controlled legacy-profile derivative generated with the "
+            "author-confirmed analytical blank; the prepared sample labels and Raman "
+            "axes remain unverified, so this is not a verified paper-era lineage."
+        ),
+    },
+    "reference_2026": {
+        "status": "regenerated_partial_provenance",
+        "role": "reference_2026_reanalysis_output",
+        "note": (
+            "Deterministic current-reference derivative generated with the "
+            "author-confirmed analytical blank; the prepared sample labels and Raman "
+            "axes remain unverified, so this is a current reanalysis rather than a "
+            "verified paper-era lineage."
+        ),
+    },
+    "comparison": {
+        "status": "audit_evidence",
+        "role": "confirmed_blank_reanalysis_comparison",
+        "note": (
+            "Machine-readable comparison of historical and regenerated 4-ATP outputs; "
+            "this is audit evidence and does not independently verify sample provenance."
+        ),
+    },
+}
+DATASET_MANIFEST_FIELDS = [
+    "repository_path",
+    "source_name",
+    "source_relative_path",
+    "source_sha256",
+    "repository_sha256",
+    "source_bytes",
+    "repository_bytes",
+    "status",
+    "role",
+    "sanitized_user_path_occurrences",
+    "note",
+]
 
 
 # Archive paths use their original names; destinations are stable, lowercase,
@@ -685,6 +730,7 @@ def write_reference_metadata(metadata_root: Path) -> None:
             {"status": "raw_author_confirmed", "meaning": "Raw source whose sample identity and experimental context were confirmed by the author and whose distributed bytes match the audited source hash.", "may_be_aggregated_without_review": "no"},
             {"status": "raw_unverified", "meaning": "Raw-like spectrum preserved with no detected decisive conflict, but identity and labels remain unverified.", "may_be_aggregated_without_review": "no"},
             {"status": "legacy_derived", "meaning": "Historical processed output retained without a complete, verified source-to-output lineage.", "may_be_aggregated_without_review": "no"},
+            {"status": "regenerated_partial_provenance", "meaning": "Deterministic current derivative generated from named inputs when at least one input retains a documented provenance limitation; this is not equivalent to verified.", "may_be_aggregated_without_review": "no"},
             {"status": "provenance_conflict", "meaning": "At least one filename, embedded label, source match, blank identity, or raw/processed relationship conflicts.", "may_be_aggregated_without_review": "no"},
             {"status": "audit_evidence", "meaning": "Machine-readable audit or numerical-validation evidence generated from read-only inputs.", "may_be_aggregated_without_review": "not_applicable"},
             {"status": "superseded_not_distributed", "meaning": "Legacy code was inventoried but replaced by the unified pipeline and is not copied into the repository.", "may_be_aggregated_without_review": "not_applicable"},
@@ -1009,7 +1055,180 @@ def add_confirmed_4atp_blank_manifest_entry(
     status_counts["raw_author_confirmed"] += 1
 
 
-def parse_args() -> argparse.Namespace:
+def add_confirmed_4atp_reanalysis_manifest_entries(
+    repository_root: Path,
+    manifest: list[dict[str, object]],
+    status_counts: Counter[str],
+) -> Counter[str]:
+    """Manifest every persistent confirmed-blank reanalysis release artifact.
+
+    The reanalysis generator owns the files and this repository-preparation script
+    deliberately does not reset their directory.  Keeping this step after the base
+    manifest sort preserves all historical ``dataset_manifest_row`` joins while
+    still making every distributed derivative hash-auditable.
+    """
+    release_root = repository_root / CONFIRMED_4ATP_REANALYSIS_RELEASE_ROOT
+    release_counts: Counter[str] = Counter()
+    if not release_root.exists():
+        return release_counts
+    if release_root.is_symlink() or not release_root.is_dir():
+        raise RuntimeError(
+            "The confirmed-blank reanalysis release root must be an ordinary "
+            f"directory: {release_root}"
+        )
+
+    release_files: list[tuple[Path, dict[str, str]]] = []
+    package_file_counts: Counter[str] = Counter()
+    for path in sorted(
+        release_root.rglob("*"),
+        key=lambda item: item.relative_to(release_root).as_posix().casefold(),
+    ):
+        relative = path.relative_to(release_root)
+        if path.is_symlink():
+            raise RuntimeError(
+                "Symlinks are not permitted in the confirmed-blank reanalysis "
+                f"release: {relative.as_posix()}"
+            )
+        if path.is_dir():
+            continue
+        if not path.is_file():
+            raise RuntimeError(
+                "Unsupported filesystem entry in the confirmed-blank reanalysis "
+                f"release: {relative.as_posix()}"
+            )
+        package = relative.parts[0]
+        specification = CONFIRMED_4ATP_REANALYSIS_PACKAGES.get(package)
+        if specification is None:
+            expected = ", ".join(sorted(CONFIRMED_4ATP_REANALYSIS_PACKAGES))
+            raise RuntimeError(
+                f"Unexpected confirmed-blank reanalysis package {package!r}; "
+                f"expected one of: {expected}"
+            )
+        release_files.append((path, specification))
+        package_file_counts[package] += 1
+
+    missing_packages = sorted(
+        set(CONFIRMED_4ATP_REANALYSIS_PACKAGES) - set(package_file_counts)
+    )
+    if missing_packages:
+        raise RuntimeError(
+            "Confirmed-blank reanalysis release is incomplete; missing file(s) "
+            "under package(s): " + ", ".join(missing_packages)
+        )
+
+    for path, specification in release_files:
+        status = specification["status"]
+        add_manifest_row(
+            manifest,
+            repository_root,
+            path,
+            source_name="confirmed_blank_4atp_reanalysis",
+            source_relative_path="generated by scripts/reprocess_4atp_750_5_5_h.py",
+            source_sha256="",
+            source_bytes="",
+            status=status,
+            role=specification["role"],
+            substitutions=0,
+            note=specification["note"],
+        )
+        status_counts[status] += 1
+        release_counts[status] += 1
+    return release_counts
+
+
+def refresh_confirmed_4atp_reanalysis_metadata(
+    repository_root: Path,
+) -> dict[str, object]:
+    """Refresh only persistent 4-ATP reanalysis rows and summary counters.
+
+    This intentionally does not require or rebuild the external source archive.
+    Existing release rows must form a suffix of the manifest, which guarantees
+    that removing and appending them cannot change any established numeric row
+    reference.  Proof-of-concept sidecars therefore remain current and are not
+    rewritten by this focused operation.
+    """
+    repository_root = repository_root.resolve()
+    manifest_path = repository_root / "metadata" / "dataset_manifest.csv"
+    summary_path = repository_root / "metadata" / "curation_summary.json"
+    if not manifest_path.is_file():
+        raise FileNotFoundError(f"Dataset manifest is missing: {manifest_path}")
+    if not summary_path.is_file():
+        raise FileNotFoundError(f"Curation summary is missing: {summary_path}")
+    release_root = repository_root / CONFIRMED_4ATP_REANALYSIS_RELEASE_ROOT
+    if not release_root.is_dir():
+        raise FileNotFoundError(
+            "Confirmed-blank reanalysis release has not been published: "
+            f"{release_root}"
+        )
+
+    with manifest_path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        fieldnames = list(reader.fieldnames or [])
+        rows: list[dict[str, object]] = [dict(row) for row in reader]
+    missing_fields = [field for field in DATASET_MANIFEST_FIELDS if field not in fieldnames]
+    if missing_fields:
+        raise RuntimeError(
+            "Dataset manifest cannot be refreshed because it is missing fields: "
+            + ", ".join(missing_fields)
+        )
+
+    release_prefix = CONFIRMED_4ATP_REANALYSIS_RELEASE_ROOT.as_posix() + "/"
+    release_indices = [
+        index
+        for index, row in enumerate(rows)
+        if str(row.get("repository_path", "")).startswith(release_prefix)
+    ]
+    if release_indices:
+        expected_suffix = list(range(release_indices[0], len(rows)))
+        if release_indices != expected_suffix:
+            raise RuntimeError(
+                "Existing confirmed-blank reanalysis rows are not a manifest suffix; "
+                "refusing to change established dataset_manifest_row references."
+            )
+        base_rows = rows[: release_indices[0]]
+    else:
+        base_rows = rows
+
+    status_counts: Counter[str] = Counter(
+        str(row.get("status") or "") for row in base_rows
+    )
+    manifest = list(base_rows)
+    release_status_counts = add_confirmed_4atp_reanalysis_manifest_entries(
+        repository_root,
+        manifest,
+        status_counts,
+    )
+
+    try:
+        summary = json.loads(summary_path.read_text(encoding="utf-8-sig"))
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"Curation summary is not valid JSON: {summary_path}") from exc
+    if not isinstance(summary, dict):
+        raise RuntimeError(f"Curation summary must contain a JSON object: {summary_path}")
+    summary["copied_audit_report_count"] = status_counts.get("audit_evidence", 0)
+    summary["regenerated_4atp_release_file_count"] = sum(
+        release_status_counts.values()
+    )
+    summary["dataset_manifest_rows"] = len(manifest)
+    summary["status_counts"] = dict(sorted(status_counts.items()))
+
+    # Preserve any future additive manifest columns during the focused refresh.
+    write_csv(manifest_path, fieldnames, manifest)
+    summary_path.write_text(
+        json.dumps(summary, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    return {
+        "dataset_manifest_rows": len(manifest),
+        "regenerated_4atp_release_file_count": sum(
+            release_status_counts.values()
+        ),
+        "status_counts": dict(sorted(status_counts.items())),
+    }
+
+
+def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     script = Path(__file__).resolve()
     default_repo = script.parents[1]
     workspace = default_repo.parent
@@ -1019,12 +1238,25 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--reports-root", type=Path, default=workspace / ".workbench" / "reports")
     parser.add_argument("--legacy-scripts-root", type=Path, default=workspace / ".workbench" / "legacy_scripts")
     parser.add_argument("--project-sources-root", type=Path, default=workspace / "sources")
-    return parser.parse_args()
+    parser.add_argument(
+        "--refresh-reanalysis-metadata",
+        action="store_true",
+        help=(
+            "Refresh only the persistent confirmed-blank reanalysis rows in "
+            "dataset_manifest.csv and curation_summary.json; no external archive "
+            "or quarantine rebuild is required."
+        ),
+    )
+    return parser.parse_args(list(argv) if argv is not None else None)
 
 
-def main() -> int:
-    args = parse_args()
+def main(argv: Iterable[str] | None = None) -> int:
+    args = parse_args(argv)
     repository_root = args.repository_root.resolve()
+    if args.refresh_reanalysis_metadata:
+        report = refresh_confirmed_4atp_reanalysis_metadata(repository_root)
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+        return 0
     source_root = args.source_root.resolve()
     reports_root = args.reports_root.resolve()
     legacy_scripts_root = args.legacy_scripts_root.resolve()
@@ -1327,15 +1559,20 @@ def main() -> int:
         metadata_root / "legacy_script_inventory.csv",
     )
 
+    # Sort only the pre-existing release rows.  The persistent reanalysis
+    # package is appended afterwards so historical numeric manifest-row joins
+    # remain stable across regeneration.
     manifest.sort(key=lambda row: str(row["repository_path"]).casefold())
+    reanalysis_status_counts = add_confirmed_4atp_reanalysis_manifest_entries(
+        repository_root,
+        manifest,
+        status_counts,
+    )
+    audit_report_count += reanalysis_status_counts.get("audit_evidence", 0)
     write_mapping_sidecars(repository_root, manifest)
     write_csv(
         metadata_root / "dataset_manifest.csv",
-        [
-            "repository_path", "source_name", "source_relative_path", "source_sha256",
-            "repository_sha256", "source_bytes", "repository_bytes", "status", "role",
-            "sanitized_user_path_occurrences", "note",
-        ],
+        DATASET_MANIFEST_FIELDS,
         manifest,
     )
 
@@ -1349,6 +1586,9 @@ def main() -> int:
         "raw_processing_manifest_rows": raw_manifest_count,
         "legacy_script_inventory_rows": legacy_script_count,
         "copied_audit_report_count": audit_report_count,
+        "regenerated_4atp_release_file_count": sum(
+            reanalysis_status_counts.values()
+        ),
         "dataset_manifest_rows": len(manifest),
         "status_counts": dict(sorted(status_counts.items())),
     }

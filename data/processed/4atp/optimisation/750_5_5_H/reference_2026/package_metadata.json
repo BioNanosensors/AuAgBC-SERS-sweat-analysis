@@ -1,0 +1,124 @@
+{
+  "code_identity": [
+    {
+      "path": "scripts/reprocess_4atp_750_5_5_h.py",
+      "sha256": "3c6456aeb10e30daac883fe912e55a31e90592becfe5e92e56cbe29e3f81bc1d"
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "e3d6cc257f89eefceb1d3b59bada903d9f6c318fe67d583ac1508a4dc9ebfed4"
+    },
+    {
+      "path": "requirements-release.txt",
+      "sha256": "5466c13c25191a4559e8e9bdff26618c4ca4198c7864bc3cebdf22757fd215e7"
+    },
+    {
+      "path": "src/auagbc_sers/__init__.py",
+      "sha256": "1ad2455623df2198c2f6ef9572938b14e7c82ca41680ae7ec37fea44a2e15a68"
+    },
+    {
+      "path": "src/auagbc_sers/cli.py",
+      "sha256": "396a1ec123eabcdbfc32dd676e916935c5a9a794fc95435e5bf049559f77407a"
+    },
+    {
+      "path": "src/auagbc_sers/errors.py",
+      "sha256": "7b528d46f1b12e3254ef8c27da7615ab5eb89b0910289586b438eae949863122"
+    },
+    {
+      "path": "src/auagbc_sers/io.py",
+      "sha256": "06668f19dd3bc9a9d30aea15715de52a20ed675436c40a60e2877e8c073c41a9"
+    },
+    {
+      "path": "src/auagbc_sers/models.py",
+      "sha256": "f8d3a62e59cf46afa923c5c41f907716a884516b1d763fec1f76aa6c94ddbb7b"
+    },
+    {
+      "path": "src/auagbc_sers/pipeline.py",
+      "sha256": "d554c3f6a3661b91a0765b643d4795ab470c1637fbeca75c13206b1c1500303c"
+    },
+    {
+      "path": "src/auagbc_sers/processing.py",
+      "sha256": "b5d45633db5ca5e3eb7d32720bdbfff716a3c2b21154f9cc5c62b1eb7b426e99"
+    },
+    {
+      "path": "src/auagbc_sers/profiles.py",
+      "sha256": "4d60a32c31515ed7532989aebd027a66022bda09a4ae972dba9c74b8b421e76f"
+    }
+  ],
+  "configuration": {
+    "path": "configs/reanalysis/optimisation_750_5_5_h_confirmed_blank_reference_2026.json",
+    "sha256": "749a2c14912018bc710e58d0d2ecebf9e0b9275706f335a1778b5ec4c6bfaeb3"
+  },
+  "confirmed_blank": {
+    "path": "data/raw/4atp/optimisation/750_5_5_H/Blanck_AABC_750_5_5_H.csv",
+    "physical_exports": 1,
+    "sha256": "e36f0ad7a57ebab8cba038309284305cfecc98d1586499fe73e266e301257dd9",
+    "technical_scan_channels": 5
+  },
+  "counts": {
+    "blank_spectra": 5,
+    "concentration_spectra": 14,
+    "manifest_rows": 200,
+    "replicate_spectra": 40,
+    "scan_spectra": 200,
+    "source_files": 196
+  },
+  "environment_constraints": {
+    "path": "requirements-release.txt",
+    "sha256": "5466c13c25191a4559e8e9bdff26618c4ca4198c7864bc3cebdf22757fd215e7"
+  },
+  "grid": {
+    "group_by": [
+      "record_group",
+      "instrument"
+    ],
+    "groups": [
+      {
+        "median_step_cm1": 3.695827999999892,
+        "metadata": {
+          "instrument": "portable_raman",
+          "record_group": "optimisation_750_5_5_h_confirmed_blank_reanalysis"
+        },
+        "points": 441,
+        "records": 200,
+        "x_max_cm1": 1971.493621,
+        "x_min_cm1": 342.006421819618
+      }
+    ],
+    "interpolation": "linear",
+    "mode": "intersection"
+  },
+  "limitations": [
+    "The 195 prepared sample spectra remain raw_unverified.",
+    "Prepared sample Raman axes differ from corresponding vendor axes by approximately 0.39937 cm-1.",
+    "The confirmed blank provides technical scans from one export, not independent blank substrates."
+  ],
+  "lineage": "reference_2026",
+  "manifest": {
+    "path": "configs/reanalysis/optimisation_750_5_5_h_confirmed_blank_reference_2026_manifest.csv",
+    "sha256": "3b1acd71efe31efc7866347c24a133bb27dba490dd6da6894d159c14194392f1"
+  },
+  "numerical_library_warnings": [
+    "ParameterWarning: almost all baseline points are below the data, indicating that \"tol\" is too low and/or \"max_iter\" is too high"
+  ],
+  "processed_spectra_zip_members": 200,
+  "profile": "reference_2026",
+  "provenance_status": "regenerated_partial_provenance",
+  "record_warning_counts": {},
+  "run_id": "df2a167c653293b039aa",
+  "run_warnings": [],
+  "schema_version": 1,
+  "software_environment": {
+    "dependencies": {
+      "PyYAML": "6.0.3",
+      "numpy": "2.5.0",
+      "pandas": "3.0.3",
+      "pybaselines": "1.2.1",
+      "pytest": "9.1.1",
+      "scipy": "1.18.0"
+    },
+    "package": "auagbc-sers",
+    "python": "3.12.13",
+    "version": "0.1.0"
+  }
+}

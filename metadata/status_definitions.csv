@@ -3,6 +3,7 @@ publication_snapshot,Selected manuscript-facing table or spectrum export; select
 raw_author_confirmed,Raw source whose sample identity and experimental context were confirmed by the author and whose distributed bytes match the audited source hash.,no
 raw_unverified,"Raw-like spectrum preserved with no detected decisive conflict, but identity and labels remain unverified.",no
 legacy_derived,"Historical processed output retained without a complete, verified source-to-output lineage.",no
+regenerated_partial_provenance,"Deterministic current derivative generated from named inputs when at least one input retains a documented provenance limitation; this is not equivalent to verified.",no
 provenance_conflict,"At least one filename, embedded label, source match, blank identity, or raw/processed relationship conflicts.",no
 audit_evidence,Machine-readable audit or numerical-validation evidence generated from read-only inputs.,not_applicable
 superseded_not_distributed,Legacy code was inventoried but replaced by the unified pipeline and is not copied into the repository.,not_applicable

@@ -2,6 +2,8 @@
 # Windows, macOS, and Linux regardless of each user's Git line-ending setting.
 *.csv -text
 *.json -text
+*.gz -text
+*.zip -text
 
 # Keep repository code and documentation on a stable LF convention.
 *.py text eol=lf

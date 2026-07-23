@@ -36,12 +36,41 @@ independently prepared blank substrates.
 This confirmation does not retroactively validate the historical processed
 optimisation files. Those files are exactly reproducible with the mixed
 15-spectrum composite documented below, which shows what the historical script
-used. Reprocessing the high-power experiment with the confirmed blank is a
-scientifically corrected run and is expected to differ from that preserved
-publication history; the two lineages must remain separately labelled.
+used. The high-power experiment is now also processed in two new, separately
+labelled lineages: a controlled legacy rerun that changes only the blank, and a
+`reference_2026` rerun that changes the wider workflow. The three lineages must
+not be merged, and neither new lineage replaces the preserved publication
+history.
 
 No historical file has been deleted, renamed, relabelled, or replaced as a
 result of this audit.
+
+## High-power reanalysis lineages
+
+The controlled legacy package under
+`data/processed/4atp/optimisation/750_5_5_H/controlled_legacy_confirmed_blank/`
+uses the confirmed five-channel blank with the otherwise unchanged
+`legacy_individual` algorithm. Its comparison with the preserved historical
+sample spectra isolates the blank-only effect.
+
+The separate package under
+`data/processed/4atp/optimisation/750_5_5_H/reference_2026/` uses the same
+confirmed blank and sample selection, but changes the grid, crop,
+baseline/filter settings, blank-subtraction stage, and post-blank baseline. Its
+comparison with the controlled legacy run is therefore a workflow effect.
+`reference_2026` is not automatically more accurate or preferred; the large
+workflow-dependent changes require scientific review.
+
+The 195 prepared sample spectra match the intensities in 39 vendor exports, but
+their prepared Raman axes differ from the vendor originals by approximately
+0.39937 cm⁻¹. They remain `raw_unverified`, and the regenerated products are
+therefore labelled `regenerated_partial_provenance`. The confirmed blank itself
+is one export with five technical scan channels, not a set of independent blank
+substrates.
+
+The compact packages, compressed scan/per-spectrum tables, comparison command,
+current numerical audit results, and concentration-label correction are
+documented in [the high-power reanalysis record](4ATP_HIGH_POWER_REANALYSIS.md).
 
 ## Author resolutions on 22 July 2026
 

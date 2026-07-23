@@ -12,18 +12,29 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.12"]
+        python-version: ["3.10", "3.12.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-      - name: Install package and test dependencies
+      - name: Install compatibility-test dependencies
+        if: matrix.python-version == '3.10'
         run: python -m pip install -e ".[test]"
+      - name: Install canonical release dependencies
+        if: matrix.python-version == '3.12.13'
+        run: python -m pip install -e ".[test]" -c requirements-release.txt
       - name: Run tests
         run: python -m pytest
       - name: Verify repository data release
         run: python scripts/verify_repository_data.py
       - name: Verify 4-ATP blank audit
         run: python scripts/verify_4atp_blank_audit.py
+      - name: Verify confirmed-blank 4-ATP reanalysis
+        if: matrix.python-version == '3.12.13'
+        run: python scripts/reprocess_4atp_750_5_5_h.py --check
+      - name: Verify human-data lineage mapping
+        run: python scripts/report_human_data_lineage.py --check
+      - name: Verify proof-of-concept mapping
+        run: python scripts/proof_of_concept_mapping.py --check
