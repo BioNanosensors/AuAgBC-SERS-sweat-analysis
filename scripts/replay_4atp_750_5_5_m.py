@@ -961,6 +961,45 @@ def fft_diagnostics(
     }
 
 
+def validate_fft_lock_branch(
+    *,
+    record_id: str,
+    computed_ties: Sequence[int],
+    runtime_argmin: int,
+    declared_ties: Sequence[int],
+    declared_argmin: int,
+    selected_bin: int,
+    declared_tie_count: int,
+    forensic_override: bool,
+    allow_runtime_argmin_tie_drift: bool,
+) -> None:
+    """Validate a locked FFT branch without ordering an epsilon-scale tie.
+
+    The exact candidate set must be stable. During cross-patch checking only,
+    NumPy's unpinned ``argmin`` winner may differ within that set. Generation
+    remains strict, and the selected forensic bin and override meaning remain
+    bound to the generation record.
+    """
+    computed = list(computed_ties)
+    declared = list(declared_ties)
+    if computed != declared:
+        raise ReplayError(f"FFT tie candidates changed for {record_id}")
+    if len(declared) != declared_tie_count:
+        raise ReplayError(f"FFT tie-count mismatch for {record_id}")
+    if declared_argmin not in declared:
+        raise ReplayError(f"Declared FFT argmin is not a valid candidate: {record_id}")
+    if runtime_argmin not in declared:
+        raise ReplayError(
+            f"FFT argmin escaped the declared epsilon-scale tie set: {record_id}"
+        )
+    if runtime_argmin != declared_argmin and not allow_runtime_argmin_tie_drift:
+        raise ReplayError(f"FFT argmin changed for {record_id}")
+    if selected_bin not in declared:
+        raise ReplayError(f"Locked FFT bin is not a valid candidate: {record_id}")
+    if forensic_override != (selected_bin != declared_argmin):
+        raise ReplayError(f"Forensic override flag mismatch: {record_id}")
+
+
 def replay_with_lock(
     source_y: np.ndarray,
     wavelength: np.ndarray,
@@ -970,6 +1009,7 @@ def replay_with_lock(
     percentile: float,
     lock: Mapping[str, str],
     config: Mapping[str, object],
+    allow_runtime_argmin_tie_drift: bool,
 ) -> np.ndarray:
     first = config["processing"]["first_iarpls"]
     second = config["processing"]["second_iarpls"]
@@ -996,19 +1036,18 @@ def replay_with_lock(
         for value in lock["tie_candidate_fft_peak_indices"].split(";")
         if value
     ]
-    if diagnostics["tie_bins"] != declared_ties:
-        raise ReplayError(f"FFT tie candidates changed for {lock['record_id']}")
-    if diagnostics["numpy_argmin_bin"] != int(
-        lock["numpy_argmin_fft_peak_index"]
-    ):
-        raise ReplayError(f"FFT argmin changed for {lock['record_id']}")
-    if len(declared_ties) != int(lock["tie_candidate_count"]):
-        raise ReplayError(f"FFT tie-count mismatch for {lock['record_id']}")
     override = parse_bool(lock["forensic_override"], "forensic_override")
-    if selected_bin not in diagnostics["tie_bins"]:
-        raise ReplayError(f"Locked FFT bin is not a valid candidate: {lock['record_id']}")
-    if override != (selected_bin != diagnostics["numpy_argmin_bin"]):
-        raise ReplayError(f"Forensic override flag mismatch: {lock['record_id']}")
+    validate_fft_lock_branch(
+        record_id=lock["record_id"],
+        computed_ties=diagnostics["tie_bins"],
+        runtime_argmin=diagnostics["numpy_argmin_bin"],
+        declared_ties=declared_ties,
+        declared_argmin=int(lock["numpy_argmin_fft_peak_index"]),
+        selected_bin=selected_bin,
+        declared_tie_count=int(lock["tie_candidate_count"]),
+        forensic_override=override,
+        allow_runtime_argmin_tie_drift=allow_runtime_argmin_tie_drift,
+    )
 
     n = len(y_corrected)
     positive_frequencies = np.abs(
@@ -1119,6 +1158,9 @@ recommended scientific processing parameters.
 
 Verification contract:
 
+- During validated cross-patch checking, a runtime FFT argmin may vary only
+  within the exact declared epsilon-scale tie set; the selected source-bound
+  bin remains unchanged.
 - Raman axes must be exactly equal to the historical references.
 - Intensity RMSE must be no greater than `1e-7`.
 - Maximum absolute intensity difference must be no greater than `1e-6`.
@@ -1147,6 +1189,7 @@ def build_package(
     locks: list[dict[str, str]],
     locks_raw: bytes,
     script_hash: str,
+    allow_runtime_argmin_tie_drift: bool,
 ) -> tuple[dict[str, bytes], dict[str, object]]:
     inventory_by_id, _, locks_by_id = validate_contract(
         root, config, inventory, manifest, locks
@@ -1253,6 +1296,7 @@ def build_package(
                 percentile=percentile,
                 lock=lock,
                 config=config,
+                allow_runtime_argmin_tie_drift=allow_runtime_argmin_tie_drift,
             )
             residual = replayed_y - expected_y
             rmse = float(np.sqrt(np.mean(residual**2)))
@@ -1708,6 +1752,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             locks=locks,
             locks_raw=locks_raw,
             script_hash=sha256_file(Path(__file__)),
+            allow_runtime_argmin_tie_drift=(
+                arguments.check
+                and platform.python_version()
+                != config["validated_environment"]["generation_python"]
+            ),
         )
         output = output_directory(root, config)
         if arguments.check:

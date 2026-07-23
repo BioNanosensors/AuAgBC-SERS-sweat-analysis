@@ -21,10 +21,10 @@
     "source_inventory_sha256": "eb74c7255ecfcfd813db8ee744a5866ea6603f7ece917e0bef6e69bd767cd285",
     "channel_manifest_sha256": "03fc0c35d72fd145bdd432fc7e50921eb336e77725a59f5576f332cea3f70eda",
     "fft_locks_sha256": "10022b48ff08074a6f6be3721f9b275dff8dcd6418719acecab750da0356d679",
-    "replay_script_sha256": "b17da79c740c0c71f83087fb0cb1e2bb86c2ef52d954ebbd27f0cfbc88ff2b00"
+    "replay_script_sha256": "38b83ec7082121dbd8951457edac390d90ce105aedf3dd5e5126df3e7243c2ea"
   },
   "package_file_hashes": {
-    "README.md": "427f2f0302b4fcc99f7fd4aff6d16362c4ae2fc48a220fd1eaafe0d435d2a79e",
+    "README.md": "dff51ccacf6267a6955ee96becc1d2a7a898c81eec3420a35cff13c7f8556d6c",
     "resolved_manifest.csv": "fb56addeec0484a46263708ed820f9b439929266326c061fe77a52396f03f427",
     "replay_metrics.csv": "1684fddfcc93f736a0e969caa45793634ef8f2ef777a450b26daee6b6c6030a3",
     "replayed_spectra.zip": "b84dee4892693c6f55f871fad176a3bdee5227a37892c4f51a389a09fb2848db"

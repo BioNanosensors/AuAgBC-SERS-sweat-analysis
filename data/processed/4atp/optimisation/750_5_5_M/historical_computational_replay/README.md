@@ -19,6 +19,9 @@ recommended scientific processing parameters.
 
 Verification contract:
 
+- During validated cross-patch checking, a runtime FFT argmin may vary only
+  within the exact declared epsilon-scale tie set; the selected source-bound
+  bin remains unchanged.
 - Raman axes must be exactly equal to the historical references.
 - Intensity RMSE must be no greater than `1e-7`.
 - Maximum absolute intensity difference must be no greater than `1e-6`.

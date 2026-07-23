@@ -114,6 +114,13 @@ For five channels, the bin required to replay the preserved output differs from
 the result of the current unpinned `numpy.argmin` branch. Those five entries are
 labelled as forensic overrides.
 
+When checking across the two validated CPython patch releases, the unpinned
+`numpy.argmin` winner may differ only within the exact recomputed and declared
+epsilon-scale candidate set. Generation remains strict. Verification still
+requires that complete set to match exactly, uses the same source-bound selected
+bin, and requires the resulting persistent package bytes to match exactly. A
+runtime choice outside the declared set is a hard failure.
+
 The lock records historical branch choices. It is not evidence that the cutoff
 is scientifically optimal, and it must not be reused as a parameter set for a
 new medium-power analysis.

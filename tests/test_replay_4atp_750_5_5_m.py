@@ -203,6 +203,42 @@ def test_executable_contract_rejects_declarative_drift(
         replay.validate_declared_semantics(changed)
 
 
+def test_fft_lock_accepts_only_argmin_drift_inside_exact_epsilon_tie() -> None:
+    replay = _load_replay_module()
+    arguments = {
+        "record_id": "test-channel",
+        "computed_ties": [17, 29],
+        "runtime_argmin": 29,
+        "declared_ties": [17, 29],
+        "declared_argmin": 17,
+        "selected_bin": 29,
+        "declared_tie_count": 2,
+        "forensic_override": True,
+        "allow_runtime_argmin_tie_drift": True,
+    }
+
+    replay.validate_fft_lock_branch(**arguments)
+
+    strict_generation = dict(
+        arguments,
+        allow_runtime_argmin_tie_drift=False,
+    )
+    with pytest.raises(replay.ReplayError, match="argmin changed"):
+        replay.validate_fft_lock_branch(**strict_generation)
+
+    outside_tie = dict(arguments, runtime_argmin=31)
+    with pytest.raises(replay.ReplayError, match="escaped"):
+        replay.validate_fft_lock_branch(**outside_tie)
+
+    changed_ties = dict(arguments, computed_ties=[17, 29, 31])
+    with pytest.raises(replay.ReplayError, match="tie candidates changed"):
+        replay.validate_fft_lock_branch(**changed_ties)
+
+    wrong_generator_meaning = dict(arguments, forensic_override=False)
+    with pytest.raises(replay.ReplayError, match="override flag mismatch"):
+        replay.validate_fft_lock_branch(**wrong_generator_meaning)
+
+
 def test_release_directory_transaction_rolls_back_then_commits(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
