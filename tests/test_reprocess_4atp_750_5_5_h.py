@@ -266,6 +266,7 @@ def test_release_metadata_records_environment_code_and_warning_scopes() -> None:
     }
     assert controlled["historical_replay_validation"]["status"] == "pass"
     assert controlled["historical_replay_validation"]["spectra_compared"] == 210
+    assert controlled["historical_replay_validation"]["absolute_tolerance"] == 1e-8
     assert controlled["historical_replay_validation"]["fft_cutoff_lock"][
         "records_pinned"
     ] == 210

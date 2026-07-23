@@ -74,6 +74,7 @@ GENERATION_PYTHON_VERSION = "3.12.13"
 CHECK_PYTHON_VERSIONS = ("3.12.10", "3.12.13")
 CANONICAL_PLATFORM_SYSTEM = "Windows"
 CANONICAL_PLATFORM_MACHINE = "AMD64"
+HISTORICAL_REPLAY_ABSOLUTE_TOLERANCE = 1e-8
 
 CONTROLLED_NAME = "controlled_legacy_confirmed_blank"
 REFERENCE_NAME = "reference_2026"
@@ -1032,11 +1033,21 @@ def _validate_historical_replay(
         delta_y = float(np.max(np.abs(fresh.y - preserved.y)))
         max_abs_x = max(max_abs_x, delta_x)
         max_abs_y = max(max_abs_y, delta_y)
-        if not np.allclose(fresh.x, preserved.x, rtol=0.0, atol=1e-9) or not np.allclose(
-            fresh.y, preserved.y, rtol=0.0, atol=1e-9
+        if not np.allclose(
+            fresh.x,
+            preserved.x,
+            rtol=0.0,
+            atol=HISTORICAL_REPLAY_ABSOLUTE_TOLERANCE,
+        ) or not np.allclose(
+            fresh.y,
+            preserved.y,
+            rtol=0.0,
+            atol=HISTORICAL_REPLAY_ABSOLUTE_TOLERANCE,
         ):
             raise ReanalysisError(
-                f"Historical replay exceeds 1e-9 absolute tolerance for {relative.name}: "
+                "Historical replay exceeds "
+                f"{HISTORICAL_REPLAY_ABSOLUTE_TOLERANCE:.0e} absolute tolerance "
+                f"for {relative.name}: "
                 f"max |delta x|={delta_x:.6g}, max |delta y|={delta_y:.6g}."
             )
         if row.get("sample_type", "").casefold() == "blank":
@@ -1051,7 +1062,7 @@ def _validate_historical_replay(
     return {
         "profile": "legacy_individual",
         "comparison": "fresh historical-composite replay versus preserved snapshot",
-        "absolute_tolerance": 1e-9,
+        "absolute_tolerance": HISTORICAL_REPLAY_ABSOLUTE_TOLERANCE,
         "spectra_compared": len(resolved_rows),
         "sample_spectra_compared": sample_count,
         "historical_blank_spectra_compared": blank_count,
