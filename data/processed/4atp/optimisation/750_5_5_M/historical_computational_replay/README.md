@@ -27,6 +27,16 @@ Verification contract:
 - Maximum absolute intensity difference must be no greater than `1e-6`.
 - Relative tolerance is zero.
 
+Verification modes:
+
+- `--check` runs only in the generation environment and requires every
+  regenerated package byte to equal the committed package.
+- `--cross-environment-check` independently verifies the exact committed
+  hashes, file set, ZIP structure, mappings, headers, and axes, then requires
+  every freshly replayed channel to pass the same historical-reference bounds.
+  It does not claim that environment-sensitive regenerated intensities or
+  compressed bytes are identical.
+
 Observed in the validated package:
 
 - Worst RMSE: `6.2941675603483758e-08`.

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "lineage": "optimisation_750_5_5_M_historical_computational_replay",
   "claim_scope": "computational_lineage_only",
   "release_classification": "audit_evidence_only",
@@ -99,11 +99,27 @@
     "text_encoding": "utf-8",
     "line_ending": "LF"
   },
+  "verification_modes": {
+    "exact_package_check": {
+      "cli": "--check",
+      "runtime": "generation_python",
+      "regenerated_package_bytes_must_match": true
+    },
+    "cross_environment_check": {
+      "cli": "--cross-environment-check",
+      "regenerated_package_bytes_must_match": false,
+      "fresh_numerical_target": "mapped_historical_references",
+      "runtime_package_byte_identity_claimed": false,
+      "committed_package_hashes_must_match": true,
+      "resolved_mapping_fields_must_match": true,
+      "raman_axes_must_match": true,
+      "numerical_acceptance_must_pass": true
+    }
+  },
   "validated_environment": {
     "generation_python": "3.12.13",
-    "check_python": [
-      "3.12.10",
-      "3.12.13"
+    "cross_environment_check_python": [
+      "3.12.10"
     ],
     "system": "Windows",
     "machine": "AMD64",

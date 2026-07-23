@@ -117,9 +117,10 @@ labelled as forensic overrides.
 When checking across the two validated CPython patch releases, the unpinned
 `numpy.argmin` winner may differ only within the exact recomputed and declared
 epsilon-scale candidate set. Generation remains strict. Verification still
-requires that complete set to match exactly, uses the same source-bound selected
-bin, and requires the resulting persistent package bytes to match exactly. A
-runtime choice outside the declared set is a hard failure.
+requires that complete set to match exactly and uses the same source-bound
+selected bin. The committed package bytes remain exactly hash-verified, but
+environment-sensitive regenerated intensity and ZIP bytes are not claimed to
+be identical. A runtime choice outside the declared set is a hard failure.
 
 The lock records historical branch choices. It is not evidence that the cutoff
 is scientifically optimal, and it must not be reused as a parameter set for a
@@ -194,18 +195,33 @@ conservative statuses. Publication is staged as a complete directory; if
 post-publication validation or metadata refresh fails, the previous package and
 metadata bytes are restored.
 
-Freshly replay all 225 channels and compare the result with the committed
-package and preserved historical files without replacing them:
+In the canonical generation environment, freshly replay all 225 channels and
+require every regenerated package byte to match without replacing the release:
 
 ```text
 python scripts/replay_4atp_750_5_5_m.py --check
 ```
 
-The check fails if a source or historical hash changes, a source column is
+For the separately declared compatible Windows environment, run:
+
+```text
+python scripts/replay_4atp_750_5_5_m.py --cross-environment-check
+```
+
+This second mode does not compare environment-sensitive regenerated intensity
+or compressed bytes. It independently requires the committed five-file package
+to retain its exact hashes, sizes, internal payload hashes, file set, ZIP
+metadata, member hashes, schemas, mappings, headers, and Raman axes. It then
+requires a fresh replay from the exact hash-verified sources to reproduce all
+225 historical channels within the same `RMSE <= 1e-7`, maximum absolute
+difference `<= 1e-6`, and relative tolerance `0` contract.
+
+Both checks fail if a source or historical hash changes, a source column is
 reordered or missing, the unique historical blank reference changes, any FFT
 lock is absent or stale, the 43-file/225-channel/432-point contract changes, an
 axis differs, an intensity exceeds either numerical bound, or a persistent
-package file is absent from `metadata/dataset_manifest.csv`.
+package file is absent from `metadata/dataset_manifest.csv`. The exact mode
+additionally fails if any regenerated package byte differs.
 
 ## Relationship to the manuscript
 

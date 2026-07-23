@@ -6,6 +6,9 @@ import hashlib
 import importlib.util
 import io
 import json
+import platform
+import shutil
+import sys
 import zipfile
 from collections import Counter
 from pathlib import Path, PurePosixPath
@@ -47,6 +50,10 @@ PACKAGE_FILES = {
     "replay_metrics.csv",
     "replayed_spectra.zip",
 }
+WINDOWS_RELEASE_ONLY = pytest.mark.skipif(
+    platform.system() != "Windows" or sys.version_info[:2] != (3, 12),
+    reason="requires the declared Windows Python 3.12 release environment",
+)
 
 
 def _csv_rows(path: Path) -> list[dict[str, str]]:
@@ -83,6 +90,7 @@ def test_contract_preserves_computational_only_scientific_boundary() -> None:
     manifest = _csv_rows(CHANNEL_MANIFEST_PATH)
     locks = _csv_rows(FFT_LOCK_PATH)
 
+    assert config["schema_version"] == "1.1"
     assert config["claim_scope"] == "computational_lineage_only"
     assert config["release_classification"] == "audit_evidence_only"
     assert config["scientific_blank_status"] == "no_confirmed_medium_power_blank"
@@ -92,7 +100,7 @@ def test_contract_preserves_computational_only_scientific_boundary() -> None:
     assert "does not prove" in config["interpretation_limit"]
     environment = config["validated_environment"]
     assert environment["generation_python"] == "3.12.13"
-    assert environment["check_python"] == ["3.12.10", "3.12.13"]
+    assert environment["cross_environment_check_python"] == ["3.12.10"]
     assert environment["system"] == "Windows"
     assert environment["machine"] == "AMD64"
     assert environment["zlib_compile"] == environment["zlib_runtime"] == "1.3.1"
@@ -105,6 +113,23 @@ def test_contract_preserves_computational_only_scientific_boundary() -> None:
             name, version = line.split("==", 1)
             requirement_pins[name] = version
     assert environment["packages"] == requirement_pins
+    assert config["verification_modes"] == {
+        "exact_package_check": {
+            "cli": "--check",
+            "runtime": "generation_python",
+            "regenerated_package_bytes_must_match": True,
+        },
+        "cross_environment_check": {
+            "cli": "--cross-environment-check",
+            "regenerated_package_bytes_must_match": False,
+            "fresh_numerical_target": "mapped_historical_references",
+            "runtime_package_byte_identity_claimed": False,
+            "committed_package_hashes_must_match": True,
+            "resolved_mapping_fields_must_match": True,
+            "raman_axes_must_match": True,
+            "numerical_acceptance_must_pass": True,
+        },
+    }
 
     assert len(inventory) == 43
     assert Counter(row["lineage_role"] for row in inventory) == {
@@ -187,6 +212,7 @@ def test_contract_preserves_computational_only_scientific_boundary() -> None:
         ("acceptance", "intensity_rtol", 1e-5),
         ("deterministic_package", "zip_compression", "store"),
         ("deterministic_package", "text_encoding", "utf-16"),
+        ("verification_modes", "cross_environment_check", {}),
     ],
 )
 def test_executable_contract_rejects_declarative_drift(
@@ -239,6 +265,50 @@ def test_fft_lock_accepts_only_argmin_drift_inside_exact_epsilon_tie() -> None:
         replay.validate_fft_lock_branch(**wrong_generator_meaning)
 
 
+def test_verification_modes_enforce_distinct_python_patches(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    replay = _load_replay_module()
+    config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+
+    monkeypatch.setattr(replay.platform, "system", lambda: "Windows")
+    monkeypatch.setattr(replay.platform, "machine", lambda: "AMD64")
+    monkeypatch.setattr(replay.zlib, "ZLIB_VERSION", "1.3.1")
+    monkeypatch.setattr(replay.zlib, "ZLIB_RUNTIME_VERSION", "1.3.1")
+    monkeypatch.setattr(
+        replay.importlib.metadata,
+        "version",
+        lambda name: config["validated_environment"]["packages"][name],
+    )
+    monkeypatch.setattr(replay.platform, "python_version", lambda: "3.12.10")
+    with pytest.raises(replay.ReplayError, match="Python 3.12.10"):
+        replay.verify_runtime(
+            REPOSITORY_ROOT,
+            config,
+            allow_cross_environment_python=False,
+        )
+    runtime = replay.verify_runtime(
+        REPOSITORY_ROOT,
+        config,
+        allow_cross_environment_python=True,
+    )
+    assert runtime["python"] == "3.12.10"
+
+    monkeypatch.setattr(replay.platform, "python_version", lambda: "3.12.11")
+    with pytest.raises(replay.ReplayError, match="Python 3.12.11"):
+        replay.verify_runtime(
+            REPOSITORY_ROOT,
+            config,
+            allow_cross_environment_python=True,
+        )
+
+
+def test_verification_cli_modes_are_mutually_exclusive() -> None:
+    replay = _load_replay_module()
+    with pytest.raises(SystemExit):
+        replay.parse_arguments(["--check", "--cross-environment-check"])
+
+
 def test_release_directory_transaction_rolls_back_then_commits(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -274,6 +344,210 @@ def test_release_directory_transaction_rolls_back_then_commits(
     } == new_files
 
 
+def _package_bytes(package_root: Path = PACKAGE_ROOT) -> dict[str, bytes]:
+    return {
+        name: (package_root / name).read_bytes()
+        for name in PACKAGE_FILES
+    }
+
+
+def _write_json(path: Path, value: object) -> None:
+    path.write_text(
+        json.dumps(value, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+
+def _write_csv(path: Path, rows: list[dict[str, str]]) -> None:
+    buffer = io.StringIO(newline="")
+    writer = csv.DictWriter(
+        buffer,
+        fieldnames=tuple(rows[0]),
+        lineterminator="\n",
+    )
+    writer.writeheader()
+    writer.writerows(rows)
+    path.write_bytes(buffer.getvalue().encode("utf-8"))
+
+
+@WINDOWS_RELEASE_ONLY
+def test_cross_environment_check_is_read_only_and_semantically_complete() -> None:
+    replay = _load_replay_module()
+    config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+    before = {
+        name: _sha256(PACKAGE_ROOT / name)
+        for name in PACKAGE_FILES
+    }
+    result = replay.check_cross_environment_release(
+        REPOSITORY_ROOT,
+        PACKAGE_ROOT,
+        _package_bytes(),
+        config,
+    )
+    after = {
+        name: _sha256(PACKAGE_ROOT / name)
+        for name in PACKAGE_FILES
+    }
+    assert before == after
+    assert result == {
+        "committed_payload_hashes_verified": 4,
+        "stable_mapping_rows_verified": 225,
+        "numerical_metric_rows_verified": 225,
+        "committed_channels_historical_reference_verified": 225,
+        "zip_members_structurally_verified": 43,
+    }
+
+
+@WINDOWS_RELEASE_ONLY
+def test_cross_environment_check_rejects_coordinated_tampering(
+    tmp_path: Path,
+) -> None:
+    replay = _load_replay_module()
+    config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+    regenerated = _package_bytes()
+
+    payload_tamper = tmp_path / "payload"
+    shutil.copytree(PACKAGE_ROOT, payload_tamper)
+    readme = payload_tamper / "README.md"
+    readme.write_bytes(readme.read_bytes() + b"\n")
+    with pytest.raises(replay.ReplayError, match="package hash mismatch"):
+        replay.check_cross_environment_release(
+            REPOSITORY_ROOT,
+            payload_tamper,
+            regenerated,
+            config,
+        )
+
+    metadata_tamper = tmp_path / "metadata"
+    shutil.copytree(PACKAGE_ROOT, metadata_tamper)
+    metadata_path = metadata_tamper / "package_metadata.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata["hash_contract"]["replay_script_sha256"] = "0" * 64
+    _write_json(metadata_path, metadata)
+    with pytest.raises(replay.ReplayError, match="hash_contract"):
+        replay.check_cross_environment_release(
+            REPOSITORY_ROOT,
+            metadata_tamper,
+            regenerated,
+            config,
+        )
+
+    mapping_tamper = tmp_path / "mapping"
+    shutil.copytree(PACKAGE_ROOT, mapping_tamper)
+    resolved_path = mapping_tamper / "resolved_manifest.csv"
+    resolved = _csv_rows(resolved_path)
+    resolved[0]["sample_type"] = "tampered"
+    _write_csv(resolved_path, resolved)
+    metadata_path = mapping_tamper / "package_metadata.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata["package_file_hashes"]["resolved_manifest.csv"] = _sha256(
+        resolved_path
+    )
+    _write_json(metadata_path, metadata)
+    with pytest.raises(replay.ReplayError, match="stable field changed"):
+        replay.check_cross_environment_release(
+            REPOSITORY_ROOT,
+            mapping_tamper,
+            regenerated,
+            config,
+        )
+
+
+@WINDOWS_RELEASE_ONLY
+def test_cross_environment_check_rejects_runtime_bound_and_zip_axis_drift(
+    tmp_path: Path,
+) -> None:
+    replay = _load_replay_module()
+    config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+
+    regenerated = _package_bytes()
+    regenerated_metrics = list(
+        csv.DictReader(
+            io.StringIO(
+                regenerated["replay_metrics.csv"].decode("utf-8"),
+                newline="",
+            )
+        )
+    )
+    regenerated_metrics[0]["intensity_rmse"] = "1"
+    metrics_buffer = io.StringIO(newline="")
+    writer = csv.DictWriter(
+        metrics_buffer,
+        fieldnames=tuple(regenerated_metrics[0]),
+        lineterminator="\n",
+    )
+    writer.writeheader()
+    writer.writerows(regenerated_metrics)
+    changed_metrics = metrics_buffer.getvalue().encode("utf-8")
+    regenerated["replay_metrics.csv"] = changed_metrics
+    regenerated_metadata = json.loads(
+        regenerated["package_metadata.json"].decode("utf-8")
+    )
+    regenerated_metadata["package_file_hashes"]["replay_metrics.csv"] = (
+        hashlib.sha256(changed_metrics).hexdigest()
+    )
+    regenerated["package_metadata.json"] = (
+        json.dumps(regenerated_metadata, indent=2, ensure_ascii=False) + "\n"
+    ).encode("utf-8")
+    with pytest.raises(replay.ReplayError, match="acceptance contract"):
+        replay.check_cross_environment_release(
+            REPOSITORY_ROOT,
+            PACKAGE_ROOT,
+            regenerated,
+            config,
+        )
+
+    axis_tamper = tmp_path / "axis"
+    shutil.copytree(PACKAGE_ROOT, axis_tamper)
+    zip_path = axis_tamper / "replayed_spectra.zip"
+    with zipfile.ZipFile(zip_path) as archive:
+        entries = [
+            (member, archive.read(member))
+            for member in archive.infolist()
+        ]
+    target_info, target_content = entries[0]
+    target_rows = list(
+        csv.reader(
+            io.StringIO(target_content.decode("utf-8"), newline=""),
+        )
+    )
+    target_rows[1][0] = str(float(target_rows[1][0]) + 1.0)
+    target_buffer = io.StringIO(newline="")
+    csv.writer(target_buffer, lineterminator="\n").writerows(target_rows)
+    changed_member = target_buffer.getvalue().encode("utf-8")
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w") as archive:
+        for member, content in entries:
+            archive.writestr(
+                member,
+                changed_member if member.filename == target_info.filename else content,
+            )
+    zip_path.write_bytes(zip_buffer.getvalue())
+
+    resolved_path = axis_tamper / "resolved_manifest.csv"
+    resolved = _csv_rows(resolved_path)
+    changed_member_hash = hashlib.sha256(changed_member).hexdigest()
+    for row in resolved:
+        if row["output_zip_member"] == target_info.filename:
+            row["output_member_sha256"] = changed_member_hash
+    _write_csv(resolved_path, resolved)
+    metadata_path = axis_tamper / "package_metadata.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata["package_file_hashes"]["resolved_manifest.csv"] = _sha256(
+        resolved_path
+    )
+    metadata["package_file_hashes"]["replayed_spectra.zip"] = _sha256(zip_path)
+    _write_json(metadata_path, metadata)
+    with pytest.raises(replay.ReplayError, match="Raman axis differs"):
+        replay.check_cross_environment_release(
+            REPOSITORY_ROOT,
+            axis_tamper,
+            _package_bytes(),
+            config,
+        )
+
+
 def test_released_package_is_hash_bound_and_deterministic() -> None:
     assert {path.name for path in PACKAGE_ROOT.iterdir()} == PACKAGE_FILES
     metadata = json.loads(
@@ -286,6 +560,9 @@ def test_released_package_is_hash_bound_and_deterministic() -> None:
     assert metadata["validated_environment"] == json.loads(
         CONFIG_PATH.read_text(encoding="utf-8")
     )["validated_environment"]
+    assert metadata["verification_modes"] == json.loads(
+        CONFIG_PATH.read_text(encoding="utf-8")
+    )["verification_modes"]
     assert metadata["observed"] == {
         "passing_channels": 225,
         "failing_channels": 0,

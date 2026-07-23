@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "package": "4atp_750_5_5_M_historical_computational_replay",
   "claim_scope": "computational_lineage_only",
   "release_classification": "audit_evidence_only",
@@ -17,14 +17,14 @@
     "points_per_channel": 432
   },
   "hash_contract": {
-    "config_sha256": "c5dad9bfcfedcfa17c9c4e2a8c1ee356149fd1d07c258edd806e3302db9f9fc7",
+    "config_sha256": "30275ac8322717d568199d9a5617e31a75e7b08df0ff98995288f7a0459e4c25",
     "source_inventory_sha256": "eb74c7255ecfcfd813db8ee744a5866ea6603f7ece917e0bef6e69bd767cd285",
     "channel_manifest_sha256": "03fc0c35d72fd145bdd432fc7e50921eb336e77725a59f5576f332cea3f70eda",
     "fft_locks_sha256": "10022b48ff08074a6f6be3721f9b275dff8dcd6418719acecab750da0356d679",
-    "replay_script_sha256": "38b83ec7082121dbd8951457edac390d90ce105aedf3dd5e5126df3e7243c2ea"
+    "replay_script_sha256": "8f88d4adf196ffbfd1026c76c7c84c7b4bf3f191d47f539a35abb390d5dcd308"
   },
   "package_file_hashes": {
-    "README.md": "dff51ccacf6267a6955ee96becc1d2a7a898c81eec3420a35cff13c7f8556d6c",
+    "README.md": "0d1d38ad316529d8e446b3c32e063fd7541ca743248591aee31929dd2ffcbc97",
     "resolved_manifest.csv": "fb56addeec0484a46263708ed820f9b439929266326c061fe77a52396f03f427",
     "replay_metrics.csv": "1684fddfcc93f736a0e969caa45793634ef8f2ef777a450b26daee6b6c6030a3",
     "replayed_spectra.zip": "b84dee4892693c6f55f871fad176a3bdee5227a37892c4f51a389a09fb2848db"
@@ -87,9 +87,8 @@
   },
   "validated_environment": {
     "generation_python": "3.12.13",
-    "check_python": [
-      "3.12.10",
-      "3.12.13"
+    "cross_environment_check_python": [
+      "3.12.10"
     ],
     "system": "Windows",
     "machine": "AMD64",
@@ -102,6 +101,23 @@
       "pybaselines": "1.2.1",
       "PyYAML": "6.0.3",
       "pytest": "9.1.1"
+    }
+  },
+  "verification_modes": {
+    "exact_package_check": {
+      "cli": "--check",
+      "runtime": "generation_python",
+      "regenerated_package_bytes_must_match": true
+    },
+    "cross_environment_check": {
+      "cli": "--cross-environment-check",
+      "regenerated_package_bytes_must_match": false,
+      "fresh_numerical_target": "mapped_historical_references",
+      "runtime_package_byte_identity_claimed": false,
+      "committed_package_hashes_must_match": true,
+      "resolved_mapping_fields_must_match": true,
+      "raman_axes_must_match": true,
+      "numerical_acceptance_must_pass": true
     }
   },
   "deterministic_serialization": {

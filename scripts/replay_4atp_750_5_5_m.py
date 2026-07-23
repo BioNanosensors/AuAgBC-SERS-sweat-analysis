@@ -7,7 +7,10 @@ medium-power interpretation. Passing verification establishes computational
 lineage only; it does not validate that blank or the experimental labels.
 
 Default mode generates the deterministic five-file audit package. ``--check``
-rebuilds it in memory and requires every released byte to match.
+requires a byte-exact rebuild in the generation environment.
+``--cross-environment-check`` independently verifies the committed hashes and
+structure while requiring a fresh numerical replay to pass every mapped-channel
+acceptance bound in the declared compatible environment.
 """
 
 from __future__ import annotations
@@ -201,6 +204,31 @@ def read_csv_contract(path: Path, expected_columns: Sequence[str]) -> list[dict[
         return list(reader)
 
 
+def read_csv_bytes_contract(
+    content: bytes,
+    expected_columns: Sequence[str],
+    label: str,
+) -> list[dict[str, str]]:
+    try:
+        text = content.decode("utf-8")
+    except UnicodeDecodeError as error:
+        raise ReplayError(f"{label} is not valid UTF-8") from error
+    reader = csv.DictReader(io.StringIO(text, newline=""))
+    if tuple(reader.fieldnames or ()) != tuple(expected_columns):
+        raise ReplayError(f"Unexpected columns in {label}: {reader.fieldnames!r}")
+    return list(reader)
+
+
+def read_json_object(content: bytes, label: str) -> dict[str, object]:
+    try:
+        value = json.loads(content.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ReplayError(f"{label} is not valid UTF-8 JSON") from error
+    if not isinstance(value, dict):
+        raise ReplayError(f"{label} must contain a JSON object")
+    return value
+
+
 def csv_bytes(
     fieldnames: Sequence[str], rows: Iterable[Mapping[str, object]]
 ) -> bytes:
@@ -263,6 +291,7 @@ def validate_declared_semantics(config: Mapping[str, object]) -> None:
         "processing",
         "acceptance",
         "deterministic_package",
+        "verification_modes",
         "validated_environment",
         "interpretation_limit",
     }
@@ -377,6 +406,23 @@ def validate_declared_semantics(config: Mapping[str, object]) -> None:
             "text_encoding": "utf-8",
             "line_ending": "LF",
         },
+        "verification_modes": {
+            "exact_package_check": {
+                "cli": "--check",
+                "runtime": "generation_python",
+                "regenerated_package_bytes_must_match": True,
+            },
+            "cross_environment_check": {
+                "cli": "--cross-environment-check",
+                "regenerated_package_bytes_must_match": False,
+                "fresh_numerical_target": "mapped_historical_references",
+                "runtime_package_byte_identity_claimed": False,
+                "committed_package_hashes_must_match": True,
+                "resolved_mapping_fields_must_match": True,
+                "raman_axes_must_match": True,
+                "numerical_acceptance_must_pass": True,
+            },
+        },
     }
     for section, expected in expected_sections.items():
         if config.get(section) != expected:
@@ -433,12 +479,12 @@ def verify_runtime(
     root: Path,
     config: Mapping[str, object],
     *,
-    allow_check_python: bool,
+    allow_cross_environment_python: bool,
 ) -> dict[str, object]:
     expected = config["validated_environment"]
     if set(expected) != {
         "generation_python",
-        "check_python",
+        "cross_environment_check_python",
         "system",
         "machine",
         "zlib_compile",
@@ -455,8 +501,8 @@ def verify_runtime(
 
     python_version = platform.python_version()
     allowed_python = (
-        tuple(expected["check_python"])
-        if allow_check_python
+        tuple(expected["cross_environment_check_python"])
+        if allow_cross_environment_python
         else (expected["generation_python"],)
     )
     actual_packages = {
@@ -489,8 +535,8 @@ def verify_runtime(
             )
     if mismatches:
         raise ReplayError(
-            "Persistent replay generation and exact checking require the "
-            "canonical release environment: "
+            "The selected replay verification mode requires its declared "
+            "release environment: "
             + "; ".join(mismatches)
             + '. Install it with: python -m pip install -e ".[test]" '
             "-c requirements-release.txt"
@@ -501,7 +547,7 @@ def verify_runtime(
 def load_contract(
     root: Path,
     *,
-    allow_check_python: bool,
+    allow_cross_environment_python: bool,
 ) -> tuple[
     dict[str, object],
     bytes,
@@ -511,11 +557,12 @@ def load_contract(
     bytes,
     list[dict[str, str]],
     bytes,
+    dict[str, object],
 ]:
     config_file = repository_file(root, CONFIG_PATH.as_posix(), "config path")
     config_raw = config_file.read_bytes()
     config = json.loads(config_raw.decode("utf-8"))
-    if config.get("schema_version") != "1.0":
+    if config.get("schema_version") != "1.1":
         raise ReplayError("Unsupported replay-config schema")
     if (
         config.get("lineage")
@@ -529,10 +576,10 @@ def load_contract(
     if config.get("scientific_blank_status") != "no_confirmed_medium_power_blank":
         raise ReplayError("The blank conflict cannot be upgraded")
     validate_declared_semantics(config)
-    verify_runtime(
+    runtime = verify_runtime(
         root,
         config,
-        allow_check_python=allow_check_python,
+        allow_cross_environment_python=allow_cross_environment_python,
     )
 
     paths = config["paths"]
@@ -559,6 +606,7 @@ def load_contract(
         manifest_raw,
         locks,
         locks_raw,
+        runtime,
     )
 
 
@@ -1166,6 +1214,16 @@ Verification contract:
 - Maximum absolute intensity difference must be no greater than `1e-6`.
 - Relative tolerance is zero.
 
+Verification modes:
+
+- `--check` runs only in the generation environment and requires every
+  regenerated package byte to equal the committed package.
+- `--cross-environment-check` independently verifies the exact committed
+  hashes, file set, ZIP structure, mappings, headers, and axes, then requires
+  every freshly replayed channel to pass the same historical-reference bounds.
+  It does not claim that environment-sensitive regenerated intensities or
+  compressed bytes are identical.
+
 Observed in the validated package:
 
 - Worst RMSE: `{format_float(worst_rmse)}`.
@@ -1404,7 +1462,7 @@ def build_package(
     )
 
     package_metadata = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "package": "4atp_750_5_5_M_historical_computational_replay",
         "claim_scope": "computational_lineage_only",
         "release_classification": "audit_evidence_only",
@@ -1459,6 +1517,7 @@ def build_package(
         },
         "processing_summary": config["processing"],
         "validated_environment": config["validated_environment"],
+        "verification_modes": config["verification_modes"],
         "deterministic_serialization": config["deterministic_package"],
         "interpretation_limit": config["interpretation_limit"],
     }
@@ -1562,8 +1621,8 @@ def restore_file_bytes(path: Path, content: bytes) -> None:
         temporary.unlink(missing_ok=True)
 
 
-def check_release(output: Path, package_files: Mapping[str, bytes]) -> None:
-    if not output.is_dir():
+def check_release_structure(output: Path) -> dict[str, bytes]:
+    if output.is_symlink() or not output.is_dir():
         raise ReplayError("Generated replay package is missing")
     actual_names = sorted(path.name for path in output.iterdir())
     if actual_names != sorted(EXPECTED_PACKAGE_FILES):
@@ -1571,15 +1630,12 @@ def check_release(output: Path, package_files: Mapping[str, bytes]) -> None:
             f"Output file set changed: expected {EXPECTED_PACKAGE_FILES!r}, "
             f"got {actual_names!r}"
         )
-    mismatches = []
+    contents: dict[str, bytes] = {}
     for name in EXPECTED_PACKAGE_FILES:
-        actual = (output / name).read_bytes()
-        if actual != package_files[name]:
-            mismatches.append(name)
-    if mismatches:
-        raise ReplayError(
-            f"Generated package is not deterministic/current: {mismatches!r}"
-        )
+        path = output / name
+        if path.is_symlink() or not path.is_file():
+            raise ReplayError(f"Replay-package member is not an ordinary file: {name}")
+        contents[name] = path.read_bytes()
 
     with zipfile.ZipFile(output / "replayed_spectra.zip") as archive:
         members = archive.infolist()
@@ -1600,6 +1656,528 @@ def check_release(output: Path, package_files: Mapping[str, bytes]) -> None:
                 raise ReplayError(
                     f"Unexpected ZIP compression: {member.filename}"
                 )
+    return contents
+
+
+def check_release(output: Path, package_files: Mapping[str, bytes]) -> None:
+    contents = check_release_structure(output)
+    mismatches = [
+        name
+        for name in EXPECTED_PACKAGE_FILES
+        if contents[name] != package_files[name]
+    ]
+    if mismatches:
+        raise ReplayError(
+            f"Generated package is not deterministic/current: {mismatches!r}"
+        )
+
+
+def metric_observed_contract(
+    rows: Sequence[Mapping[str, str]],
+    config: Mapping[str, object],
+    label: str,
+) -> dict[str, object]:
+    expected = config["expected_composition"]
+    acceptance = config["acceptance"]
+    fft_config = config["processing"]["fft_filter"]
+    expected_channels = int(expected["channels"])
+    if len(rows) != expected_channels:
+        raise ReplayError(f"{label} metric count is not {expected_channels}")
+    record_ids = [row["record_id"] for row in rows]
+    if len(set(record_ids)) != len(record_ids):
+        raise ReplayError(f"{label} contains duplicate metric record IDs")
+
+    passing = 0
+    exact_axes = 0
+    exact_intensities = 0
+    tie_channels = 0
+    overrides = 0
+    rmse_values: list[float] = []
+    max_abs_values: list[float] = []
+    for row in rows:
+        record_id = row["record_id"]
+        try:
+            points = int(row["points"])
+            axis_max_abs = float(row["axis_max_abs_cm-1"])
+            rmse = float(row["intensity_rmse"])
+            mae = float(row["intensity_mae"])
+            max_abs = float(row["intensity_max_abs"])
+            rtol = float(row["intensity_rtol"])
+            rmse_max = float(row["intensity_rmse_max"])
+            max_abs_max = float(row["intensity_max_abs_max"])
+            tie_count = int(row["tie_candidate_count"])
+        except ValueError as error:
+            raise ReplayError(
+                f"{label} contains an invalid numeric metric for {record_id}"
+            ) from error
+        numeric_values = (
+            axis_max_abs,
+            rmse,
+            mae,
+            max_abs,
+            rtol,
+            rmse_max,
+            max_abs_max,
+        )
+        if not all(math.isfinite(value) for value in numeric_values):
+            raise ReplayError(f"{label} contains a non-finite metric for {record_id}")
+        axis_equal = parse_bool(row["axis_array_equal"], "axis_array_equal")
+        intensity_equal = parse_bool(
+            row["intensity_array_equal"], "intensity_array_equal"
+        )
+        within_tolerance = parse_bool(row["within_tolerance"], "within_tolerance")
+        override = parse_bool(row["forensic_override"], "forensic_override")
+        if (
+            points != int(expected["points_per_channel"])
+            or axis_equal is not bool(acceptance["axis_array_equal"])
+            or axis_max_abs != float(acceptance["axis_max_abs_cm-1"])
+            or rtol != float(acceptance["intensity_rtol"])
+            or rmse_max != float(acceptance["intensity_rmse_max"])
+            or max_abs_max != float(acceptance["intensity_max_abs_max"])
+            or min(rmse, mae, max_abs) < 0.0
+            or rmse > rmse_max
+            or max_abs > max_abs_max
+            or mae > max_abs
+            or not within_tolerance
+        ):
+            raise ReplayError(
+                f"{label} violates the numerical acceptance contract for {record_id}"
+            )
+        passing += int(within_tolerance)
+        exact_axes += int(axis_equal)
+        exact_intensities += int(intensity_equal)
+        tie_channels += int(tie_count > 1)
+        overrides += int(override)
+        rmse_values.append(rmse)
+        max_abs_values.append(max_abs)
+
+    observed = {
+        "passing_channels": passing,
+        "failing_channels": expected_channels - passing,
+        "exact_axis_channels": exact_axes,
+        "exact_intensity_channels": exact_intensities,
+        "worst_intensity_rmse": max(rmse_values),
+        "worst_intensity_max_abs": max(max_abs_values),
+        "fft_tie_channels": tie_channels,
+        "forensic_fft_overrides": overrides,
+    }
+    if tie_channels != int(fft_config["expected_tie_channels"]):
+        raise ReplayError(f"{label} FFT tie count changed")
+    if overrides != int(fft_config["expected_forensic_overrides"]):
+        raise ReplayError(f"{label} forensic-override count changed")
+    return observed
+
+
+def check_declared_payload_hashes(
+    metadata: Mapping[str, object],
+    package_files: Mapping[str, bytes],
+    label: str,
+) -> None:
+    declared = metadata.get("package_file_hashes")
+    payload_names = set(EXPECTED_PACKAGE_FILES) - {"package_metadata.json"}
+    if not isinstance(declared, dict) or set(declared) != payload_names:
+        raise ReplayError(f"{label} package-file hash declaration changed")
+    for name in sorted(payload_names):
+        if declared[name] != sha256_bytes(package_files[name]):
+            raise ReplayError(f"{label} package hash mismatch: {name}")
+
+
+def compare_stable_rows(
+    committed: Sequence[Mapping[str, str]],
+    regenerated: Sequence[Mapping[str, str]],
+    stable_fields: Sequence[str],
+    label: str,
+) -> None:
+    if len(committed) != len(regenerated):
+        raise ReplayError(f"{label} row count changed across environments")
+    for index, (committed_row, regenerated_row) in enumerate(
+        zip(committed, regenerated, strict=True),
+        start=1,
+    ):
+        for field in stable_fields:
+            if committed_row[field] != regenerated_row[field]:
+                raise ReplayError(
+                    f"{label} stable field changed at row {index}: {field}"
+                )
+
+
+def zip_member_payloads(content: bytes, label: str) -> dict[str, bytes]:
+    try:
+        with zipfile.ZipFile(io.BytesIO(content)) as archive:
+            return {
+                member.filename: archive.read(member)
+                for member in archive.infolist()
+            }
+    except (OSError, zipfile.BadZipFile, RuntimeError) as error:
+        raise ReplayError(f"{label} is not a readable ZIP archive") from error
+
+
+def validate_resolved_member_hashes(
+    rows: Sequence[Mapping[str, str]],
+    members: Mapping[str, bytes],
+    label: str,
+) -> None:
+    hashes_by_member: dict[str, set[str]] = defaultdict(set)
+    for row in rows:
+        hashes_by_member[row["output_zip_member"]].add(
+            row["output_member_sha256"]
+        )
+    if set(hashes_by_member) != set(members):
+        raise ReplayError(f"{label} resolved manifest does not cover its ZIP exactly")
+    for name, declared_hashes in hashes_by_member.items():
+        if declared_hashes != {sha256_bytes(members[name])}:
+            raise ReplayError(f"{label} resolved ZIP-member hash mismatch: {name}")
+
+
+def spectra_header_and_axis(
+    content: bytes,
+    expected_points: int,
+    label: str,
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    try:
+        rows = list(
+            csv.reader(
+                io.StringIO(content.decode("utf-8"), newline=""),
+            )
+        )
+    except UnicodeDecodeError as error:
+        raise ReplayError(f"{label} is not valid UTF-8 CSV") from error
+    if len(rows) != expected_points + 1 or not rows or len(rows[0]) < 2:
+        raise ReplayError(f"{label} has an unexpected spectral table shape")
+    width = len(rows[0])
+    if any(len(row) != width for row in rows):
+        raise ReplayError(f"{label} has inconsistent CSV row widths")
+    return tuple(rows[0]), tuple(row[0] for row in rows[1:])
+
+
+def spectra_csv_arrays(
+    content: bytes,
+    expected_points: int,
+    label: str,
+) -> tuple[tuple[str, ...], np.ndarray]:
+    try:
+        rows = list(
+            csv.reader(
+                io.StringIO(content.decode("utf-8"), newline=""),
+            )
+        )
+    except UnicodeDecodeError as error:
+        raise ReplayError(f"{label} is not valid UTF-8 CSV") from error
+    if len(rows) != expected_points + 1 or not rows or len(rows[0]) < 2:
+        raise ReplayError(f"{label} has an unexpected spectral table shape")
+    header = tuple(rows[0])
+    if len(set(header)) != len(header):
+        raise ReplayError(f"{label} contains duplicate column names")
+    if any(len(row) != len(header) for row in rows):
+        raise ReplayError(f"{label} has inconsistent CSV row widths")
+    try:
+        values = np.asarray(
+            [[float(value) for value in row] for row in rows[1:]],
+            dtype=float,
+        )
+    except ValueError as error:
+        raise ReplayError(f"{label} contains a non-numeric spectral value") from error
+    if not np.all(np.isfinite(values)):
+        raise ReplayError(f"{label} contains a non-finite spectral value")
+    return header, values
+
+
+def validate_committed_package_against_historical(
+    root: Path,
+    config: Mapping[str, object],
+    resolved_rows: Sequence[Mapping[str, str]],
+    metric_rows: Sequence[Mapping[str, str]],
+    members: Mapping[str, bytes],
+) -> int:
+    """Recompute every committed ZIP metric against its historical reference."""
+    metrics_by_id = {row["record_id"]: row for row in metric_rows}
+    resolved_by_id = {row["record_id"]: row for row in resolved_rows}
+    if (
+        len(metrics_by_id) != len(metric_rows)
+        or len(resolved_by_id) != len(resolved_rows)
+        or set(metrics_by_id) != set(resolved_by_id)
+    ):
+        raise ReplayError("Committed metric/resolved record coverage changed")
+
+    rows_by_member: dict[str, list[Mapping[str, str]]] = defaultdict(list)
+    for row in resolved_rows:
+        rows_by_member[row["output_zip_member"]].append(row)
+    if set(rows_by_member) != set(members):
+        raise ReplayError("Committed ZIP mapping does not cover every member")
+
+    acceptance = config["acceptance"]
+    expected_points = int(config["expected_composition"]["points_per_channel"])
+    verified = 0
+    for member_name, member_rows in sorted(rows_by_member.items()):
+        reference_paths = {
+            row["historical_reference_path"] for row in member_rows
+        }
+        if len(reference_paths) != 1:
+            raise ReplayError(
+                f"Committed ZIP member maps to multiple references: {member_name}"
+            )
+        reference_path = repository_file(
+            root,
+            next(iter(reference_paths)),
+            "committed historical reference",
+        )
+        reference_df = pd.read_csv(reference_path)
+        member_header, member_values = spectra_csv_arrays(
+            members[member_name],
+            expected_points,
+            f"committed ZIP member {member_name}",
+        )
+        reference_header = tuple(str(column) for column in reference_df.columns)
+        if member_header != reference_header:
+            raise ReplayError(
+                f"Committed ZIP header differs from historical reference: {member_name}"
+            )
+        reference_values = reference_df.to_numpy(dtype=float)
+        if member_values.shape != reference_values.shape:
+            raise ReplayError(
+                f"Committed ZIP shape differs from historical reference: {member_name}"
+            )
+        axis_equal = bool(
+            np.array_equal(member_values[:, 0], reference_values[:, 0])
+        )
+        axis_max_abs = float(
+            np.max(np.abs(member_values[:, 0] - reference_values[:, 0]))
+        )
+        if (
+            not axis_equal
+            or axis_max_abs != float(acceptance["axis_max_abs_cm-1"])
+        ):
+            raise ReplayError(
+                f"Committed ZIP Raman axis differs from historical reference: "
+                f"{member_name}"
+            )
+        mapped_columns = {
+            row["output_intensity_column"] for row in member_rows
+        }
+        if mapped_columns != set(member_header[1:]):
+            raise ReplayError(
+                f"Committed ZIP channel mapping changed: {member_name}"
+            )
+
+        column_indices = {
+            column: index for index, column in enumerate(member_header)
+        }
+        for row in member_rows:
+            record_id = row["record_id"]
+            output_column = row["output_intensity_column"]
+            historical_column = row["historical_intensity_column"]
+            if output_column != historical_column:
+                raise ReplayError(
+                    f"Committed output/reference column changed for {record_id}"
+                )
+            column_index = column_indices[output_column]
+            residual = (
+                member_values[:, column_index]
+                - reference_values[:, column_index]
+            )
+            rmse = float(np.sqrt(np.mean(residual**2)))
+            mae = float(np.mean(np.abs(residual)))
+            max_abs = float(np.max(np.abs(residual)))
+            intensity_equal = bool(
+                np.array_equal(
+                    member_values[:, column_index],
+                    reference_values[:, column_index],
+                )
+            )
+            within_tolerance = (
+                rmse <= float(acceptance["intensity_rmse_max"])
+                and max_abs <= float(acceptance["intensity_max_abs_max"])
+                and axis_equal
+            )
+            stored = metrics_by_id[record_id]
+            if (
+                float(stored["axis_max_abs_cm-1"]) != axis_max_abs
+                or parse_bool(
+                    stored["axis_array_equal"], "axis_array_equal"
+                )
+                != axis_equal
+                or float(stored["intensity_rmse"]) != rmse
+                or float(stored["intensity_mae"]) != mae
+                or float(stored["intensity_max_abs"]) != max_abs
+                or parse_bool(
+                    stored["intensity_array_equal"], "intensity_array_equal"
+                )
+                != intensity_equal
+                or parse_bool(stored["within_tolerance"], "within_tolerance")
+                != within_tolerance
+                or not within_tolerance
+            ):
+                raise ReplayError(
+                    f"Committed ZIP metric is stale for {record_id}"
+                )
+            verified += 1
+    return verified
+
+
+def check_cross_environment_release(
+    root: Path,
+    output: Path,
+    regenerated_package: Mapping[str, bytes],
+    config: Mapping[str, object],
+) -> dict[str, int]:
+    """Verify numerical replay plus immutable committed-release integrity."""
+    committed_package = check_release_structure(output)
+    if set(regenerated_package) != set(EXPECTED_PACKAGE_FILES):
+        raise ReplayError("Regenerated package file set changed")
+
+    committed_metadata = read_json_object(
+        committed_package["package_metadata.json"],
+        "committed package_metadata.json",
+    )
+    regenerated_metadata = read_json_object(
+        regenerated_package["package_metadata.json"],
+        "regenerated package_metadata.json",
+    )
+    if set(committed_metadata) != set(regenerated_metadata):
+        raise ReplayError("Package-metadata fields changed across environments")
+    dynamic_metadata_fields = {"observed", "package_file_hashes"}
+    for field in sorted(set(committed_metadata) - dynamic_metadata_fields):
+        if committed_metadata[field] != regenerated_metadata[field]:
+            raise ReplayError(
+                f"Package-metadata contract changed across environments: {field}"
+            )
+    check_declared_payload_hashes(
+        committed_metadata,
+        committed_package,
+        "committed",
+    )
+    check_declared_payload_hashes(
+        regenerated_metadata,
+        regenerated_package,
+        "regenerated",
+    )
+
+    committed_resolved = read_csv_bytes_contract(
+        committed_package["resolved_manifest.csv"],
+        RESOLVED_COLUMNS,
+        "committed resolved_manifest.csv",
+    )
+    regenerated_resolved = read_csv_bytes_contract(
+        regenerated_package["resolved_manifest.csv"],
+        RESOLVED_COLUMNS,
+        "regenerated resolved_manifest.csv",
+    )
+    compare_stable_rows(
+        committed_resolved,
+        regenerated_resolved,
+        [field for field in RESOLVED_COLUMNS if field != "output_member_sha256"],
+        "resolved manifest",
+    )
+
+    committed_metrics = read_csv_bytes_contract(
+        committed_package["replay_metrics.csv"],
+        METRIC_COLUMNS,
+        "committed replay_metrics.csv",
+    )
+    regenerated_metrics = read_csv_bytes_contract(
+        regenerated_package["replay_metrics.csv"],
+        METRIC_COLUMNS,
+        "regenerated replay_metrics.csv",
+    )
+    environment_sensitive_metric_fields = {
+        "intensity_array_equal",
+        "intensity_rmse",
+        "intensity_mae",
+        "intensity_max_abs",
+    }
+    compare_stable_rows(
+        committed_metrics,
+        regenerated_metrics,
+        [
+            field
+            for field in METRIC_COLUMNS
+            if field not in environment_sensitive_metric_fields
+        ],
+        "replay metrics",
+    )
+    committed_observed = metric_observed_contract(
+        committed_metrics,
+        config,
+        "committed",
+    )
+    regenerated_observed = metric_observed_contract(
+        regenerated_metrics,
+        config,
+        "regenerated",
+    )
+    if committed_metadata["observed"] != committed_observed:
+        raise ReplayError("Committed package observed summary is stale")
+    if regenerated_metadata["observed"] != regenerated_observed:
+        raise ReplayError("Regenerated package observed summary is inconsistent")
+
+    committed_members = zip_member_payloads(
+        committed_package["replayed_spectra.zip"],
+        "committed replayed_spectra.zip",
+    )
+    regenerated_members = zip_member_payloads(
+        regenerated_package["replayed_spectra.zip"],
+        "regenerated replayed_spectra.zip",
+    )
+    if set(committed_members) != set(regenerated_members):
+        raise ReplayError("Replayed ZIP member set changed across environments")
+    validate_resolved_member_hashes(
+        committed_resolved,
+        committed_members,
+        "committed",
+    )
+    validate_resolved_member_hashes(
+        regenerated_resolved,
+        regenerated_members,
+        "regenerated",
+    )
+    committed_channels_verified = (
+        validate_committed_package_against_historical(
+            root,
+            config,
+            committed_resolved,
+            committed_metrics,
+            committed_members,
+        )
+    )
+    expected_points = int(config["expected_composition"]["points_per_channel"])
+    for name in sorted(committed_members):
+        committed_table = spectra_header_and_axis(
+            committed_members[name],
+            expected_points,
+            f"committed ZIP member {name}",
+        )
+        regenerated_table = spectra_header_and_axis(
+            regenerated_members[name],
+            expected_points,
+            f"regenerated ZIP member {name}",
+        )
+        if committed_table != regenerated_table:
+            raise ReplayError(
+                f"Replayed ZIP header or Raman axis changed across environments: {name}"
+            )
+
+    composition = committed_metadata.get("composition")
+    if not isinstance(composition, dict):
+        raise ReplayError("Committed package composition is invalid")
+    expected_readme = readme_bytes(
+        source_count=int(composition["source_files"]),
+        channel_count=int(composition["spectral_channels"]),
+        file_count=int(composition["replayed_spectra_files"]),
+        worst_rmse=float(committed_observed["worst_intensity_rmse"]),
+        worst_max_abs=float(committed_observed["worst_intensity_max_abs"]),
+    )
+    if committed_package["README.md"] != expected_readme:
+        raise ReplayError("Committed replay-package README is stale")
+
+    return {
+        "committed_payload_hashes_verified": len(EXPECTED_PACKAGE_FILES) - 1,
+        "stable_mapping_rows_verified": len(committed_resolved),
+        "numerical_metric_rows_verified": len(regenerated_metrics),
+        "committed_channels_historical_reference_verified": (
+            committed_channels_verified
+        ),
+        "zip_members_structurally_verified": len(committed_members),
+    }
 
 
 def check_dataset_manifest(
@@ -1703,12 +2281,22 @@ def refresh_repository_manifest(root: Path) -> dict[str, object]:
 
 def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
+    verification = parser.add_mutually_exclusive_group()
+    verification.add_argument(
         "--check",
         action="store_true",
         help=(
             "Rebuild in memory and require the released five-file package and "
             "its conservative dataset-manifest coverage to match."
+        ),
+    )
+    verification.add_argument(
+        "--cross-environment-check",
+        action="store_true",
+        help=(
+            "Replay in the declared compatible environment, enforce every "
+            "scientific tolerance and stable mapping, and independently verify "
+            "the exact hashes and structure of the committed package."
         ),
     )
     parser.add_argument(
@@ -1737,9 +2325,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             manifest_raw,
             locks,
             locks_raw,
+            runtime,
         ) = load_contract(
             root,
-            allow_check_python=arguments.check,
+            allow_cross_environment_python=arguments.cross_environment_check,
         )
         package_files, result = build_package(
             root=root,
@@ -1752,12 +2341,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             locks=locks,
             locks_raw=locks_raw,
             script_hash=sha256_file(Path(__file__)),
-            allow_runtime_argmin_tie_drift=(
-                arguments.check
-                and platform.python_version()
-                != config["validated_environment"]["generation_python"]
-            ),
+            allow_runtime_argmin_tie_drift=arguments.cross_environment_check,
         )
+        result["verified_runtime"] = runtime
         output = output_directory(root, config)
         if arguments.check:
             check_release(output, package_files)
@@ -1767,7 +2353,23 @@ def main(argv: Sequence[str] | None = None) -> int:
                 inventory,
             )
             result["mode"] = "check"
-            result["status"] = "verified"
+            result["status"] = "exact_package_verified"
+        elif arguments.cross_environment_check:
+            result["release_integrity"] = check_cross_environment_release(
+                root,
+                output,
+                package_files,
+                config,
+            )
+            result["dataset_manifest_files_verified"] = check_dataset_manifest(
+                root,
+                config,
+                inventory,
+            )
+            result["mode"] = "cross_environment_check"
+            result["status"] = (
+                "numerical_replay_and_committed_release_integrity_verified"
+            )
         else:
             metadata_paths = (
                 root / "metadata" / "dataset_manifest.csv",
