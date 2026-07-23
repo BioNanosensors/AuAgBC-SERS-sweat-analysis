@@ -80,9 +80,51 @@ identity. Four contextually plausible but mismatched candidates remain
 unassigned. See `docs/4ATP_BLANK_AUDIT.md` and the four machine-readable tables
 under `metadata/provenance/`.
 
-The four calibration summary tables are preserved as
-`publication_snapshot`. Their values can be aggregated internally, but that
-does not resolve the identity of the underlying prepared raw files.
+The calibration lineage is now resolved at source-column level for all 210
+prepared scans. The mapping identifies 195 nominal sample scans and 15 nominal
+blanks, but only 151 sample scans agree simultaneously with the intended
+3 July 2024 date and `750_5_5_L` setting. Forty-four sample scans disagree in
+date, setting, or both. The source-setting counts are 156 `750_5_5_L`, 35
+`750_5_5_H`, 14 `750_5_5_M`, and five `500_5_5_L`; the 35 high-power records
+include all 15 blanks. Only eight of the thirteen concentrations are uniformly
+from the intended date and setting.
+
+The 210 prepared rows represent 204 distinct exact source-scan identities.
+Twelve rows participate in six exact source-scan reuse groups: all five scans
+from one `10 µM` source replicate are reused as two prepared replicates, and
+two prepared `1 nM` accumulations use the same source scan. These entries are
+not independent observations, and distinct exact identities do not by
+themselves establish independence for the remaining records.
+
+Although every prepared intensity vector has an exact source-column match,
+45/210 prepared Raman axes differ from the selected source by more than
+`1 × 10⁻⁵ cm⁻¹`: 35 sample axes and ten blank axes. The worst maximum absolute
+axis difference is approximately `1.26216 cm⁻¹`. The 35 affected samples are a
+subset of the 44 date/setting conflicts. This axis evidence is retained
+separately from the exact-intensity result.
+
+The October 2025 processing chain has been recovered and replayed without
+overwriting the historical snapshot. All 210 processed scan channels pass a
+cross-environment maximum-absolute-difference tolerance of `2 × 10⁻⁴`; the
+worst observed difference is `1.03203 × 10⁻⁴`. Six aggregate-table checks also
+pass their declared tolerances. This establishes computational lineage for the
+four calibration tables preserved as `publication_snapshot`.
+
+It does not validate the quantitative model. Fitting the supplied summary to
+the manuscript's stated `Y = Y0 × exp(k × log10(C/M))` model does not reproduce
+the paper's `Y0`, `k`, or `R²` values for any of the three bands. The recovered
+historical script also used `3 × SD` and `10 × SD` thresholds, whereas the
+manuscript describes blank mean plus three or ten SD. Neither calculation is a
+valid analytical LOD or LOQ because the required context-matched low-power
+AuAgBC blank is absent. Calibration-dependent blind predictions therefore
+remain historical results requiring reanalysis, not independently validated
+quantification.
+
+The full source mapping, recovered recipe, numerical bounds, model
+sensitivities, parameter comparison, and claim classifications are documented
+in [the calibration-curve audit](CALIBRATION_CURVE_AUDIT.md). The four
+paper-facing tables remain `publication_snapshot`; the new lineage and replay
+files are `audit_evidence`.
 
 ### Blind samples
 
@@ -323,16 +365,21 @@ For blind samples, a different legacy strategy using a single blank reproduces
 123 of 135 sample columns at 1e-9 and 130 at 1e-7; five material discrepancies
 remain, and the fifteen separately prepared blank outputs are unresolved.
 
-The legacy profiles do not exactly reproduce the calibration, AEF, or
+The generic legacy profiles do not exactly reproduce the AEF or
 proof-of-concept processed folders. They were made with other historical
-variants or missing inputs. The current package therefore exposes named,
-explicit profiles and records every parameter instead of guessing silently from
-a filename.
+variants or missing inputs. The calibration is now handled by its separate
+recovered October 2025 replay: all 210 scan channels and six aggregate-table
+checks pass declared cross-environment tolerances, but the mixed acquisition
+contexts, source reuse, missing low-power blank, and non-reproduced paper model
+parameters remain scientific conflicts. The current package therefore exposes
+named, explicit profiles and records every parameter instead of guessing
+silently from a filename.
 
 See `metadata/validation/package_reproduction_summary.csv` for family counts and
 `metadata/validation/package_reproduction_metrics.csv` for all 955 file-level
-comparisons. An exact reproduction proves how a prepared derivative was
-calculated; it does not prove that the raw file was labelled correctly.
+comparisons. An exact reproduction demonstrates a computational route
+consistent with a prepared derivative; it does not prove that the raw file was
+labelled correctly.
 
 ### High-power 4-ATP controlled and reference packages
 

@@ -1,0 +1,97 @@
+{
+  "analysis_id": "calibration_curve_historical_replay",
+  "expected_scientific_context": {
+    "blank_material": "AuAgBC without 4-ATP",
+    "date": "03-07-24",
+    "setting": "750_5_5_L"
+  },
+  "historical_generator": {
+    "archive_relative_path": "Scripts/Latest/4-ATP/Raman Portatil/raman_sers_pipeline_merged_spyder_UPDATED2.py",
+    "distribution_note": "The historical script is inventoried but not distributed because it contains private absolute paths. The recovered portable recipe is implemented by scripts/audit_calibration_curve.py.",
+    "inventory": "../../metadata/legacy_script_inventory.csv",
+    "repository_status": "superseded_not_distributed",
+    "sha256": "ec6583400df1615d808f07299d6e2e1f8eeb4ae7f7340f796da2c45610443892"
+  },
+  "manifest": "calibration_curve_historical_replay_manifest.csv",
+  "publication_snapshot": "../../data/published_snapshot/calibration_curve/final_spectra_by_accumulation_wide.csv",
+  "purpose": "Computational replay and sensitivity audit only; not a corrected low-power calibration.",
+  "recovered_historical_models": {
+    "aggregation": "mean of five accumulation peak heights within each prepared replicate, followed by mean and sample SD (ddof=1) across the three prepared replicate means",
+    "blank_sigma": "sample SD (ddof=1) of 15 pooled scan/accumulation-level processed blank peak heights from three later, non-context-matched exports; not independent blank preparations",
+    "exponential": {
+      "equation": "Y = Y0 * exp(k * log10(C_M))",
+      "fit": "unweighted nonlinear least squares with Y0 >= 0",
+      "historical_optimizer": "single recovered initializer; audit sensitivities use deterministic multistart and report when the historical initializer enters a poorer local solution"
+    },
+    "historical_thresholds": {
+      "LOD": "3 * blank_sigma",
+      "LOQ": "10 * blank_sigma",
+      "warning": "The recovered script omits blank mean; the manuscript describes blank mean plus 3 or 10 SD. Samples undergo blank subtraction before the final baseline, while blank threshold spectra do not, so the inversion is diagnostic rather than an analytical LOD/LOQ."
+    },
+    "linear": {
+      "equation": "Y = slope * log10(C_M) + intercept",
+      "fit": "unweighted ordinary least squares"
+    }
+  },
+  "recovered_historical_processing": {
+    "baseline": {
+      "diff_order": 2,
+      "lambda": 3000.0,
+      "max_iter": 50,
+      "method": "iarpls",
+      "tol": 0.001
+    },
+    "blank": {
+      "historical_strategy": "mean_of_all_15_prepared_blank_scans",
+      "stage": "after_second_baseline",
+      "warning": "All 15 historical blank scans are high-power, later-session measurements and are not a valid low-power calibration blank."
+    },
+    "crop_min_cm-1": 341.6070517,
+    "filter": {
+      "method": "fft_selected_butterworth",
+      "order": 2,
+      "percentile": 60.0,
+      "selection": "legacy_argmin_with_hash_bound_committed_fft_index_and_normalized_cutoff_lock; fresh_peak_membership_is_diagnostic_only"
+    },
+    "grid_mode": "intersection",
+    "grid_order": "align_all_then_crop",
+    "grid_step": "median_of_native_median_steps",
+    "peaks": [
+      {
+        "center_cm-1": 392.32,
+        "half_window_cm-1": 10.0,
+        "method": "height"
+      },
+      {
+        "center_cm-1": 1078.5,
+        "half_window_cm-1": 7.0,
+        "method": "height"
+      },
+      {
+        "center_cm-1": 1589.62,
+        "half_window_cm-1": 8.0,
+        "method": "height"
+      }
+    ],
+    "post_blank_baseline": {
+      "diff_order": 2,
+      "lambda": 5000000.0,
+      "max_iter": 50,
+      "method": "asls",
+      "p": 0.001,
+      "tol": 0.001
+    },
+    "second_baseline": {
+      "diff_order": 2,
+      "lambda": 600.0,
+      "max_iter": 50,
+      "method": "iarpls",
+      "tol": 0.001
+    }
+  },
+  "schema_version": "1.0",
+  "verification_tolerances": {
+    "processed_intensity_max_abs": 0.0002,
+    "rounded_table_axis_max_abs_cm-1": 6e-06
+  }
+}

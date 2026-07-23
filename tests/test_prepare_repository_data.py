@@ -186,6 +186,132 @@ def _medium_replay_fixture(repository_root: Path) -> list[Path]:
     return [*sources, lock, *release_paths]
 
 
+def _calibration_audit_fixture(repository_root: Path) -> list[Path]:
+    paths: list[Path] = []
+    for relative, _role in PREPARE.CALIBRATION_AUDIT_MANIFEST_SPECS:
+        path = repository_root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            f"fixture for {relative.as_posix()}\n",
+            encoding="utf-8",
+        )
+        paths.append(path)
+    return paths
+
+
+def test_calibration_audit_is_regenerated_after_reset_and_hash_manifested(
+    tmp_path: Path,
+) -> None:
+    repository_root = tmp_path / "repository"
+    generated_specs = [
+        relative.as_posix()
+        for relative, _role in PREPARE.CALIBRATION_AUDIT_MANIFEST_SPECS
+        if relative != Path("docs/CALIBRATION_CURVE_AUDIT.md")
+    ]
+    report = repository_root / "docs" / "CALIBRATION_CURVE_AUDIT.md"
+    report.parent.mkdir(parents=True)
+    report.write_text("Human-readable fixture audit.\n", encoding="utf-8")
+    generator = repository_root / "scripts" / "audit_calibration_curve.py"
+    generator.parent.mkdir(parents=True)
+    generator.write_text(
+        "from pathlib import Path\n"
+        f"paths = {generated_specs!r}\n"
+        "for relative in paths:\n"
+        "    path = Path(relative)\n"
+        "    path.parent.mkdir(parents=True, exist_ok=True)\n"
+        "    path.write_text('regenerated audit evidence\\n', encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    provenance = repository_root / "metadata" / "provenance"
+    validation = repository_root / "metadata" / "validation"
+    provenance.mkdir(parents=True)
+    validation.mkdir(parents=True)
+    (provenance / "stale.csv").write_text("stale\n", encoding="utf-8")
+    (validation / "stale.csv").write_text("stale\n", encoding="utf-8")
+
+    PREPARE.reset_generated_directory(provenance, repository_root)
+    PREPARE.reset_generated_directory(validation, repository_root)
+    PREPARE.run_calibration_audit(repository_root)
+    manifest: list[dict[str, object]] = []
+    status_counts: Counter[str] = Counter()
+    counts = PREPARE.add_calibration_audit_manifest_entries(
+        repository_root,
+        manifest,
+        status_counts,
+    )
+
+    assert not (provenance / "stale.csv").exists()
+    assert not (validation / "stale.csv").exists()
+    assert counts == {"audit_evidence": 12}
+    assert status_counts == counts
+    assert [row["repository_path"] for row in manifest] == [
+        relative.as_posix()
+        for relative, _role in PREPARE.CALIBRATION_AUDIT_MANIFEST_SPECS
+    ]
+    assert {
+        row["role"] for row in manifest
+    } == {
+        role for _relative, role in PREPARE.CALIBRATION_AUDIT_MANIFEST_SPECS
+    }
+    for row in manifest:
+        path = repository_root / str(row["repository_path"])
+        assert path.is_file()
+        assert row["status"] == "audit_evidence"
+        assert row["repository_sha256"] == PREPARE.sha256_file(path)
+        assert row["repository_bytes"] == path.stat().st_size
+    assert "metadata/dataset_manifest.csv" not in {
+        row["repository_path"] for row in manifest
+    }
+    assert "metadata/curation_summary.json" not in {
+        row["repository_path"] for row in manifest
+    }
+
+
+def test_legacy_package_validation_is_regenerated_in_target_checkout(
+    tmp_path: Path,
+) -> None:
+    repository_root = tmp_path / "repository"
+    scripts = repository_root / "scripts"
+    scripts.mkdir(parents=True)
+    reproduce = scripts / "reproduce_legacy_families.py"
+    validate = scripts / "validate_legacy_reproduction.py"
+    reproduce.write_text(
+        "from pathlib import Path\n"
+        "path = Path('outputs/qa/reproduced.txt')\n"
+        "path.parent.mkdir(parents=True, exist_ok=True)\n"
+        "path.write_text('reproduced\\n', encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    validate.write_text(
+        "from pathlib import Path\n"
+        "root = Path('metadata/validation')\n"
+        "root.mkdir(parents=True, exist_ok=True)\n"
+        "(root / 'package_reproduction_metrics.csv').write_text("
+        "'metric\\n', encoding='utf-8')\n"
+        "(root / 'package_reproduction_summary.csv').write_text("
+        "'summary\\n', encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+
+    PREPARE.run_legacy_package_validation(repository_root)
+
+    assert (
+        repository_root / "outputs" / "qa" / "reproduced.txt"
+    ).read_text(encoding="utf-8") == "reproduced\n"
+    assert (
+        repository_root
+        / "metadata"
+        / "validation"
+        / "package_reproduction_metrics.csv"
+    ).is_file()
+    assert (
+        repository_root
+        / "metadata"
+        / "validation"
+        / "package_reproduction_summary.csv"
+    ).is_file()
+
+
 def test_medium_replay_sources_and_release_remain_conservatively_classified(
     tmp_path: Path,
 ) -> None:
@@ -399,6 +525,7 @@ def test_refresh_manages_high_and_medium_release_rows_as_one_stable_suffix(
     metadata_root.mkdir(parents=True)
     high_paths = _release_fixture(repository_root)
     _medium_replay_fixture(repository_root)
+    _calibration_audit_fixture(repository_root)
     base_path = repository_root / "data" / "raw" / "base.csv"
     base_path.parent.mkdir(parents=True)
     base_path.write_text("x,y\n1,2\n", encoding="utf-8")
@@ -423,10 +550,15 @@ def test_refresh_manages_high_and_medium_release_rows_as_one_stable_suffix(
     old_medium["repository_path"] = (
         PREPARE.MEDIUM_4ATP_REPLAY_RELEASE_ROOT / "old.csv"
     ).as_posix()
+    old_audit = dict(base_row)
+    old_audit["repository_path"] = next(
+        iter(PREPARE.CALIBRATION_AUDIT_MANIFEST_PATHS)
+    )
+    old_audit["status"] = "audit_evidence"
     PREPARE.write_csv(
         metadata_root / "dataset_manifest.csv",
         PREPARE.DATASET_MANIFEST_FIELDS,
-        [base_row, old_high, old_medium],
+        [base_row, old_high, old_medium, old_audit],
     )
     (metadata_root / "curation_summary.json").write_text(
         "{}\n", encoding="utf-8"
@@ -445,13 +577,18 @@ def test_refresh_manages_high_and_medium_release_rows_as_one_stable_suffix(
         ),
     ]
     assert [row["repository_path"] for row in rows[1:5]] == high_expected
-    assert len(rows) == 54
-    assert report["dataset_manifest_rows"] == 54
+    assert [row["repository_path"] for row in rows[-12:]] == [
+        relative.as_posix()
+        for relative, _role in PREPARE.CALIBRATION_AUDIT_MANIFEST_SPECS
+    ]
+    assert len(rows) == 66
+    assert report["dataset_manifest_rows"] == 66
     assert report["regenerated_4atp_release_file_count"] == 8
     assert report["medium_power_computational_replay_source_file_count"] == 43
     assert report["medium_power_computational_replay_file_count"] == 5
+    assert report["calibration_audit_file_count"] == 12
     assert report["status_counts"] == {
-        "audit_evidence": 8,
+        "audit_evidence": 20,
         "provenance_conflict": 1,
         "raw_unverified": 43,
         "regenerated_partial_provenance": 2,

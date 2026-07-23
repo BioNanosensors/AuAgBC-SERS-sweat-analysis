@@ -51,6 +51,18 @@ See [the data audit](docs/DATA_AUDIT.md) and the focused
 `publication_snapshot` label means “used in preparation of the manuscript,” not
 “complete raw lineage independently verified.”
 
+For the Figure 3/4A calibration, read the dedicated
+[computational-lineage and sensitivity audit](docs/CALIBRATION_CURVE_AUDIT.md).
+The recovered October 2025 chain regenerates all 210 processed scan channels
+and all four paper-facing tables within declared cross-environment tolerances.
+This is a computational result, not validation of the experiment: 44 of 195
+sample scans conflict with the intended date or setting, 45 of 210 prepared
+axes differ from their exact-intensity source match beyond `1 × 10⁻⁵ cm⁻¹`, 12
+prepared rows participate in exact source-scan reuse, all 15 blanks are later
+high-power records, and none of the paper's three `Y0`/`k`/`R²` rows is
+reproduced from the supplied calibration summary. Quantitative calibration,
+LOD/LOQ, and dependent blind-prediction claims therefore remain unresolved.
+
 For the high-power `750_5_5_H` optimisation, also read the dedicated
 [reanalysis record](docs/4ATP_HIGH_POWER_REANALYSIS.md). It keeps three lineages
 strictly separate: the historical snapshot made with a mixed 15-spectrum blank
@@ -138,6 +150,19 @@ Verify the machine-readable 4-ATP blank provenance and candidate decisions:
 python scripts/verify_4atp_blank_audit.py
 ```
 
+Regenerate or verify the Figure 3/4A calibration computational-lineage and
+sensitivity audit:
+
+```text
+python scripts/audit_calibration_curve.py
+python scripts/audit_calibration_curve.py --check
+```
+
+The calibration check binds every prepared scan to its source column and hash,
+replays the recovered processing with locked FFT decisions, compares all
+paper-facing tables, and verifies that every diagnostic LOD/LOQ remains marked
+non-reportable in the absence of a context-matched low-power blank.
+
 The archive-wide manifest at `metadata/raw_processing_manifest.csv` includes
 quarantined records so that every submitted raw-like file is discoverable. It
 spans experiments that require different blank and normalisation rules, so
@@ -163,6 +188,12 @@ environments.
 ```text
 python -m pip install -e ".[test]" -c requirements-release.txt
 ```
+
+The separate Python 3.10 compatibility lane uses the mature patch releases in
+`requirements-compatibility.txt`. It runs the complete test suite, repository
+verification, and calibration replay on Linux. This is the oldest tested patch
+stack, not a claim that every earlier patch in the declared dependency series
+was independently tested.
 
 Then regenerate the two separately labelled high-power 4-ATP reanalyses and
 their comparison package, or verify the committed compact products:
@@ -269,6 +300,7 @@ scientific review before quantitative interpretation.
 | `docs/HUMAN_DATA_GOVERNANCE.md` | Consent, ethics, pseudonymisation, and public-sharing evidence status |
 | `docs/ETHICS_APPROVAL.md` | Scope and limitations of the later CFATA/CEID approval letter |
 | `docs/4ATP_BLANK_AUDIT.md` | Historical blank origins, experiment-specific candidates, and unresolved decisions |
+| `docs/CALIBRATION_CURVE_AUDIT.md` | Figure 3/4A scan lineage, recovered computation, fit comparison, and claim limits |
 | `docs/4ATP_HIGH_POWER_REANALYSIS.md` | Three-lineage high-power reanalysis design, results, and interpretation limits |
 | `docs/4ATP_MEDIUM_POWER_COMPUTATIONAL_REPLAY.md` | Medium-power source mapping, recovered algorithm, numerical bounds, and unresolved blank limitation |
 | `docs/LICENSING.md` | Proposed path-level licensing arrangement and required decisions |

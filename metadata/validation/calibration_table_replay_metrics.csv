@@ -1,0 +1,7 @@
+dataset,compared_numeric_cells,rmse,max_abs_difference,absolute_tolerance,passes,note
+replicate_mean_sd_by_shift.csv,34944,3.6742025503607247e-06,3.532497945002433e-05,0.0002,True,Compares intensity mean and SD; mojibake labels are ignored as historical text.
+final_spectra_by_accumulation_wide.csv,87360,8.299939204393336e-06,0.00010320316187062417,0.0002,True,All 210 processed scan channels on the recovered 416-point axis.
+summary_by_concentration.csv,126,2.113128967211484e-06,9.008818437905575e-06,0.0002,True,"Compares peak mean, SD, and CV for all 14 precision entries."
+calibration_at_selected_shifts.csv:axis,416,2.8888122355330067e-06,4.995855306333397e-06,6e-06,True,The historical spreadsheet rounds Raman shift to five decimals.
+calibration_at_selected_shifts.csv:intensity_and_sd,11648,3.836052226075793e-06,1.561065194977118e-05,0.0002,True,Compares concentration-level intensity mean and SD; legacy header-label errors are outside the numerical check.
+calibration_at_selected_shifts.csv:cv,5824,0.0003239104199374833,0.02309183080069488,0.05,True,CV is a ratio and amplifies the cross-environment baseline drift where the replayed mean is near zero.

@@ -1,18 +1,8 @@
 > **Superseded package result (20 July 2026).** This exploratory report used a separate data-frame replay. Its conclusion that 27 large differences demonstrate provenance mismatches is not supported by the released workflow. The deterministic package replay later reproduced all 955 paired spectra exactly (RMSE and maximum absolute difference both zero). See `package_reproduction_summary.csv`, `package_reproduction_metrics.csv`, and `../../docs/DATA_AUDIT.md`. The report below is retained only as evidence of the historical FFT cutoff's sensitivity to approximately 1e-12 parsing and summation differences.
 
-> **Medium-power lineage correction (23 July 2026).** The original stem-pair
-> audit correctly found zero name-paired sources for
-> `Optimisation/750_5_5_M` inside the prepared folder, but its inference that
-> none of the 43 outputs could be regenerated was too broad. A later explicit
-> mapping to 42 vendor exports and one assembled 15-channel blank reproduces
-> all 43 files and all 225 channels: parsed Raman-shift arrays are exact, the
-> worst intensity RMSE is approximately `6.294e-8`, and the worst maximum
-> absolute difference is approximately `2.292e-7`. This is
-> computational-lineage evidence only. The historical workflow uses the first
-> channel of a mixed high-power assembled blank, so its scientific context
-> remains unresolved. See
-> `../../docs/4ATP_MEDIUM_POWER_COMPUTATIONAL_REPLAY.md` and the persistent
-> replay package.
+> **Medium-power lineage correction (23 July 2026).** The original stem-pair audit correctly found zero name-paired sources for `Optimisation/750_5_5_M` inside the prepared folder, but its inference that none of the 43 outputs could be regenerated was too broad. A later explicit mapping to 42 vendor exports and one assembled 15-channel blank reproduces all 43 files and 225 channels. Parsed Raman-shift arrays are exact, the worst intensity RMSE is approximately `6.294e-8`, and the worst maximum absolute difference is approximately `2.292e-7`. This is computational-lineage evidence only; the mixed high-power blank remains scientifically unresolved. See `../../docs/4ATP_MEDIUM_POWER_COMPUTATIONAL_REPLAY.md` and the persistent replay package.
+
+> **Calibration computational-lineage correction (23 July 2026).** The generic profile comparison below did not include the later recovered October 2025 calibration pipeline. The dedicated replay now regenerates all 210 processed scan channels and all four preserved calibration tables within declared cross-environment tolerances; the worst scan maximum absolute difference is approximately `1.03203e-4`. This resolves executable processing lineage only. Forty-four of 195 samples conflict with the intended date or setting, 12 prepared rows participate in exact source-scan reuse, 45/210 prepared axes differ from their exact-intensity source match beyond `1e-5 cm-1`, all 15 blanks are later-session high-power records, and the paper's three model-parameter rows are not reproduced from the supplied summary. See `../../docs/CALIBRATION_CURVE_AUDIT.md`.
 
 # Numerical reproduction audit
 
@@ -95,6 +85,9 @@ The `750_5_5_M` folder now also has a complete but separate 43-file,
 225-channel historical computational replay from explicitly mapped vendor
 sources. That result resolves executable lineage only; its assembled
 high-power blank remains invalid for a scientifically verified medium-power
-analysis. Calibration, Analytical Enhancement, and Proof of concept still
-require corrected raw provenance and/or missing processing evidence before
-complete scientific reproducibility can be claimed.
+analysis. The calibration now also has complete executable processing lineage,
+but its mixed acquisition contexts, exact source reuse, absent low-power blank,
+and non-reproduced paper model parameters prevent quantitative scientific
+validation. Analytical Enhancement and Proof of concept still require corrected
+raw provenance and/or missing processing evidence before complete scientific
+reproducibility can be claimed.

@@ -1,0 +1,10 @@
+# Oldest tested patch stack for the declared Python 3.10 compatibility lane.
+# These are mature patch releases from the earliest supported dependency
+# series; they are not claims that every earlier patch in each series was
+# independently tested.
+numpy==1.26.4
+pandas==2.1.4
+scipy==1.11.4
+pybaselines==1.1.0
+PyYAML==6.0.1
+pytest==8.0.2

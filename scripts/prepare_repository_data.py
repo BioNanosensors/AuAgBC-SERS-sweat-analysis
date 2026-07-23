@@ -11,7 +11,11 @@ Run from anywhere with::
 
     python scripts/prepare_repository_data.py
 
-Only Python's standard library is required.
+The orchestration itself uses only Python's standard library. A complete
+rebuild also invokes the legacy package validation and
+``scripts/audit_calibration_curve.py`` and therefore requires the repository's
+numerical dependencies. The focused metadata refresh remains
+standard-library-only.
 """
 
 from __future__ import annotations
@@ -23,6 +27,8 @@ import hashlib
 import json
 import re
 import shutil
+import subprocess
+import sys
 import tokenize
 from collections import Counter, defaultdict
 from itertools import zip_longest
@@ -132,6 +138,63 @@ DATASET_MANIFEST_FIELDS = [
     "sanitized_user_path_occurrences",
     "note",
 ]
+
+CALIBRATION_AUDIT_MANIFEST_SPECS = (
+    (
+        Path("configs/reanalysis/calibration_curve_historical_replay.json"),
+        "reanalysis_configuration",
+    ),
+    (
+        Path(
+            "configs/reanalysis/"
+            "calibration_curve_historical_replay_manifest.csv"
+        ),
+        "reanalysis_manifest",
+    ),
+    (Path("docs/CALIBRATION_CURVE_AUDIT.md"), "audit_report"),
+    (
+        Path(
+            "metadata/processing_locks/"
+            "calibration_curve_historical_replay_fft_cutoffs.csv"
+        ),
+        "processing_parameter_lock",
+    ),
+    (
+        Path("metadata/provenance/calibration_scan_lineage.csv"),
+        "provenance_audit",
+    ),
+    (
+        Path("metadata/provenance/calibration_source_reuse.csv"),
+        "provenance_audit",
+    ),
+    (
+        Path("metadata/validation/calibration_audit_summary.json"),
+        "numerical_validation",
+    ),
+    (
+        Path("metadata/validation/calibration_claim_assessment.csv"),
+        "claim_assessment",
+    ),
+    (
+        Path("metadata/validation/calibration_model_sensitivity.csv"),
+        "numerical_validation",
+    ),
+    (
+        Path("metadata/validation/calibration_parameter_comparison.csv"),
+        "numerical_validation",
+    ),
+    (
+        Path("metadata/validation/calibration_replay_metrics.csv"),
+        "numerical_validation",
+    ),
+    (
+        Path("metadata/validation/calibration_table_replay_metrics.csv"),
+        "numerical_validation",
+    ),
+)
+CALIBRATION_AUDIT_MANIFEST_PATHS = frozenset(
+    path.as_posix() for path, _role in CALIBRATION_AUDIT_MANIFEST_SPECS
+)
 
 
 # Archive paths use their original names; destinations are stable, lowercase,
@@ -770,12 +833,14 @@ def write_reference_metadata(metadata_root: Path) -> None:
         [
             {"conflict_id": "cross_label_duplicate_content", "scope": "curated raw spectra", "severity": "critical", "finding": "Identical spectrum bytes occur under different stated concentrations.", "affected_count": "103 groups; 277 files", "evidence": "provenance/duplicate_content_groups.csv and provenance/concentration_label_conflicts.csv", "resolution_status": "unresolved"},
             {"conflict_id": "shared_blank_wrong_context", "scope": "blind, calibration, optimisation, stability", "severity": "critical", "finding": "The same 15 high-power blank spectra are reused across eight sets that require different sessions and settings. Their exact historical origins are identified, but the shared composite is not a confirmed context-matched analytical blank. A separate 24 September high-power blank is author-confirmed for the matching optimisation condition. An exhaustive search of 1,623 portable CSV paths found no explicit AuAgBC blank at the required low- or medium-power settings.", "affected_count": "120 exact copies across 8 sets; 3 historical source exports; 1 separate confirmed high-power match; 4 contextual candidates; 0 target matches", "evidence": "provenance/shared_blank_origin_summary.csv; provenance/4atp_blank_family_assessment.csv; provenance/4atp_blank_search_summary.csv; provenance/4atp_blank_unresolved_candidates.csv; docs/4ATP_MEDIUM_POWER_COMPUTATIONAL_REPLAY.md", "resolution_status": "historical_sources_identified_one_context_match_confirmed_portable_collection_exhausted_others_unresolved"},
+            {"conflict_id": "calibration_mixed_acquisition_and_source_reuse", "scope": "Calibration curve", "severity": "critical", "finding": "The 195 prepared sample scans are not a uniform 3 July 2024 750_5_5_L experiment: 44 conflict in date or setting. Although all 210 intensity vectors have exact source-column matches, 45 prepared axes differ beyond 1e-5 cm-1. The 210 prepared rows contain only 204 distinct exact source-scan identities; 12 rows participate in six exact reuse groups and must not be treated as independent observations.", "affected_count": "44/195 context-conflicting sample scans; 45/210 axis conflicts; 12 reused prepared rows; 204 distinct exact source-scan identities", "evidence": "provenance/calibration_scan_lineage.csv; provenance/calibration_source_reuse.csv; docs/CALIBRATION_CURVE_AUDIT.md", "resolution_status": "computational_lineage_resolved_experimental_design_conflict_unresolved"},
+            {"conflict_id": "calibration_model_and_detection_limits", "scope": "Calibration curve and blind predictions", "severity": "critical", "finding": "The recovered processing regenerates the Figure 3/4A spectral tables, but none of the three paper Y0/k/R2 rows is reproduced from the supplied summary under the manuscript model. Every non-empty threshold inversion generated from the supplied/recovered calibration uses a later-session high-power blank rather than a context-matched low-power AuAgBC blank and is non-reportable; the manuscript LOD/LOQ lineage remains unresolved.", "affected_count": "3/3 paper parameter rows not reproduced; 0 valid low-power blank scans", "evidence": "validation/calibration_parameter_comparison.csv; validation/calibration_model_sensitivity.csv; validation/calibration_claim_assessment.csv; docs/CALIBRATION_CURVE_AUDIT.md", "resolution_status": "historical_computation_replayed_quantitative_claims_not_validated"},
             {"conflict_id": "stability_19may_label_mismatch", "scope": "Stability/19_05_24", "severity": "critical", "finding": "Curated concentration labels disagree with the best matching master spectra.", "affected_count": "105 matched columns", "evidence": "provenance/concentration_label_conflicts.csv", "resolution_status": "unresolved"},
             {"conflict_id": "stability_content_overlap", "scope": "all stability dates", "severity": "critical", "finding": "Stability folders substantially overlap calibration or other-date content instead of forming independent dated acquisitions.", "affected_count": "unique content: 149/165, 103/159, and 20/210", "evidence": "provenance/duplicate_content_groups.csv", "resolution_status": "unresolved"},
             {"conflict_id": "optimisation_750m_orphan_derivatives", "scope": "Optimisation/750_5_5_M/Processed Spectra", "severity": "high", "finding": "The prepared folder has no same-stem source partners for the 43 historical multi-column files. An explicit mapping to 42 vendor exports and one assembled blank now reproduces all 43 files and 225 channels within machine-scale numerical bounds, resolving the computational orphan finding but not experimental provenance.", "affected_count": "43 files; 225 channels", "evidence": "docs/4ATP_MEDIUM_POWER_COMPUTATIONAL_REPLAY.md; data/processed/4atp/optimisation/750_5_5_M/historical_computational_replay/resolved_manifest.csv; data/processed/4atp/optimisation/750_5_5_M/historical_computational_replay/replay_metrics.csv", "resolution_status": "computational_mapping_resolved_provenance_not_verified"},
             {"conflict_id": "optimisation_750m_historical_blank_context", "scope": "Optimisation/750_5_5_M", "severity": "critical", "finding": "The recovered historical workflow subtracts the first channel of an assembled mixed high-power blank from all 210 nonblank medium-power channels. Numerical replay establishes that this operation generated the preserved outputs, but no evidence makes that channel a setting-matched 750_5_5_M AuAgBC blank.", "affected_count": "43 historical files; 225 replayed channels; 210 nonblank channels use the conflicting reference", "evidence": "docs/4ATP_MEDIUM_POWER_COMPUTATIONAL_REPLAY.md; provenance/shared_blank_origin_summary.csv; provenance/4atp_blank_family_assessment.csv", "resolution_status": "unresolved_no_setting_matched_medium_power_blank"},
             {"conflict_id": "portable_poc_embedded_metadata", "scope": "Proof of concept/Portable Raman", "severity": "high", "finding": "Six human-sweat raw files use outer publication aliases that differ from embedded acquisition aliases. The author-confirmed crosswalk resolves the numbering; the embedded V2S2 session in the two AA_HS copies is a confirmed metadata typo whose canonical session is V2S1. Historical bytes are preserved.", "affected_count": "6 human-sweat raw files", "evidence": "provenance/proof_of_concept_label_evidence.csv", "resolution_status": "resolved_by_author_confirmed_crosswalk_and_session_correction"},
-            {"conflict_id": "families_not_exactly_regenerated", "scope": "calibration, analytical enhancement, proof of concept", "severity": "high", "finding": "Candidate recipes do not exactly regenerate supplied processed outputs from the paired curated raw files; missing or different blanks/source columns are implicated.", "affected_count": "3 analysis families", "evidence": "validation/numerical_reproduction_summary.md", "resolution_status": "unresolved"},
+            {"conflict_id": "families_not_exactly_regenerated", "scope": "analytical enhancement, proof of concept", "severity": "high", "finding": "Candidate recipes do not exactly regenerate supplied processed outputs from the paired curated raw files; missing or different blanks/source columns are implicated. Calibration has a separate recovered computational replay and is tracked by dedicated conflicts above.", "affected_count": "2 analysis families", "evidence": "validation/numerical_reproduction_summary.md", "resolution_status": "unresolved"},
         ],
     )
 
@@ -1234,6 +1299,130 @@ def add_manifest_row(
     })
 
 
+def run_calibration_audit(repository_root: Path) -> None:
+    """Regenerate calibration audit evidence using the target checkout."""
+    script = repository_root / "scripts" / "audit_calibration_curve.py"
+    if script.is_symlink() or not script.is_file():
+        raise RuntimeError(
+            "Calibration audit generator is missing or unsafe in the target "
+            f"repository: {script}"
+        )
+    completed = subprocess.run(
+        [sys.executable, str(script)],
+        cwd=repository_root,
+        shell=False,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if completed.returncode:
+        detail = (completed.stderr or completed.stdout).strip()
+        raise RuntimeError(
+            "Calibration audit regeneration failed"
+            + (f": {detail}" if detail else ".")
+        )
+
+
+def run_legacy_package_validation(repository_root: Path) -> None:
+    """Regenerate the tracked five-family package-validation summaries."""
+    for relative in (
+        Path("scripts/reproduce_legacy_families.py"),
+        Path("scripts/validate_legacy_reproduction.py"),
+    ):
+        script = repository_root / relative
+        if script.is_symlink() or not script.is_file():
+            raise RuntimeError(
+                "Legacy package validation generator is missing or unsafe in "
+                f"the target repository: {script}"
+            )
+        completed = subprocess.run(
+            [sys.executable, str(script)],
+            cwd=repository_root,
+            shell=False,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if completed.returncode:
+            detail = (completed.stderr or completed.stdout).strip()
+            raise RuntimeError(
+                f"Legacy package validation failed in {relative.as_posix()}"
+                + (f": {detail}" if detail else ".")
+            )
+
+
+def add_calibration_audit_manifest_entries(
+    repository_root: Path,
+    manifest: list[dict[str, object]],
+    status_counts: Counter[str],
+    *,
+    required: bool = True,
+) -> Counter[str]:
+    """Manifest the explicit calibration audit evidence contract."""
+    present = [
+        (repository_root / relative).exists()
+        for relative, _role in CALIBRATION_AUDIT_MANIFEST_SPECS
+    ]
+    if not any(present) and not required:
+        return Counter()
+    missing_or_unsafe = [
+        relative.as_posix()
+        for (relative, _role), exists in zip(
+            CALIBRATION_AUDIT_MANIFEST_SPECS, present
+        )
+        if (
+            not exists
+            or (repository_root / relative).is_symlink()
+            or not (repository_root / relative).is_file()
+        )
+    ]
+    if missing_or_unsafe:
+        raise RuntimeError(
+            "Calibration audit evidence is incomplete or unsafe; required "
+            "ordinary files are missing: "
+            + ", ".join(missing_or_unsafe)
+        )
+
+    counts: Counter[str] = Counter()
+    computational_note = (
+        "Recovered calibration computational-lineage evidence; this reproduces "
+        "the preserved computation but does not validate acquisition uniformity, "
+        "replicate independence, blank context, LOD/LOQ, or blind predictions."
+    )
+    for relative, role in CALIBRATION_AUDIT_MANIFEST_SPECS:
+        path = repository_root / relative
+        is_report = relative == Path("docs/CALIBRATION_CURVE_AUDIT.md")
+        add_manifest_row(
+            manifest,
+            repository_root,
+            path,
+            source_name=(
+                "repository_documentation"
+                if is_report
+                else "calibration_curve_computational_lineage_audit"
+            ),
+            source_relative_path=(
+                "authored calibration audit report"
+                if is_report
+                else "generated by scripts/audit_calibration_curve.py"
+            ),
+            source_sha256="",
+            source_bytes="",
+            status="audit_evidence",
+            role=role,
+            substitutions=0,
+            note=(
+                "Human-readable audit report accompanying the machine-readable "
+                "calibration evidence."
+                if is_report
+                else computational_note
+            ),
+        )
+        status_counts["audit_evidence"] += 1
+        counts["audit_evidence"] += 1
+    return counts
+
+
 def add_confirmed_4atp_blank_manifest_entry(
     repository_root: Path,
     manifest: list[dict[str, object]],
@@ -1583,14 +1772,14 @@ def add_medium_4atp_replay_manifest_entries(
 def refresh_confirmed_4atp_reanalysis_metadata(
     repository_root: Path,
 ) -> dict[str, object]:
-    """Refresh the managed persistent 4-ATP release suffix and counters.
+    """Refresh managed reanalysis/calibration-audit suffix rows and counters.
 
     This intentionally does not require or rebuild the external source archive.
-    Existing high-power reanalysis and medium-power computational-replay rows
-    must together form a suffix of the manifest. Removing and appending that
-    suffix in a stable order cannot change any established numeric row
-    reference. Proof-of-concept sidecars therefore remain current and are not
-    rewritten by this focused operation.
+    Existing high-power reanalysis, medium-power computational replay, and
+    calibration-audit rows must together form a suffix of the manifest.
+    Removing and appending that suffix in a stable order cannot change any
+    established numeric row reference. Proof-of-concept sidecars therefore
+    remain current and are not rewritten by this focused operation.
     """
     repository_root = repository_root.resolve()
     manifest_path = repository_root / "metadata" / "dataset_manifest.csv"
@@ -1630,12 +1819,15 @@ def refresh_confirmed_4atp_reanalysis_metadata(
         or str(row.get("repository_path", "")).startswith(medium_source_prefix)
         or str(row.get("repository_path", "")).startswith(medium_release_prefix)
         or str(row.get("repository_path", "")) == medium_support_path
+        or str(row.get("repository_path", ""))
+        in CALIBRATION_AUDIT_MANIFEST_PATHS
     ]
     if release_indices:
         expected_suffix = list(range(release_indices[0], len(rows)))
         if release_indices != expected_suffix:
             raise RuntimeError(
-                "Existing managed 4-ATP release rows are not a manifest suffix; "
+                "Existing managed reanalysis/calibration-audit rows are not a "
+                "manifest suffix; "
                 "refusing to change established dataset_manifest_row references."
             )
         base_rows = rows[: release_indices[0]]
@@ -1671,6 +1863,12 @@ def refresh_confirmed_4atp_reanalysis_metadata(
         repository_root,
         manifest,
         status_counts,
+    )
+    calibration_status_counts = add_calibration_audit_manifest_entries(
+        repository_root,
+        manifest,
+        status_counts,
+        required=False,
     )
 
     try:
@@ -1722,6 +1920,7 @@ def refresh_confirmed_4atp_reanalysis_metadata(
             if medium_status_counts
             else 0
         ),
+        "calibration_audit_file_count": sum(calibration_status_counts.values()),
         "status_counts": dict(sorted(status_counts.items())),
     }
 
@@ -1740,7 +1939,7 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
         "--refresh-reanalysis-metadata",
         action="store_true",
         help=(
-            "Refresh only the managed persistent 4-ATP release rows in "
+            "Refresh only the managed reanalysis and calibration-audit rows in "
             "dataset_manifest.csv and curation_summary.json; no external archive "
             "or legacy-snapshot rebuild is required."
         ),
@@ -1965,7 +2164,6 @@ def main(argv: Iterable[str] | None = None) -> int:
         status_counts["publication_snapshot"] += 1
 
     # Audit evidence copied with the same privacy sanitation.
-    audit_report_count = 0
     for source_name, normalized in REPORT_MAP.items():
         source = reports_root / source_name
         if not source.is_file():
@@ -2002,7 +2200,6 @@ def main(argv: Iterable[str] | None = None) -> int:
             ),
         )
         status_counts["audit_evidence"] += 1
-        audit_report_count += 1
 
     numerical_root = reports_root / "numerical"
     if numerical_root.is_dir():
@@ -2030,6 +2227,16 @@ def main(argv: Iterable[str] | None = None) -> int:
                     "computational-lineage evidence only; the mixed high-power blank remains scientifically "
                     "unresolved. See `../../docs/4ATP_MEDIUM_POWER_COMPUTATIONAL_REPLAY.md` and the persistent "
                     "replay package.\n\n"
+                    "> **Calibration computational-lineage correction (23 July 2026).** The generic profile "
+                    "comparison below did not include the later recovered October 2025 calibration pipeline. "
+                    "The dedicated replay now regenerates all 210 processed scan channels and all four "
+                    "preserved calibration tables within declared cross-environment tolerances; the worst "
+                    "scan maximum absolute difference is approximately `1.03203e-4`. This resolves executable "
+                    "processing lineage only. Forty-four of 195 samples conflict with the intended date or "
+                    "setting, 12 prepared rows participate in exact source-scan reuse, 45/210 prepared axes "
+                    "differ from their exact-intensity source match beyond `1e-5 cm-1`, all 15 blanks are "
+                    "later-session high-power records, and the paper's three model-parameter rows are not "
+                    "reproduced from the supplied summary. See `../../docs/CALIBRATION_CURVE_AUDIT.md`.\n\n"
                 )
                 existing = destination.read_text(encoding="utf-8-sig")
                 existing = existing.replace(
@@ -2058,9 +2265,12 @@ def main(argv: Iterable[str] | None = None) -> int:
                     "225-channel historical computational replay from explicitly mapped vendor\n"
                     "sources. That result resolves executable lineage only; its assembled\n"
                     "high-power blank remains invalid for a scientifically verified medium-power\n"
-                    "analysis. Calibration, Analytical Enhancement, and Proof of concept still\n"
-                    "require corrected raw provenance and/or missing processing evidence before\n"
-                    "complete scientific reproducibility can be claimed.\n",
+                    "analysis. The calibration now also has complete executable processing lineage,\n"
+                    "but its mixed acquisition contexts, exact source reuse, absent low-power blank,\n"
+                    "and non-reproduced paper model parameters prevent quantitative scientific\n"
+                    "validation. Analytical Enhancement and Proof of concept still require corrected\n"
+                    "raw provenance and/or missing processing evidence before complete scientific\n"
+                    "reproducibility can be claimed.\n",
                 )
                 destination.write_text(supersession_notice + existing, encoding="utf-8", newline="\n")
             add_manifest_row(
@@ -2081,7 +2291,6 @@ def main(argv: Iterable[str] | None = None) -> int:
                 ),
             )
             status_counts["audit_evidence"] += 1
-            audit_report_count += 1
 
     write_reference_metadata(metadata_root)
     raw_manifest_count = build_raw_processing_manifest(
@@ -2095,6 +2304,8 @@ def main(argv: Iterable[str] | None = None) -> int:
         legacy_scripts_root,
         metadata_root / "legacy_script_inventory.csv",
     )
+    run_legacy_package_validation(repository_root)
+    run_calibration_audit(repository_root)
 
     # Sort only the pre-existing release rows. Persistent 4-ATP packages are
     # appended afterwards in a stable order so historical numeric manifest-row
@@ -2110,9 +2321,12 @@ def main(argv: Iterable[str] | None = None) -> int:
         manifest,
         status_counts,
     )
-    audit_report_count += reanalysis_status_counts.get("audit_evidence", 0)
-    audit_report_count += medium_replay_status_counts.get("audit_evidence", 0)
     write_mapping_sidecars(repository_root, manifest)
+    add_calibration_audit_manifest_entries(
+        repository_root,
+        manifest,
+        status_counts,
+    )
     write_csv(
         metadata_root / "dataset_manifest.csv",
         DATASET_MANIFEST_FIELDS,
@@ -2128,7 +2342,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         "publication_snapshot_file_count": len(list(publication_root.rglob("*.*"))),
         "raw_processing_manifest_rows": raw_manifest_count,
         "legacy_script_inventory_rows": legacy_script_count,
-        "copied_audit_report_count": audit_report_count,
+        "copied_audit_report_count": status_counts.get("audit_evidence", 0),
         "regenerated_4atp_release_file_count": sum(
             reanalysis_status_counts.values()
         ) + (
@@ -2150,6 +2364,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     (metadata_root / "curation_summary.json").write_text(
         json.dumps(summary, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
+        newline="\n",
     )
     print(json.dumps(summary, indent=2, ensure_ascii=False))
     return 0

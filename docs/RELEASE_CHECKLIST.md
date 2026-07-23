@@ -86,10 +86,45 @@ items below remain limitations; public visibility does not mark them resolved.
 - [x] Keep the replay separate from the publication snapshot and decline to
   publish a `reference_2026` medium-power result without a setting-matched
   AuAgBC blank.
+- [x] Map all 210 prepared calibration scans to exact source intensity columns,
+  source dates, settings, and hashes; record that 44/195 sample scans conflict
+  with the intended date or setting.
+- [x] Record that 45/210 prepared calibration axes differ from their
+  exact-intensity source match beyond `1 × 10⁻⁵ cm⁻¹`, including 35 sample
+  scans and ten blanks.
+- [x] Identify six exact calibration source-scan reuse groups involving 12
+  prepared rows and record that the affected prepared entries are not
+  independent observations.
+- [x] Recover the October 2025 Figure 3/4A processing chain and replay all 210
+  processed scan channels and six aggregate-table comparisons within declared
+  cross-environment tolerances.
+- [x] Publish the calibration replay manifest, processing configuration,
+  source-hash-bound FFT decisions, per-channel metrics, table metrics, model
+  sensitivities, parameter comparison, and claim assessment as
+  `audit_evidence`.
+- [x] Test the supplied summary against the manuscript's declared exponential
+  model and record that none of the three paper `Y0`/`k`/`R²` rows is
+  reproduced.
+- [x] Mark every calibration LOD/LOQ sensitivity value non-reportable because
+  no context-matched low-power AuAgBC blank is available; retain the numerical
+  values only as diagnostics.
+- [x] Register all 12 calibration audit/report artifacts as checksum-bound
+  `audit_evidence` and regenerate them after provenance/validation resets in a
+  complete repository rebuild.
+- [x] Verify the complete calibration replay on the canonical Windows release
+  stack and on both supported Linux compatibility lanes, including the oldest
+  tested Python 3.10 dependency patch stack.
+- [x] Make a complete repository rebuild rerun the five-family package
+  validation so its 955-row exact-reproduction evidence is not dropped.
 
 ## Required before an unqualified public data release
 
-- [ ] Resolve or explicitly withdraw the conflicting calibration and stability labels documented in `DATA_AUDIT.md`.
+- [ ] Correctly reacquire/recover the calibration inputs or explicitly withdraw
+  the uniform-acquisition, independent-replicate, quantitative model, LOD/LOQ,
+  and calibration-dependent prediction claims documented in
+  `CALIBRATION_CURVE_AUDIT.md`.
+- [ ] Resolve or explicitly withdraw the conflicting stability labels
+  documented in `DATA_AUDIT.md`.
 - [ ] Supply the 10 September decoding key before releasing that historical
   coded experiment or presenting the selected 24 September snapshot as its
   decoded blinded-validation result.

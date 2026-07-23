@@ -1,0 +1,60 @@
+{
+  "analysis_id": "calibration_curve_lineage_and_sensitivity_audit",
+  "counts": {
+    "blank_rows": 15,
+    "fully_context_uniform_concentrations": 8,
+    "prepared_rows": 210,
+    "reused_prepared_rows": 12,
+    "reused_source_groups": 6,
+    "sample_rows": 195,
+    "source_axis_conflicts_1e-5_all": 45,
+    "source_axis_conflicts_1e-5_samples": 35,
+    "source_axis_matches_1e-5_all": 165,
+    "source_date_counts_all": {
+      "03-07-24": 170,
+      "18-09-24": 5,
+      "24-09-24": 25,
+      "25-09-24": 5,
+      "30-09-24": 5
+    },
+    "source_setting_counts_all": {
+      "500_5_5_L": 5,
+      "750_5_5_H": 35,
+      "750_5_5_L": 156,
+      "750_5_5_M": 14
+    },
+    "source_setting_counts_samples": {
+      "500_5_5_L": 5,
+      "750_5_5_H": 20,
+      "750_5_5_L": 156,
+      "750_5_5_M": 14
+    },
+    "unique_source_scans": 204
+  },
+  "environment_used_to_generate_committed_evidence": {
+    "numpy": "2.5.0",
+    "pandas": "3.0.3",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "pybaselines": "1.2.1",
+    "python": "3.12.13",
+    "scipy": "1.18.0"
+  },
+  "interpretation": "The prepared bytes and historical processing chain explain the publication snapshot. They do not establish a scientifically valid uniform low-power calibration, its LOD/LOQ, or downstream quantitative blind prediction claims.",
+  "model_audit": {
+    "blank_status": "no context-matched low-power AuAgBC blank is available; every blank scenario is historical or counterfactual",
+    "paper_parameter_rows_not_reproduced": 3,
+    "sensitivity_rows": 24
+  },
+  "replay": {
+    "cross_environment_intensity_tolerance": 0.0002,
+    "grid_points": 416,
+    "scan_channels_passing": 210,
+    "scan_channels_total": 210,
+    "table_checks_passing": 6,
+    "table_checks_total": 6,
+    "worst_max_abs_difference": 0.00010320316187062417,
+    "worst_rmse": 5.5147212931100024e-05
+  },
+  "result": "historical_computation_replayed_quantitative_claims_not_validated",
+  "schema_version": "1.0"
+}
