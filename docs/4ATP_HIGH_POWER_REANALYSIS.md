@@ -116,11 +116,13 @@ Package metadata records the cutoff-lock hash, pinned direct-package versions,
 the constraints-file hash, and SHA-256 identities for the generator and all
 `auagbc_sers` modules used. Both regeneration and `--check` freshly replay the
 historical mixed-composite run and require all 210 preserved spectra to agree
-within an absolute tolerance of `1e-6`. This bound admits only very small
+within an absolute tolerance of `1e-5`. This bound admits only very small
 platform-level floating-point drift between the canonical workstation and the
 GitHub Windows runner while remaining many orders of magnitude below a
 scientifically meaningful intensity change; it keeps the “blank-only” comparison
-self-checking as the code evolves.
+self-checking as the code evolves. The final machine-readable package comparison
+uses the same `1e-5` absolute tolerance plus a `1e-7` relative tolerance for
+numeric fields; schemas, file sets, labels, and other text remain exact.
 
 The release directories contain compact machine-readable summaries. The full
 long-form scan table is stored as `spectra_scan.csv.gz`, while the 200 individual

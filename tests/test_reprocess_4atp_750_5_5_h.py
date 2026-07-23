@@ -266,7 +266,7 @@ def test_release_metadata_records_environment_code_and_warning_scopes() -> None:
     }
     assert controlled["historical_replay_validation"]["status"] == "pass"
     assert controlled["historical_replay_validation"]["spectra_compared"] == 210
-    assert controlled["historical_replay_validation"]["absolute_tolerance"] == 1e-6
+    assert controlled["historical_replay_validation"]["absolute_tolerance"] == 1e-5
     assert controlled["historical_replay_validation"]["fft_cutoff_lock"][
         "records_pinned"
     ] == 210
@@ -374,3 +374,15 @@ def test_release_comparison_allows_only_the_python_check_patch_difference() -> N
         errors=errors,
     )
     assert errors
+
+
+def test_release_numeric_comparison_accepts_only_machine_scale_drift() -> None:
+    expected = REPROCESS.pd.DataFrame({"intensity": ["0", "4250"]})
+    machine_scale = REPROCESS.pd.DataFrame(
+        {"intensity": ["0.00000293732", "4250.00000293732"]}
+    )
+    assert REPROCESS._compare_frames(expected, machine_scale, "spectra.csv") == []
+
+    branch_scale = REPROCESS.pd.DataFrame({"intensity": ["0", "4936.565"]})
+    errors = REPROCESS._compare_frames(expected, branch_scale, "spectra.csv")
+    assert errors == ["spectra.csv: numeric column 'intensity' differs"]

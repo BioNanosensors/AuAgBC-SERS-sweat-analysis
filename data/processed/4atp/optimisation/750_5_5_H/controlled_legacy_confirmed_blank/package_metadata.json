@@ -2,7 +2,7 @@
   "code_identity": [
     {
       "path": "scripts/reprocess_4atp_750_5_5_h.py",
-      "sha256": "fc218556a40cfcef134b00c7764492d89dcc8cd58eebec6bfb50c4b7bfae35c8"
+      "sha256": "3955b3136d5700edcfae420d1cd4f8b11e40489205b39793047b63c21dc3e5fb"
     },
     {
       "path": "pyproject.toml",
@@ -78,7 +78,7 @@
     "mode": "native"
   },
   "historical_replay_validation": {
-    "absolute_tolerance": 1e-06,
+    "absolute_tolerance": 1e-05,
     "comparison": "fresh historical-composite replay versus preserved snapshot",
     "fft_cutoff_lock": {
       "path": "metadata/processing_locks/optimisation_750_5_5_h_fft_cutoffs.csv",

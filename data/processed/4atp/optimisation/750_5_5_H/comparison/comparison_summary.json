@@ -150,7 +150,7 @@
     "technical_scans_per_sample_replicate": 5
   },
   "historical_replay_validation": {
-    "absolute_tolerance": 1e-06,
+    "absolute_tolerance": 1e-05,
     "comparison": "fresh historical-composite replay versus preserved snapshot",
     "fft_cutoff_lock": {
       "path": "metadata/processing_locks/optimisation_750_5_5_h_fft_cutoffs.csv",

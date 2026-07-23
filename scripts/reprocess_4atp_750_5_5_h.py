@@ -74,7 +74,9 @@ GENERATION_PYTHON_VERSION = "3.12.13"
 CHECK_PYTHON_VERSIONS = ("3.12.10", "3.12.13")
 CANONICAL_PLATFORM_SYSTEM = "Windows"
 CANONICAL_PLATFORM_MACHINE = "AMD64"
-HISTORICAL_REPLAY_ABSOLUTE_TOLERANCE = 1e-6
+RELEASE_COMPARISON_RELATIVE_TOLERANCE = 1e-7
+RELEASE_COMPARISON_ABSOLUTE_TOLERANCE = 1e-5
+HISTORICAL_REPLAY_ABSOLUTE_TOLERANCE = RELEASE_COMPARISON_ABSOLUTE_TOLERANCE
 
 CONTROLLED_NAME = "controlled_legacy_confirmed_blank"
 REFERENCE_NAME = "reference_2026"
@@ -2059,8 +2061,8 @@ def _compare_values(
     *,
     path: str,
     errors: list[str],
-    rtol: float = 1e-7,
-    atol: float = 1e-6,
+    rtol: float = RELEASE_COMPARISON_RELATIVE_TOLERANCE,
+    atol: float = RELEASE_COMPARISON_ABSOLUTE_TOLERANCE,
 ) -> None:
     if path.endswith("package_metadata.json.software_environment.python"):
         # The committed release records its generation patch (3.12.13), while
@@ -2116,8 +2118,8 @@ def _compare_frames(expected: pd.DataFrame, actual: pd.DataFrame, label: str) ->
             if not np.allclose(
                 left_numeric.to_numpy(dtype=float),
                 right_numeric.to_numpy(dtype=float),
-                rtol=1e-7,
-                atol=1e-6,
+                rtol=RELEASE_COMPARISON_RELATIVE_TOLERANCE,
+                atol=RELEASE_COMPARISON_ABSOLUTE_TOLERANCE,
                 equal_nan=True,
             ):
                 errors.append(f"{label}: numeric column {column!r} differs")
