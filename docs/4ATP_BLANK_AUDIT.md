@@ -83,6 +83,32 @@ documented in [the high-power reanalysis record](4ATP_HIGH_POWER_REANALYSIS.md).
   but cannot identify them. That recollection is not treated as file-level
   evidence, so no low- or medium-power blank is inferred or relabelled.
 
+## Expanded master-collection search on 23 July 2026
+
+The complete expanded portable master collection was searched again after the
+high-power resolution. The search inspected 1,623 CSV paths representing 1,263
+unique file SHA-256 values. Relative paths and embedded vendor `Name` and `Tag`
+fields were searched case-insensitively for `blank`, `blanck`, and `blanco`.
+This produced 116 blank-like paths and 89 unique blank-file hashes.
+
+Each numerical scan channel from those blank-like exports was also hashed
+independently. The 426 unique blank-channel signatures were compared with every
+channel in all 1,623 portable CSV paths. No signature occurred under a
+nonblank path or embedded identity. This rules out an exact hidden copy under a
+nonblank name; it does not prove that a semantically mislabelled or numerically
+modified file cannot exist.
+
+The search found zero explicitly labelled AuAgBC blanks at `500_5_5_L`,
+`750_5_5_L`, or `750_5_5_M`. On the exact target dates, the 3 July collection
+contains only the bare-BC `750_5_5_L` blank, while the 24 September collection
+contains only high-power blanks. The confirmed AABC blank directly precedes the
+24 September high-power series; the medium-power series begins afterward.
+
+The collection-wide counts and rules are recorded in
+`metadata/provenance/4atp_blank_search_summary.csv`. The shortlisted files below
+are recorded with complete paths, hashes, headers, and decisions in
+`metadata/provenance/4atp_blank_unresolved_candidates.csv`.
+
 ## Method-definition evidence
 
 The submitted manuscript source states that portable 4-ATP measurements used
@@ -139,17 +165,23 @@ historical input, not an independent blank acquisition.
 Full paths, hashes, acquisition checks, and reasons are in
 `metadata/provenance/4atp_blank_family_assessment.csv`.
 
-## Other unresolved candidate
+## Unresolved contextual candidates
 
-`Parámetros heterogéneos de medición/Primeras mediciones/24-06-24/Blank/AAB_blank.csv`
-is a genuine five-channel AAB-labelled blank export acquired with 750 ms, five
-averages, and five data counts. Its SHA-256 is
-`ef476bb3b3ae59196766ddc529c2c3d12ad80d2dbc520def8a1bb7b03c429fbc`.
-Neither its filename nor its instrument header records laser power, and the same
-session contains measurements explicitly labelled low, medium, and high power.
-Its power cannot be inferred from date or folder context. It is also from a
-different date than the final experiments, so it remains an unresolved
-candidate rather than a replacement.
+Four additional AuAgBC-labelled files were examined closely. None matches a
+target experiment, none of their five scan channels matches any channel in the
+historical prepared-blank composite, and none is promoted or redistributed.
+
+| Candidate | Header-supported acquisition | Power evidence | Decision |
+| --- | --- | --- | --- |
+| `Parámetros heterogéneos de medición/Primeras mediciones/06-06-24/060624_AuAgBC_blank.csv` | 6 June; 750 ms; five averages; five data counts; five channels | Power is absent. Four later AuAgBC/4-ATP measurements are labelled low, while a separate BC/4-ATP measurement is labelled medium; the same-material context suggests but does not record low power. | Wrong date or batch; contextual candidate only |
+| `Parámetros heterogéneos de medición/Primeras mediciones/24-06-24/Blank/AAB_blank.csv` | 24 June; 750 ms; five averages; five data counts; five channels | Power is absent. The file precedes two low-power acquisitions, but the session later includes medium and high power. | Power irrecoverable from the mixed session; contextual candidate only |
+| `Test AS   4-ATP/13-09-24/Blank/AABC Blank.csv` | 13 September; 750 ms; five averages; five data counts; five channels | Power is absent. All 33 following analyte acquisitions are explicitly `750_5_5_L`, which strongly supports but does not encode low power. | Wrong date, batch, and artificial-sweat context; contextual candidate only |
+| `Parámetros heterogéneos de medición/Primeras mediciones/08-02-24/Blank/Au-Ag-BC/2024_02_08 Au_Ag_BC_blank 240208 H 500 ms 5 Av 5 C_CL_DM_2.csv` | 8 February; 500 ms; five averages; five data counts; five channels | Filename and embedded tag both record high power. | Correct integration but wrong power and session; contextual candidate only |
+
+No historical script or output identifies a different laser power for the
+three power-unlabelled files. The 6 June and 13 September contexts are useful
+clues, but contextual inference cannot establish a target-session analytical
+blank.
 
 ## Blind release selection
 
@@ -165,11 +197,16 @@ original blinded-validation lineage.
 
 ## Blank files still needed
 
-The remaining task is to locate or identify any AuAgBC-without-4-ATP
-measurements acquired at `500_5_5_L`, `750_5_5_L`, or `750_5_5_M`, including
-files stored under an unexpected name. The author's uncertain recollection that
-such files probably existed is recorded, but it is not sufficient to select a
-file.
+The supplied portable master collection is now exhausted without finding an
+AuAgBC-without-4-ATP measurement acquired in the required `500_5_5_L`,
+`750_5_5_L`, or `750_5_5_M` target context. The supplied benchtop collection
+cannot provide a target blank because it was acquired on a different instrument
+and Raman grid. Resolving those families now requires new portable source
+evidence, such as an original instrument export, a contemporaneous laboratory
+record that identifies an existing file, or a scientifically documented
+decision to withdraw or reanalyze the affected comparison. The author's
+uncertain recollection that additional blanks probably existed is recorded, but
+it is not sufficient to select a file.
 
 The historical composite remains quarantined. Only the separately confirmed
 `750_5_5_H` source is promoted into `data/raw/`, and it must not be substituted
@@ -177,7 +214,7 @@ for the still-missing low- or medium-power blanks.
 
 ## Reproducing this audit check
 
-The two evidence tables are checked without third-party dependencies:
+The four evidence tables are checked without third-party dependencies:
 
 ```text
 python scripts/verify_4atp_blank_audit.py

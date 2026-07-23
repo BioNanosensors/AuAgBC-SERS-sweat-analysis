@@ -40,6 +40,12 @@ def test_reference_metadata_survives_a_provenance_rebuild(tmp_path: Path) -> Non
     (provenance_root / "4atp_blank_family_assessment.csv").write_text(
         "stale\n", encoding="utf-8"
     )
+    (provenance_root / "4atp_blank_search_summary.csv").write_text(
+        "stale\n", encoding="utf-8"
+    )
+    (provenance_root / "4atp_blank_unresolved_candidates.csv").write_text(
+        "stale\n", encoding="utf-8"
+    )
     (metadata_root / "source_archives.csv").write_text("stale\n", encoding="utf-8")
     (metadata_root / "provenance_conflicts.csv").write_text(
         "stale\n", encoding="utf-8"
@@ -54,6 +60,8 @@ def test_reference_metadata_survives_a_provenance_rebuild(tmp_path: Path) -> Non
         Path("provenance_conflicts.csv"),
         Path("provenance/shared_blank_origin_summary.csv"),
         Path("provenance/4atp_blank_family_assessment.csv"),
+        Path("provenance/4atp_blank_search_summary.csv"),
+        Path("provenance/4atp_blank_unresolved_candidates.csv"),
     )
     for relative_path in generated_paths:
         assert _read_csv(metadata_root / relative_path) == _read_csv(

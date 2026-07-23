@@ -24,6 +24,8 @@ def _copy_audit_fixture(tmp_path: Path) -> Path:
         "raw_to_master_best_matches.csv",
         "shared_blank_origin_summary.csv",
         "4atp_blank_family_assessment.csv",
+        "4atp_blank_search_summary.csv",
+        "4atp_blank_unresolved_candidates.csv",
     ):
         shutil.copy2(PROJECT_ROOT / "metadata" / "provenance" / filename, provenance)
     shutil.copy2(
@@ -65,6 +67,8 @@ def test_committed_4atp_blank_audit_is_internally_consistent() -> None:
         "prepared_record_groups": 8,
         "shared_source_files": 3,
         "family_assessments": 9,
+        "collection_search_summaries": 1,
+        "unresolved_contextual_candidates": 4,
         "provisional_candidates": 0,
         "confirmed_candidates": 1,
         "required_author_confirmations": 3,
@@ -192,3 +196,63 @@ def test_confirmed_raw_file_tampering_is_rejected(tmp_path: Path) -> None:
     joined = "\n".join(report["errors"])
     assert "byte-size mismatch" in joined
     assert "SHA-256 mismatch" in joined
+
+
+def test_collection_search_count_substitution_is_rejected(tmp_path: Path) -> None:
+    root = _copy_audit_fixture(tmp_path)
+    summary = (
+        root / "metadata" / "provenance" / "4atp_blank_search_summary.csv"
+    )
+    _mutate_first_row(summary, {"explicit_auagbc_750_5_5_m": "1"})
+
+    report = VERIFY.verify_audit(root)
+
+    assert report["ok"] is False
+    assert "explicit_auagbc_750_5_5_m differs from reviewed audit value" in "\n".join(
+        report["errors"]
+    )
+
+
+def test_contextual_candidate_cannot_be_silently_promoted(tmp_path: Path) -> None:
+    root = _copy_audit_fixture(tmp_path)
+    candidates = (
+        root
+        / "metadata"
+        / "provenance"
+        / "4atp_blank_unresolved_candidates.csv"
+    )
+    _mutate_first_row(
+        candidates,
+        {
+            "target_context_match": "true",
+            "resolution_status": "confirmed_context_match",
+        },
+        required_text=("candidate_id", "aabc_blank_2024_09_13"),
+    )
+
+    report = VERIFY.verify_audit(root)
+
+    assert report["ok"] is False
+    joined = "\n".join(report["errors"])
+    assert "target_context_match differs from reviewed audit value" in joined
+    assert "cannot be promoted from contextual candidate" in joined
+
+
+def test_contextual_candidate_hash_substitution_is_rejected(tmp_path: Path) -> None:
+    root = _copy_audit_fixture(tmp_path)
+    candidates = (
+        root
+        / "metadata"
+        / "provenance"
+        / "4atp_blank_unresolved_candidates.csv"
+    )
+    _mutate_first_row(
+        candidates,
+        {"sha256": "0" * 64},
+        required_text=("candidate_id", "auagbc_blank_2024_06_06"),
+    )
+
+    report = VERIFY.verify_audit(root)
+
+    assert report["ok"] is False
+    assert "sha256 differs from reviewed audit value" in "\n".join(report["errors"])

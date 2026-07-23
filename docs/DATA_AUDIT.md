@@ -71,8 +71,14 @@ summary; the explicit correction is recorded in
 A focused blank audit found a same-date, low-power `BC Blank` file, but the
 manuscript and thesis define the analytical blank as AuAgBC without 4-ATP, not
 bare bacterial cellulose. It therefore cannot be substituted without evidence
-that the material label is wrong. See `docs/4ATP_BLANK_AUDIT.md` and the two
-machine-readable tables under `metadata/provenance/`.
+that the material label is wrong. A subsequent collection-wide audit inspected
+all 1,623 portable CSV paths (1,263 unique file hashes), found 116 blank-like
+paths, and compared 426 unique blank scan signatures against every portable
+scan channel. It found no explicitly labelled AuAgBC blank at `500_5_5_L`,
+`750_5_5_L`, or `750_5_5_M` and no exact blank-channel copy under a nonblank
+identity. Four contextually plausible but mismatched candidates remain
+unassigned. See `docs/4ATP_BLANK_AUDIT.md` and the four machine-readable tables
+under `metadata/provenance/`.
 
 The four calibration summary tables are preserved as
 `publication_snapshot`. Their values can be aggregated internally, but that
@@ -128,7 +134,10 @@ The author confirmed on 22 July 2026 that `AABC` means AuAgBC/AAB and that this
 file is an AuAgBC substrate without 4-ATP. It is now the confirmed blank for the
 matching 24 September `750_5_5_H` optimisation condition and is distributed
 unchanged under `data/raw/`. No matched AuAgBC blank was found for the 500 ms
-low-power or 750 ms medium-power set.
+low-power or 750 ms medium-power set. The supplied portable collection has now
+been exhausted for these settings; resolution requires new laboratory evidence,
+a newly supplied source file, or withdrawal and reanalysis of the affected
+claim.
 
 The high-power condition now has three strictly separate lineages:
 
@@ -328,8 +337,10 @@ or confirmed:
 1. the blind-sample code-to-concentration key only if the historical 10 September
    coded experiment is to be released or used to substantiate the original
    blinded-validation lineage;
-2. the still missing or unidentified AuAgBC blanks at `500_5_5_L`,
-   `750_5_5_L`, and `750_5_5_M`, as detailed in `4ATP_BLANK_AUDIT.md`;
+2. external laboratory evidence or a newly supplied source file for the still
+   missing or unidentified AuAgBC blanks at `500_5_5_L`, `750_5_5_L`, and
+   `750_5_5_M`, or a decision to withdraw and reanalyse the affected claims, as
+   detailed in `4ATP_BLANK_AUDIT.md`;
 3. the intended 750 ms low-power calibration file list, especially mixed 500 ms
    records;
 4. the day-1 stability manifest and the intended three substrate replicates;

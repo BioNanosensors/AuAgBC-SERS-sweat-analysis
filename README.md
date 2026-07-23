@@ -27,8 +27,12 @@ context does not prove the blank's sample identity, and none of the channels is
 a confirmed setting-matched low-power blank for the final calibration. A
 separate 24 September `750_5_5_H` analyte-free AuAgBC blank is now
 author-confirmed and distributed only for the matching high-power optimisation;
-it is not substituted for low- or medium-power experiments. Nothing in the
-historical quarantine was deleted or silently relabelled. Two
+it is not substituted for low- or medium-power experiments. An expanded
+23 July 2026 search of all 1,623 portable CSV paths found no explicitly labelled
+AuAgBC blank at `500_5_5_L`, `750_5_5_L`, or `750_5_5_M`; the collection counts
+and four rejected contextual candidates are recorded as machine-readable audit
+evidence. Nothing in the historical quarantine was deleted or silently
+relabelled. Two
 publication-summary headers were transparently corrected after author
 confirmation, with both source and corrected hashes recorded in provenance.
 

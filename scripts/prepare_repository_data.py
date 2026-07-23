@@ -745,7 +745,7 @@ def write_reference_metadata(metadata_root: Path) -> None:
         ["conflict_id", "scope", "severity", "finding", "affected_count", "evidence", "resolution_status"],
         [
             {"conflict_id": "cross_label_duplicate_content", "scope": "curated raw spectra", "severity": "critical", "finding": "Identical spectrum bytes occur under different stated concentrations.", "affected_count": "103 groups; 277 files", "evidence": "provenance/duplicate_content_groups.csv and provenance/concentration_label_conflicts.csv", "resolution_status": "unresolved"},
-            {"conflict_id": "shared_blank_wrong_context", "scope": "blind, calibration, optimisation, stability", "severity": "critical", "finding": "The same 15 high-power blank spectra are reused across eight sets that require different sessions and settings. Their exact historical origins are identified, but the shared composite is not a confirmed context-matched analytical blank. A separate 24 September high-power blank is author-confirmed for the matching optimisation condition; required low- and medium-power AuAgBC blanks remain unresolved.", "affected_count": "120 exact copies across 8 sets; 3 historical source exports; 1 separate confirmed high-power match", "evidence": "provenance/shared_blank_origin_summary.csv and provenance/4atp_blank_family_assessment.csv", "resolution_status": "historical_sources_identified_one_context_match_confirmed_others_unresolved"},
+            {"conflict_id": "shared_blank_wrong_context", "scope": "blind, calibration, optimisation, stability", "severity": "critical", "finding": "The same 15 high-power blank spectra are reused across eight sets that require different sessions and settings. Their exact historical origins are identified, but the shared composite is not a confirmed context-matched analytical blank. A separate 24 September high-power blank is author-confirmed for the matching optimisation condition. An exhaustive search of 1,623 portable CSV paths found no explicit AuAgBC blank at the required low- or medium-power settings.", "affected_count": "120 exact copies across 8 sets; 3 historical source exports; 1 separate confirmed high-power match; 4 contextual candidates; 0 target matches", "evidence": "provenance/shared_blank_origin_summary.csv; provenance/4atp_blank_family_assessment.csv; provenance/4atp_blank_search_summary.csv; provenance/4atp_blank_unresolved_candidates.csv", "resolution_status": "historical_sources_identified_one_context_match_confirmed_portable_collection_exhausted_others_unresolved"},
             {"conflict_id": "stability_19may_label_mismatch", "scope": "Stability/19_05_24", "severity": "critical", "finding": "Curated concentration labels disagree with the best matching master spectra.", "affected_count": "105 matched columns", "evidence": "provenance/concentration_label_conflicts.csv", "resolution_status": "unresolved"},
             {"conflict_id": "stability_content_overlap", "scope": "all stability dates", "severity": "critical", "finding": "Stability folders substantially overlap calibration or other-date content instead of forming independent dated acquisitions.", "affected_count": "unique content: 149/165, 103/159, and 20/210", "evidence": "provenance/duplicate_content_groups.csv", "resolution_status": "unresolved"},
             {"conflict_id": "optimisation_750m_orphan_derivatives", "scope": "Optimisation/750_5_5_M/Processed Spectra", "severity": "high", "finding": "Legacy processed filenames have no same-stem raw partners.", "affected_count": "43 files", "evidence": "validation/numerical_reproduction_summary.md", "resolution_status": "quarantined"},
@@ -998,6 +998,183 @@ def write_reference_metadata(metadata_root: Path) -> None:
                 "data_count_match": "true",
                 "resolution_status": "no_confirmed_context_match",
                 "reason": "The author confirmed the same-day AABC file is an analyte-free AuAgBC blank, but it was acquired at high rather than required low power",
+            },
+        ],
+    )
+
+    write_csv(
+        metadata_root / "provenance" / "4atp_blank_search_summary.csv",
+        [
+            "search_date",
+            "source_collection",
+            "portable_csv_paths",
+            "unique_file_sha256",
+            "blank_like_paths",
+            "unique_blank_file_sha256",
+            "unique_blank_scan_signatures",
+            "exact_nonblank_alias_matches",
+            "explicit_auagbc_500_5_5_l",
+            "explicit_auagbc_750_5_5_l",
+            "explicit_auagbc_750_5_5_m",
+            "search_result",
+            "method_note",
+        ],
+        [
+            {
+                "search_date": "2026-07-23",
+                "source_collection": "Mediciones Raman portátil expanded directory",
+                "portable_csv_paths": 1623,
+                "unique_file_sha256": 1263,
+                "blank_like_paths": 116,
+                "unique_blank_file_sha256": 89,
+                "unique_blank_scan_signatures": 426,
+                "exact_nonblank_alias_matches": 0,
+                "explicit_auagbc_500_5_5_l": 0,
+                "explicit_auagbc_750_5_5_l": 0,
+                "explicit_auagbc_750_5_5_m": 0,
+                "search_result": "no_additional_context_matched_blank_found",
+                "method_note": (
+                    "Inspected relative paths and vendor Name/Tag fields for blank, "
+                    "blanck, or blanco; hashed files and numerical blank intensity "
+                    "channels; compared 426 unique blank-channel signatures with every "
+                    "channel in all 1,623 portable CSV paths."
+                ),
+            }
+        ],
+    )
+
+    write_csv(
+        metadata_root / "provenance" / "4atp_blank_unresolved_candidates.csv",
+        [
+            "candidate_id",
+            "canonical_master_path",
+            "sha256",
+            "bytes",
+            "embedded_datetime",
+            "embedded_tag",
+            "integration_ms",
+            "averaging",
+            "data_count",
+            "scan_channels",
+            "power_evidence",
+            "session_context",
+            "target_context_match",
+            "historical_prepared_channel_matches",
+            "resolution_status",
+            "reason",
+        ],
+        [
+            {
+                "candidate_id": "auagbc_blank_2024_06_06",
+                "canonical_master_path": (
+                    "Parámetros heterogéneos de medición/Primeras mediciones/"
+                    "06-06-24/060624_AuAgBC_blank.csv"
+                ),
+                "sha256": "9a3207e4ce1d021a26b3302bcdc2988c44ed983ca9b9b28097f27e85f975dee1",
+                "bytes": 28768,
+                "embedded_datetime": "2024-06-06T17:44:05",
+                "embedded_tag": "060624_AuAgBC_blank",
+                "integration_ms": 750,
+                "averaging": 5,
+                "data_count": 5,
+                "scan_channels": 5,
+                "power_evidence": (
+                    "same_material_context_suggests_L_but_not_recorded"
+                ),
+                "session_context": (
+                    "The blank is followed by four AuAgBC 4-ATP measurements "
+                    "explicitly labelled L; a separate BC 4-ATP measurement in "
+                    "the same session is labelled M."
+                ),
+                "target_context_match": "false",
+                "historical_prepared_channel_matches": "0/5",
+                "resolution_status": "contextual_candidate_not_assignable",
+                "reason": (
+                    "Laser power is absent from the file and the date or batch does "
+                    "not match the 3 July or 24 September target experiments."
+                ),
+            },
+            {
+                "candidate_id": "aab_blank_2024_06_24",
+                "canonical_master_path": (
+                    "Parámetros heterogéneos de medición/Primeras mediciones/"
+                    "24-06-24/Blank/AAB_blank.csv"
+                ),
+                "sha256": "ef476bb3b3ae59196766ddc529c2c3d12ad80d2dbc520def8a1bb7b03c429fbc",
+                "bytes": 28013,
+                "embedded_datetime": "2024-06-24T17:10:38",
+                "embedded_tag": "AAB_blank",
+                "integration_ms": 750,
+                "averaging": 5,
+                "data_count": 5,
+                "scan_channels": 5,
+                "power_evidence": "unresolved_mixed_L_M_H_session",
+                "session_context": (
+                    "The blank immediately precedes two L-labelled measurements, "
+                    "but the same session later contains M- and H-labelled acquisitions."
+                ),
+                "target_context_match": "false",
+                "historical_prepared_channel_matches": "0/5",
+                "resolution_status": "contextual_candidate_not_assignable",
+                "reason": (
+                    "Laser power cannot be recovered from the mixed-power session, "
+                    "and the date or batch does not match a target experiment."
+                ),
+            },
+            {
+                "candidate_id": "aabc_blank_2024_09_13",
+                "canonical_master_path": (
+                    "Test AS   4-ATP/13-09-24/Blank/AABC Blank.csv"
+                ),
+                "sha256": "56e4f954fc677afbc9359042611b2bb95cacc0c7cc5eb3ab13ce177096fa0b0f",
+                "bytes": 27434,
+                "embedded_datetime": "2024-09-13T10:20:42",
+                "embedded_tag": "AABC Blank",
+                "integration_ms": 750,
+                "averaging": 5,
+                "data_count": 5,
+                "scan_channels": 5,
+                "power_evidence": "context_strongly_suggests_L_not_recorded",
+                "session_context": (
+                    "The blank immediately precedes 33 analyte measurements, all "
+                    "explicitly labelled 750_5_5_L, in an artificial-sweat 4-ATP session."
+                ),
+                "target_context_match": "false",
+                "historical_prepared_channel_matches": "0/5",
+                "resolution_status": "contextual_candidate_not_assignable",
+                "reason": (
+                    "The session strongly supports low power, but the file does not "
+                    "record power and its date, batch, and artificial-sweat context do "
+                    "not match the target dry 4-ATP experiments."
+                ),
+            },
+            {
+                "candidate_id": "auagbc_blank_2024_02_08_500_h",
+                "canonical_master_path": (
+                    "Parámetros heterogéneos de medición/Primeras mediciones/"
+                    "08-02-24/Blank/Au-Ag-BC/2024_02_08 Au_Ag_BC_blank 240208 H "
+                    "500 ms 5 Av 5 C_CL_DM_2.csv"
+                ),
+                "sha256": "489609d0691fad30b2d2369a0cce1e2ea92abab39f28335b8d0e1ded191778f5",
+                "bytes": 28117,
+                "embedded_datetime": "2024-02-08T12:11:00",
+                "embedded_tag": "240208 Au_Ag_BC_blank H 500 ms 5 Av 5 C_CL_DM",
+                "integration_ms": 500,
+                "averaging": 5,
+                "data_count": 5,
+                "scan_channels": 5,
+                "power_evidence": "recorded_H",
+                "session_context": (
+                    "This is the only explicit five-channel AuAgBC blank found at "
+                    "500 ms; its filename and embedded tag both record high power."
+                ),
+                "target_context_match": "false",
+                "historical_prepared_channel_matches": "0/5",
+                "resolution_status": "contextual_candidate_not_assignable",
+                "reason": (
+                    "Integration time matches the 500 ms optimisation, but the "
+                    "recorded high power and February date do not."
+                ),
             },
         ],
     )

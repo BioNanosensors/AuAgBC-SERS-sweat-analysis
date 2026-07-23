@@ -81,11 +81,17 @@ items below remain limitations; public visibility does not mark them resolved.
 - [ ] Supply the 10 September decoding key before releasing that historical
   coded experiment or presenting the selected 24 September snapshot as its
   decoded blinded-validation result.
-- [ ] Locate or identify the missing `500_5_5_L`, `750_5_5_L`, and
-  `750_5_5_M` AuAgBC blanks listed in `4ATP_BLANK_AUDIT.md`; the author's
-  uncertain recollection is not file-level evidence, and the historical
-  composite must not be reused as if independently acquired for every
-  experiment.
+- [x] Exhaustively search the supplied portable master collection for the
+  missing `500_5_5_L`, `750_5_5_L`, and `750_5_5_M` AuAgBC blanks; record the
+  negative result, portable search counts, hashes, and contextual candidates in
+  `4ATP_BLANK_AUDIT.md` and machine-readable provenance tables. Benchtop files
+  were rejected for this purpose because they use a different instrument and
+  Raman grid.
+- [ ] Obtain evidence outside the supplied collections for the unresolved
+  low- and medium-power blanks, or scientifically document withdrawal or
+  reanalysis of the affected comparisons. The author's uncertain recollection
+  is not file-level evidence, and the historical high-power composite must not
+  be reused as if independently acquired for every experiment.
 - [ ] Confirm the AEF extraction and acquisition-time scaling rule.
 - [ ] Complete scientific review before presenting the high-power
   `reference_2026` reanalysis as more accurate, preferred, or suitable for new

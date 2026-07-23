@@ -2,7 +2,7 @@
 """Verify the committed 4-ATP blank audit without modifying repository data.
 
 The check deliberately uses only the Python standard library.  It verifies the
-two audit tables, the relevant author confirmations, and the one confirmed raw
+four audit tables, the relevant author confirmations, and the one confirmed raw
 blank, then independently rebuilds the historical shared-blank mapping from
 ``raw_to_master_best_matches.csv``.  A blank may be marked confirmed only when
 all material and acquisition-context checks are true.
@@ -54,6 +54,39 @@ FAMILY_TABLE_FIELDS = (
     "power_match",
     "averaging_match",
     "data_count_match",
+    "resolution_status",
+    "reason",
+)
+SEARCH_SUMMARY_FIELDS = (
+    "search_date",
+    "source_collection",
+    "portable_csv_paths",
+    "unique_file_sha256",
+    "blank_like_paths",
+    "unique_blank_file_sha256",
+    "unique_blank_scan_signatures",
+    "exact_nonblank_alias_matches",
+    "explicit_auagbc_500_5_5_l",
+    "explicit_auagbc_750_5_5_l",
+    "explicit_auagbc_750_5_5_m",
+    "search_result",
+    "method_note",
+)
+UNRESOLVED_CANDIDATE_FIELDS = (
+    "candidate_id",
+    "canonical_master_path",
+    "sha256",
+    "bytes",
+    "embedded_datetime",
+    "embedded_tag",
+    "integration_ms",
+    "averaging",
+    "data_count",
+    "scan_channels",
+    "power_evidence",
+    "session_context",
+    "target_context_match",
+    "historical_prepared_channel_matches",
     "resolution_status",
     "reason",
 )
@@ -258,6 +291,98 @@ EXPECTED_FAMILY_ROWS = {
     },
 }
 EXPECTED_FAMILY_IDS = set(EXPECTED_FAMILY_ROWS)
+EXPECTED_SEARCH_SUMMARY = {
+    "search_date": "2026-07-23",
+    "source_collection": "Mediciones Raman portátil expanded directory",
+    "portable_csv_paths": "1623",
+    "unique_file_sha256": "1263",
+    "blank_like_paths": "116",
+    "unique_blank_file_sha256": "89",
+    "unique_blank_scan_signatures": "426",
+    "exact_nonblank_alias_matches": "0",
+    "explicit_auagbc_500_5_5_l": "0",
+    "explicit_auagbc_750_5_5_l": "0",
+    "explicit_auagbc_750_5_5_m": "0",
+    "search_result": "no_additional_context_matched_blank_found",
+    "method_note": (
+        "Inspected relative paths and vendor Name/Tag fields for blank, blanck, "
+        "or blanco; hashed files and numerical blank intensity channels; compared "
+        "426 unique blank-channel signatures with every channel in all 1,623 "
+        "portable CSV paths."
+    ),
+}
+EXPECTED_UNRESOLVED_CANDIDATES = {
+    "auagbc_blank_2024_06_06": {
+        "canonical_master_path": (
+            "Parámetros heterogéneos de medición/Primeras mediciones/"
+            "06-06-24/060624_AuAgBC_blank.csv"
+        ),
+        "sha256": "9a3207e4ce1d021a26b3302bcdc2988c44ed983ca9b9b28097f27e85f975dee1",
+        "bytes": "28768",
+        "embedded_datetime": "2024-06-06T17:44:05",
+        "embedded_tag": "060624_AuAgBC_blank",
+        "integration_ms": "750",
+        "averaging": "5",
+        "data_count": "5",
+        "scan_channels": "5",
+        "power_evidence": "same_material_context_suggests_L_but_not_recorded",
+        "target_context_match": "false",
+        "historical_prepared_channel_matches": "0/5",
+        "resolution_status": "contextual_candidate_not_assignable",
+    },
+    "aab_blank_2024_06_24": {
+        "canonical_master_path": (
+            "Parámetros heterogéneos de medición/Primeras mediciones/"
+            "24-06-24/Blank/AAB_blank.csv"
+        ),
+        "sha256": "ef476bb3b3ae59196766ddc529c2c3d12ad80d2dbc520def8a1bb7b03c429fbc",
+        "bytes": "28013",
+        "embedded_datetime": "2024-06-24T17:10:38",
+        "embedded_tag": "AAB_blank",
+        "integration_ms": "750",
+        "averaging": "5",
+        "data_count": "5",
+        "scan_channels": "5",
+        "power_evidence": "unresolved_mixed_L_M_H_session",
+        "target_context_match": "false",
+        "historical_prepared_channel_matches": "0/5",
+        "resolution_status": "contextual_candidate_not_assignable",
+    },
+    "aabc_blank_2024_09_13": {
+        "canonical_master_path": "Test AS   4-ATP/13-09-24/Blank/AABC Blank.csv",
+        "sha256": "56e4f954fc677afbc9359042611b2bb95cacc0c7cc5eb3ab13ce177096fa0b0f",
+        "bytes": "27434",
+        "embedded_datetime": "2024-09-13T10:20:42",
+        "embedded_tag": "AABC Blank",
+        "integration_ms": "750",
+        "averaging": "5",
+        "data_count": "5",
+        "scan_channels": "5",
+        "power_evidence": "context_strongly_suggests_L_not_recorded",
+        "target_context_match": "false",
+        "historical_prepared_channel_matches": "0/5",
+        "resolution_status": "contextual_candidate_not_assignable",
+    },
+    "auagbc_blank_2024_02_08_500_h": {
+        "canonical_master_path": (
+            "Parámetros heterogéneos de medición/Primeras mediciones/"
+            "08-02-24/Blank/Au-Ag-BC/2024_02_08 Au_Ag_BC_blank 240208 H "
+            "500 ms 5 Av 5 C_CL_DM_2.csv"
+        ),
+        "sha256": "489609d0691fad30b2d2369a0cce1e2ea92abab39f28335b8d0e1ded191778f5",
+        "bytes": "28117",
+        "embedded_datetime": "2024-02-08T12:11:00",
+        "embedded_tag": "240208 Au_Ag_BC_blank H 500 ms 5 Av 5 C_CL_DM",
+        "integration_ms": "500",
+        "averaging": "5",
+        "data_count": "5",
+        "scan_channels": "5",
+        "power_evidence": "recorded_H",
+        "target_context_match": "false",
+        "historical_prepared_channel_matches": "0/5",
+        "resolution_status": "contextual_candidate_not_assignable",
+    },
+}
 EXPECTED_SOURCES = {
     1: {
         "path": "Test HS/25-09-24/Blank/AAB_Blank_750_5_5_H.csv",
@@ -359,6 +484,20 @@ def _positive_integer(value: str, context: str, errors: list[str]) -> int | None
         return None
     if number <= 0:
         errors.append(f"{context} must be a positive integer, found {value!r}")
+        return None
+    return number
+
+
+def _non_negative_integer(
+    value: str, context: str, errors: list[str]
+) -> int | None:
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        errors.append(f"{context} must be a non-negative integer, found {value!r}")
+        return None
+    if number < 0:
+        errors.append(f"{context} must be a non-negative integer, found {value!r}")
         return None
     return number
 
@@ -780,6 +919,142 @@ def _verify_family_table(rows: list[dict[str, str]], errors: list[str]) -> None:
             )
 
 
+def _verify_search_summary(
+    rows: list[dict[str, str]], errors: list[str]
+) -> None:
+    if len(rows) != 1:
+        errors.append(
+            "4atp_blank_search_summary.csv must contain exactly one reviewed "
+            f"collection-wide search row, found {len(rows)}"
+        )
+        return
+    row = rows[0]
+    for field, expected_value in EXPECTED_SEARCH_SUMMARY.items():
+        if row.get(field) != expected_value:
+            errors.append(
+                "4atp_blank_search_summary.csv "
+                f"{field} differs from reviewed audit value: expected "
+                f"{expected_value!r}, found {row.get(field)!r}"
+            )
+
+    numeric_fields = (
+        "portable_csv_paths",
+        "unique_file_sha256",
+        "blank_like_paths",
+        "unique_blank_file_sha256",
+        "unique_blank_scan_signatures",
+        "exact_nonblank_alias_matches",
+        "explicit_auagbc_500_5_5_l",
+        "explicit_auagbc_750_5_5_l",
+        "explicit_auagbc_750_5_5_m",
+    )
+    numbers: dict[str, int] = {}
+    for field in numeric_fields:
+        value = _non_negative_integer(
+            row.get(field, ""),
+            f"4atp_blank_search_summary.csv {field}",
+            errors,
+        )
+        if value is not None:
+            numbers[field] = value
+    if (
+        numbers.get("unique_file_sha256", 0)
+        > numbers.get("portable_csv_paths", 0)
+    ):
+        errors.append(
+            "4atp_blank_search_summary.csv cannot report more unique file "
+            "hashes than portable CSV paths"
+        )
+    if (
+        numbers.get("unique_blank_file_sha256", 0)
+        > numbers.get("blank_like_paths", 0)
+    ):
+        errors.append(
+            "4atp_blank_search_summary.csv cannot report more unique blank "
+            "hashes than blank-like paths"
+        )
+
+
+def _verify_unresolved_candidate_table(
+    rows: list[dict[str, str]], errors: list[str]
+) -> None:
+    candidate_ids = [row.get("candidate_id", "") for row in rows]
+    expected_ids = set(EXPECTED_UNRESOLVED_CANDIDATES)
+    if set(candidate_ids) != expected_ids or len(candidate_ids) != len(expected_ids):
+        errors.append(
+            "4atp_blank_unresolved_candidates.csv must contain exactly the four "
+            f"reviewed candidates; found {sorted(candidate_ids)!r}"
+        )
+    if len(set(candidate_ids)) != len(candidate_ids):
+        errors.append(
+            "4atp_blank_unresolved_candidates.csv contains duplicate candidate_id values"
+        )
+
+    seen_paths: set[str] = set()
+    seen_hashes: set[str] = set()
+    for row_number, row in enumerate(rows, start=2):
+        context = f"4atp_blank_unresolved_candidates.csv row {row_number}"
+        candidate_id = row.get("candidate_id", "")
+        expected = EXPECTED_UNRESOLVED_CANDIDATES.get(candidate_id)
+        if expected is not None:
+            for field, expected_value in expected.items():
+                if row.get(field) != expected_value:
+                    errors.append(
+                        f"{context} {field} differs from reviewed audit value: "
+                        f"expected {expected_value!r}, found {row.get(field)!r}"
+                    )
+
+        path = row.get("canonical_master_path", "")
+        _portable_relative_path(path, f"{context} canonical_master_path", errors)
+        if path in seen_paths:
+            errors.append(f"{context} duplicates canonical_master_path {path!r}")
+        seen_paths.add(path)
+
+        digest = row.get("sha256", "")
+        if SHA256.fullmatch(digest) is None:
+            errors.append(f"{context} sha256 is not lowercase SHA-256")
+        if digest == CONFIRMED_RAW_SHA256:
+            errors.append(f"{context} must not duplicate the confirmed high-power blank")
+        if digest in seen_hashes:
+            errors.append(f"{context} duplicates candidate SHA-256 {digest!r}")
+        seen_hashes.add(digest)
+
+        _positive_integer(row.get("bytes", ""), f"{context} bytes", errors)
+        _positive_integer(
+            row.get("integration_ms", ""), f"{context} integration_ms", errors
+        )
+        _positive_integer(row.get("averaging", ""), f"{context} averaging", errors)
+        _positive_integer(row.get("data_count", ""), f"{context} data_count", errors)
+        _positive_integer(
+            row.get("scan_channels", ""), f"{context} scan_channels", errors
+        )
+        if DATE_TIME.fullmatch(row.get("embedded_datetime", "")) is None:
+            errors.append(f"{context} embedded_datetime has an invalid format")
+        for field in (
+            "embedded_tag",
+            "power_evidence",
+            "session_context",
+            "resolution_status",
+            "reason",
+        ):
+            if not row.get(field, "").strip():
+                errors.append(f"{context} {field} must not be empty")
+        if row.get("target_context_match") != "false":
+            errors.append(
+                f"{context} target_context_match must remain false until a "
+                "complete target-session match is supported"
+            )
+        if row.get("historical_prepared_channel_matches") != "0/5":
+            errors.append(
+                f"{context} historical_prepared_channel_matches must be 0/5"
+            )
+        if row.get("resolution_status") != "contextual_candidate_not_assignable":
+            errors.append(
+                f"{context} cannot be promoted from contextual candidate without "
+                "new author or laboratory-record evidence"
+            )
+
+
 def verify_audit(repository_root: Path) -> dict[str, object]:
     """Return a read-only verification report for the committed blank audit."""
 
@@ -795,6 +1070,16 @@ def verify_audit(repository_root: Path) -> dict[str, object]:
     family_rows = _read_csv(
         provenance / "4atp_blank_family_assessment.csv", FAMILY_TABLE_FIELDS, errors
     )
+    search_summary_rows = _read_csv(
+        provenance / "4atp_blank_search_summary.csv",
+        SEARCH_SUMMARY_FIELDS,
+        errors,
+    )
+    unresolved_candidate_rows = _read_csv(
+        provenance / "4atp_blank_unresolved_candidates.csv",
+        UNRESOLVED_CANDIDATE_FIELDS,
+        errors,
+    )
     confirmation_rows = _read_csv(
         root / "metadata" / "author_confirmations.csv",
         AUTHOR_CONFIRMATION_FIELDS,
@@ -804,6 +1089,8 @@ def verify_audit(repository_root: Path) -> dict[str, object]:
     mapping_aggregate = _verify_shared_mapping(mapping_rows, errors)
     _verify_shared_table(shared_rows, mapping_aggregate, errors)
     _verify_family_table(family_rows, errors)
+    _verify_search_summary(search_summary_rows, errors)
+    _verify_unresolved_candidate_table(unresolved_candidate_rows, errors)
     verified_confirmations = _verify_author_confirmations(confirmation_rows, errors)
     verified_confirmed_raw_files = _verify_confirmed_raw_file(root, errors)
     return {
@@ -823,6 +1110,8 @@ def verify_audit(repository_root: Path) -> dict[str, object]:
             ),
             "shared_source_files": len(shared_rows),
             "family_assessments": len(family_rows),
+            "collection_search_summaries": len(search_summary_rows),
+            "unresolved_contextual_candidates": len(unresolved_candidate_rows),
             "provisional_candidates": sum(
                 row.get("resolution_status")
                 == "provisional_context_match_pending_author_confirmation"
@@ -864,6 +1153,7 @@ def main(argv: Iterable[str] | None = None) -> int:
             f"({counts['prepared_blank_records']} prepared records, "
             f"{counts['shared_source_files']} historical source files, "
             f"{counts['family_assessments']} family assessments, "
+            f"{counts['unresolved_contextual_candidates']} contextual candidates, "
             f"{counts['confirmed_candidates']} confirmed candidate, "
             f"{counts['confirmed_raw_files_verified']} confirmed raw file)."
         )
