@@ -91,6 +91,54 @@
   },
   "schema_version": "1.0",
   "verification_tolerances": {
+    "diagnostic_fit_absolute": 0.0002,
+    "diagnostic_fit_relative": 0.0002,
+    "diagnostic_fit_relative_columns": {
+      "calibration_model_sensitivity.csv": [
+        "Y0",
+        "k",
+        "R2",
+        "Y0_formal_local_relative_standard_error",
+        "k_formal_local_relative_standard_error",
+        "historical_initializer_rss_ratio_to_best",
+        "LOD_mean_plus_3sd_M",
+        "LOQ_mean_plus_10sd_M",
+        "LOD_legacy_3sd_only_M",
+        "LOQ_legacy_10sd_only_M"
+      ],
+      "calibration_parameter_comparison.csv": [
+        "replayed_Y0",
+        "Y0_ratio_replayed_to_paper",
+        "replayed_k",
+        "k_difference",
+        "replayed_R2",
+        "R2_difference",
+        "diagnostic_inverted_blank_mean_plus_3sd_M",
+        "diagnostic_inverted_blank_mean_plus_10sd_M"
+      ]
+    },
+    "exact_numeric_columns": {
+      "calibration_model_sensitivity.csv": [
+        "peak_cm-1",
+        "n_scan_records",
+        "n_nominal_prepared_replicate_groups",
+        "n_concentrations",
+        "concentration_min_M",
+        "concentration_max_M",
+        "concentration_span_decades",
+        "n_blank_scans"
+      ],
+      "calibration_parameter_comparison.csv": [
+        "paper_shift_cm-1",
+        "replayed_peak_cm-1",
+        "paper_Y0",
+        "paper_k",
+        "paper_R2",
+        "paper_LOD_M",
+        "paper_LOQ_M",
+        "diagnostic_blank_scan_count"
+      ]
+    },
     "processed_intensity_max_abs": 0.0002,
     "rounded_table_axis_max_abs_cm-1": 6e-06
   }

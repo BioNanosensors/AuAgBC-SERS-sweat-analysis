@@ -190,6 +190,14 @@ flags describe numerical behaviour of an unweighted fit to nominal
 concentration means; they are not experimental uncertainty estimates or
 evidence of scientific validity.
 
+Cross-environment verification permits at most `0.02%` relative and
+`2 × 10⁻⁴` absolute drift in these numerical fit diagnostics. Scenario
+identifiers, record counts, fit-status labels, reporting status, and the
+three parameter-reproduction classifications must remain exact.
+Only calculated continuous fit, covariance, RSS-ratio, and diagnostic
+threshold-inversion columns receive the relative allowance; numeric row keys,
+concentration bounds, and manuscript input constants remain exact.
+
 For the complete supplied prepared set and historical mixed blank, the result
 is:
 

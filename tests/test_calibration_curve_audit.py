@@ -190,6 +190,85 @@ def test_replay_configuration_binds_the_forensic_generator_and_model() -> None:
             "so the inversion is diagnostic rather than an analytical LOD/LOQ."
         ),
     }
+    assert config["verification_tolerances"]["diagnostic_fit_relative"] == 2e-4
+    assert config["verification_tolerances"]["diagnostic_fit_absolute"] == 2e-4
+    assert set(
+        config["verification_tolerances"]["diagnostic_fit_relative_columns"][
+            "calibration_model_sensitivity.csv"
+        ]
+    ) == set(AUDIT.MODEL_DIAGNOSTIC_RELATIVE_COLUMNS)
+    assert set(
+        config["verification_tolerances"]["exact_numeric_columns"][
+            "calibration_parameter_comparison.csv"
+        ]
+    ) == set(AUDIT.PARAMETER_EXACT_NUMERIC_COLUMNS)
+
+
+def test_fit_tolerance_is_column_scoped_and_preserves_fixed_inputs(
+    tmp_path: Path,
+) -> None:
+    committed = pd.DataFrame(
+        {
+            "peak_cm-1": [1589.62],
+            "paper_Y0": [58000.0],
+            "Y0": [30000.0],
+            "status": ["numerically_converged"],
+        }
+    )
+    path = tmp_path / "fit_diagnostic.csv"
+    committed.to_csv(path, index=False)
+    computed = committed.copy()
+    computed["Y0"] *= 1.0001
+    overrides = {"Y0": AUDIT.DIAGNOSTIC_FIT_RELATIVE_TOLERANCE}
+    exact_absolute = {"peak_cm-1": 0.0, "paper_Y0": 0.0}
+    exact_relative = {"peak_cm-1": 0.0, "paper_Y0": 0.0, **overrides}
+
+    AUDIT._compare_frames(
+        path,
+        computed,
+        column_absolute_tolerances=exact_absolute,
+        column_relative_tolerances=exact_relative,
+    )
+
+    computed = committed.copy()
+    computed["Y0"] *= 1.000201
+    with pytest.raises(AUDIT.CalibrationAuditError, match="Y0"):
+        AUDIT._compare_frames(
+            path,
+            computed,
+            column_absolute_tolerances=exact_absolute,
+            column_relative_tolerances=exact_relative,
+        )
+
+    computed = committed.copy()
+    computed["peak_cm-1"] += 1e-6
+    with pytest.raises(AUDIT.CalibrationAuditError, match="peak_cm-1"):
+        AUDIT._compare_frames(
+            path,
+            computed,
+            column_absolute_tolerances=exact_absolute,
+            column_relative_tolerances=exact_relative,
+        )
+
+    computed = committed.copy()
+    computed["status"] = "changed"
+    with pytest.raises(AUDIT.CalibrationAuditError, match="status"):
+        AUDIT._compare_frames(
+            path,
+            computed,
+            column_absolute_tolerances=exact_absolute,
+            column_relative_tolerances=exact_relative,
+        )
+
+    computed = committed.copy()
+    computed["paper_Y0"] += 0.1
+    with pytest.raises(AUDIT.CalibrationAuditError, match="paper_Y0"):
+        AUDIT._compare_frames(
+            path,
+            computed,
+            column_absolute_tolerances=exact_absolute,
+            column_relative_tolerances=exact_relative,
+        )
 
 
 def test_model_sensitivity_never_presents_a_valid_lod_or_loq() -> None:

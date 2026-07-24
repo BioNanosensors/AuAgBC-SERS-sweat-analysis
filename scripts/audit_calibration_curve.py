@@ -115,6 +115,49 @@ REPLAY_ABSOLUTE_TOLERANCE = 2.0e-4
 AXIS_ABSOLUTE_TOLERANCE = 6.0e-6
 CHECK_NUMERIC_ABSOLUTE_TOLERANCE = 2.0e-4
 CHECK_NUMERIC_RELATIVE_TOLERANCE = 2.0e-6
+DIAGNOSTIC_FIT_RELATIVE_TOLERANCE = 2.0e-4
+MODEL_DIAGNOSTIC_RELATIVE_COLUMNS = (
+    "Y0",
+    "k",
+    "R2",
+    "Y0_formal_local_relative_standard_error",
+    "k_formal_local_relative_standard_error",
+    "historical_initializer_rss_ratio_to_best",
+    "LOD_mean_plus_3sd_M",
+    "LOQ_mean_plus_10sd_M",
+    "LOD_legacy_3sd_only_M",
+    "LOQ_legacy_10sd_only_M",
+)
+MODEL_EXACT_NUMERIC_COLUMNS = (
+    "peak_cm-1",
+    "n_scan_records",
+    "n_nominal_prepared_replicate_groups",
+    "n_concentrations",
+    "concentration_min_M",
+    "concentration_max_M",
+    "concentration_span_decades",
+    "n_blank_scans",
+)
+PARAMETER_DIAGNOSTIC_RELATIVE_COLUMNS = (
+    "replayed_Y0",
+    "Y0_ratio_replayed_to_paper",
+    "replayed_k",
+    "k_difference",
+    "replayed_R2",
+    "R2_difference",
+    "diagnostic_inverted_blank_mean_plus_3sd_M",
+    "diagnostic_inverted_blank_mean_plus_10sd_M",
+)
+PARAMETER_EXACT_NUMERIC_COLUMNS = (
+    "paper_shift_cm-1",
+    "replayed_peak_cm-1",
+    "paper_Y0",
+    "paper_k",
+    "paper_R2",
+    "paper_LOD_M",
+    "paper_LOQ_M",
+    "diagnostic_blank_scan_count",
+)
 
 PEAKS = (
     (392.32, 10.0),
@@ -528,6 +571,24 @@ def build_replay_config() -> dict[str, Any]:
         "verification_tolerances": {
             "processed_intensity_max_abs": REPLAY_ABSOLUTE_TOLERANCE,
             "rounded_table_axis_max_abs_cm-1": AXIS_ABSOLUTE_TOLERANCE,
+            "diagnostic_fit_relative": DIAGNOSTIC_FIT_RELATIVE_TOLERANCE,
+            "diagnostic_fit_absolute": CHECK_NUMERIC_ABSOLUTE_TOLERANCE,
+            "diagnostic_fit_relative_columns": {
+                "calibration_model_sensitivity.csv": list(
+                    MODEL_DIAGNOSTIC_RELATIVE_COLUMNS
+                ),
+                "calibration_parameter_comparison.csv": list(
+                    PARAMETER_DIAGNOSTIC_RELATIVE_COLUMNS
+                ),
+            },
+            "exact_numeric_columns": {
+                "calibration_model_sensitivity.csv": list(
+                    MODEL_EXACT_NUMERIC_COLUMNS
+                ),
+                "calibration_parameter_comparison.csv": list(
+                    PARAMETER_EXACT_NUMERIC_COLUMNS
+                ),
+            },
         },
     }
 
@@ -2128,6 +2189,8 @@ def _compare_frames(
     *,
     absolute_tolerance: float = CHECK_NUMERIC_ABSOLUTE_TOLERANCE,
     relative_tolerance: float = CHECK_NUMERIC_RELATIVE_TOLERANCE,
+    column_absolute_tolerances: Mapping[str, float] | None = None,
+    column_relative_tolerances: Mapping[str, float] | None = None,
 ) -> None:
     if not path.is_file():
         raise CalibrationAuditError(f"Missing committed audit artifact: {path}")
@@ -2139,7 +2202,15 @@ def _compare_frames(
         raise CalibrationAuditError(
             f"Shape mismatch in {path}: {committed.shape} != {computed.shape}."
         )
+    absolute_overrides = dict(column_absolute_tolerances or {})
+    relative_overrides = dict(column_relative_tolerances or {})
     for column in committed.columns:
+        column_absolute_tolerance = absolute_overrides.get(
+            column, absolute_tolerance
+        )
+        column_relative_tolerance = relative_overrides.get(
+            column, relative_tolerance
+        )
         left_numeric = pd.to_numeric(committed[column], errors="coerce")
         right_numeric = pd.to_numeric(computed[column], errors="coerce")
         numeric_mask = left_numeric.notna() | right_numeric.notna()
@@ -2151,8 +2222,8 @@ def _compare_frames(
         if both_numeric.any() and not np.allclose(
             left_numeric[both_numeric].to_numpy(dtype=float),
             right_numeric[both_numeric].to_numpy(dtype=float),
-            rtol=relative_tolerance,
-            atol=absolute_tolerance,
+            rtol=column_relative_tolerance,
+            atol=column_absolute_tolerance,
             equal_nan=True,
         ):
             difference = np.max(
@@ -2304,7 +2375,37 @@ def check() -> None:
             }
             else CHECK_NUMERIC_ABSOLUTE_TOLERANCE
         )
-        _compare_frames(path, frame, absolute_tolerance=tolerance)
+        relative_overrides: dict[str, float] = {}
+        absolute_overrides: dict[str, float] = {}
+        if path == MODEL_SENSITIVITY_OUTPUT:
+            relative_overrides = {
+                column: DIAGNOSTIC_FIT_RELATIVE_TOLERANCE
+                for column in MODEL_DIAGNOSTIC_RELATIVE_COLUMNS
+            }
+            absolute_overrides = {
+                column: 0.0 for column in MODEL_EXACT_NUMERIC_COLUMNS
+            }
+            relative_overrides.update(
+                {column: 0.0 for column in MODEL_EXACT_NUMERIC_COLUMNS}
+            )
+        elif path == PARAMETER_COMPARISON_OUTPUT:
+            relative_overrides = {
+                column: DIAGNOSTIC_FIT_RELATIVE_TOLERANCE
+                for column in PARAMETER_DIAGNOSTIC_RELATIVE_COLUMNS
+            }
+            absolute_overrides = {
+                column: 0.0 for column in PARAMETER_EXACT_NUMERIC_COLUMNS
+            }
+            relative_overrides.update(
+                {column: 0.0 for column in PARAMETER_EXACT_NUMERIC_COLUMNS}
+            )
+        _compare_frames(
+            path,
+            frame,
+            absolute_tolerance=tolerance,
+            column_absolute_tolerances=absolute_overrides,
+            column_relative_tolerances=relative_overrides,
+        )
 
     if not REPLAY_CONFIG_OUTPUT.is_file():
         raise CalibrationAuditError("Missing committed replay configuration.")
