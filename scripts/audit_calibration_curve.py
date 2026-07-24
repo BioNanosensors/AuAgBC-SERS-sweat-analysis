@@ -1788,21 +1788,24 @@ def build_claim_assessment(
         lineage["axis_max_abs_difference"].max()
     )
     reused_records = int(lineage["source_scan_is_reused"].sum())
-    worst_replay = float(replay_metrics["max_abs_difference"].max())
-    selected_intensity_difference = float(
+    passing_scan_channels = int(
+        replay_metrics["passes_cross_environment_tolerance"].astype(bool).sum()
+    )
+    passing_table_checks = int(table_metrics["passes"].astype(bool).sum())
+    selected_intensity_tolerance = float(
         table_metrics.loc[
             table_metrics["dataset"].eq(
                 "calibration_at_selected_shifts.csv:intensity_and_sd"
             ),
-            "max_abs_difference",
+            "absolute_tolerance",
         ].iloc[0]
     )
-    selected_cv_difference = float(
+    selected_cv_tolerance = float(
         table_metrics.loc[
             table_metrics["dataset"].eq(
                 "calibration_at_selected_shifts.csv:cv"
             ),
-            "max_abs_difference",
+            "absolute_tolerance",
         ].iloc[0]
     )
     claims = [
@@ -1814,11 +1817,12 @@ def build_claim_assessment(
             ),
             "classification": "supportable_as_computational_lineage",
             "evidence": (
-                f"210/210 scan channels pass; worst max absolute replay "
-                f"difference={worst_replay:.6g}; selected-shift intensity/SD "
-                f"max absolute difference={selected_intensity_difference:.6g}; "
-                f"selected-shift CV max absolute difference="
-                f"{selected_cv_difference:.6g} percentage points."
+                f"{passing_scan_channels}/{len(replay_metrics)} scan channels "
+                f"and {passing_table_checks}/{len(table_metrics)} aggregate "
+                "table checks pass their declared cross-environment tolerances; "
+                "the selected-shift intensity/SD and CV limits are "
+                f"{selected_intensity_tolerance:g} intensity units and "
+                f"{selected_cv_tolerance:g} percentage points, respectively."
             ),
             "required_action": "retain publication snapshot and replay audit",
         },
@@ -2171,9 +2175,124 @@ def _compare_frames(
             )
 
 
+def _compare_table_metrics(path: Path, computed: pd.DataFrame) -> None:
+    """Compare stable table contracts while allowing bounded diagnostics to drift.
+
+    RMSE and maximum-difference values summarize a fresh cross-environment
+    replay, so their exact values are environment-specific. The stable
+    contract is the row identity, number of compared cells, declared
+    tolerance, pass result, and explanatory note. Diagnostic values may differ
+    by no more than that row's fixed scientific tolerance.
+    """
+    if not path.is_file():
+        raise CalibrationAuditError(f"Missing committed audit artifact: {path}")
+    committed = pd.read_csv(path).reset_index(drop=True)
+    computed = computed.reset_index(drop=True)
+    expected_columns = [
+        "dataset",
+        "compared_numeric_cells",
+        "rmse",
+        "max_abs_difference",
+        "absolute_tolerance",
+        "passes",
+        "note",
+    ]
+    if (
+        list(committed.columns) != expected_columns
+        or list(computed.columns) != expected_columns
+    ):
+        raise CalibrationAuditError(f"Column mismatch in {path}.")
+    if committed.shape != computed.shape:
+        raise CalibrationAuditError(
+            f"Shape mismatch in {path}: {committed.shape} != {computed.shape}."
+        )
+
+    for column in ("dataset", "note"):
+        if not committed[column].astype(str).equals(computed[column].astype(str)):
+            raise CalibrationAuditError(
+                f"Text mismatch in {path}, column {column}."
+            )
+    if not np.array_equal(
+        committed["compared_numeric_cells"].to_numpy(dtype=int),
+        computed["compared_numeric_cells"].to_numpy(dtype=int),
+    ):
+        raise CalibrationAuditError(
+            f"Exact mismatch in {path}, column compared_numeric_cells."
+        )
+    if not np.allclose(
+        committed["absolute_tolerance"].to_numpy(dtype=float),
+        computed["absolute_tolerance"].to_numpy(dtype=float),
+        rtol=0,
+        atol=1e-15,
+    ):
+        raise CalibrationAuditError(
+            f"Exact mismatch in {path}, column absolute_tolerance."
+    )
+    committed_passes = committed["passes"].astype(str).str.casefold()
+    computed_passes = computed["passes"].astype(str).str.casefold()
+    if not committed_passes.isin({"true", "false"}).all() or not (
+        computed_passes.isin({"true", "false"}).all()
+    ):
+        raise CalibrationAuditError(f"Invalid boolean in {path}, column passes.")
+    if not committed_passes.equals(computed_passes):
+        raise CalibrationAuditError(f"Exact mismatch in {path}, column passes.")
+
+    row_tolerances = committed["absolute_tolerance"].to_numpy(dtype=float)
+    for label, frame, pass_values in (
+        ("committed", committed, committed_passes),
+        ("computed", computed, computed_passes),
+    ):
+        rmse_values = frame["rmse"].to_numpy(dtype=float)
+        maximum_values = frame["max_abs_difference"].to_numpy(dtype=float)
+        if (
+            not np.isfinite(rmse_values).all()
+            or not np.isfinite(maximum_values).all()
+            or (rmse_values < 0).any()
+            or (maximum_values < 0).any()
+        ):
+            raise CalibrationAuditError(
+                f"Invalid {label} numerical diagnostic in {path}."
+            )
+        if np.any(rmse_values > maximum_values + 1e-15):
+            raise CalibrationAuditError(
+                f"Inconsistent {label} RMSE in {path}."
+            )
+        expected_passes = maximum_values <= row_tolerances
+        recorded_passes = pass_values.eq("true").to_numpy(dtype=bool)
+        if not np.array_equal(recorded_passes, expected_passes):
+            raise CalibrationAuditError(
+                f"Inconsistent {label} pass result in {path}."
+            )
+
+    for column in ("rmse", "max_abs_difference"):
+        left = committed[column].to_numpy(dtype=float)
+        right = computed[column].to_numpy(dtype=float)
+        if (
+            not np.isfinite(left).all()
+            or not np.isfinite(right).all()
+            or (left < 0).any()
+            or (right < 0).any()
+        ):
+            raise CalibrationAuditError(
+                f"Invalid numerical diagnostic in {path}, column {column}."
+            )
+        allowed = row_tolerances + (
+            CHECK_NUMERIC_RELATIVE_TOLERANCE * np.abs(left)
+        )
+        if np.any(np.abs(left - right) > allowed):
+            difference = float(np.max(np.abs(left - right)))
+            raise CalibrationAuditError(
+                f"Numerical mismatch in {path}, column {column}; "
+                f"max abs={difference}."
+            )
+
+
 def check() -> None:
     frames, json_values = _computed_artifacts(require_lock=True)
     for path, frame in frames.items():
+        if path == TABLE_METRICS_OUTPUT:
+            _compare_table_metrics(path, frame)
+            continue
         tolerance = (
             1e-15
             if path

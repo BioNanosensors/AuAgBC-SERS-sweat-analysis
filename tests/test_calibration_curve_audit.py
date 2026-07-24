@@ -124,6 +124,39 @@ def test_replay_and_aggregate_tables_pass_declared_bounds() -> None:
     assert locks["butterworth_order"].eq(2).all()
 
 
+def test_table_metric_check_allows_only_bounded_diagnostic_drift(
+    tmp_path: Path,
+) -> None:
+    committed = _csv(
+        "metadata/validation/calibration_table_replay_metrics.csv"
+    )
+    committed_path = tmp_path / "calibration_table_replay_metrics.csv"
+    committed.to_csv(committed_path, index=False)
+    computed = committed.copy()
+    cv_row = computed["dataset"].eq(
+        "calibration_at_selected_shifts.csv:cv"
+    )
+    computed.loc[cv_row, "rmse"] += 0.001
+    computed.loc[cv_row, "max_abs_difference"] += 0.01
+
+    AUDIT._compare_table_metrics(committed_path, computed)
+
+    computed.loc[cv_row, "absolute_tolerance"] = 0.051
+    with pytest.raises(AUDIT.CalibrationAuditError, match="absolute_tolerance"):
+        AUDIT._compare_table_metrics(committed_path, computed)
+
+    computed = committed.copy()
+    computed.loc[cv_row, "rmse"] += 0.051
+    with pytest.raises(AUDIT.CalibrationAuditError, match="Inconsistent computed RMSE"):
+        AUDIT._compare_table_metrics(committed_path, computed)
+
+    malformed = committed.copy()
+    malformed.loc[cv_row, "max_abs_difference"] = 0.06
+    malformed.to_csv(committed_path, index=False)
+    with pytest.raises(AUDIT.CalibrationAuditError, match="Inconsistent committed"):
+        AUDIT._compare_table_metrics(committed_path, malformed)
+
+
 def test_replay_configuration_binds_the_forensic_generator_and_model() -> None:
     config = json.loads(
         (
@@ -271,6 +304,12 @@ def test_all_paper_parameters_are_explicitly_not_reproduced() -> None:
             "supportable_with_acquisition_qualification"
         ),
     }
+    lineage_evidence = claims.set_index("claim_id").loc[
+        "figure_3_4a_computational_lineage", "evidence"
+    ]
+    assert "210/210 scan channels and 6/6 aggregate table checks" in lineage_evidence
+    assert "0.0002 intensity units" in lineage_evidence
+    assert "0.05 percentage points" in lineage_evidence
 
 
 def test_multistart_fit_avoids_known_historical_initializer_trap() -> None:
